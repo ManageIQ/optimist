@@ -278,14 +278,16 @@ class Parser
 
   ## Print the help message to 'stream'.
   def educate stream=$stdout
+    width # just calculate it now; otherwise we have to be careful not to
+          # call this unless the cursor's at the beginning of a line.
     if @banner
       stream.puts wrap(@banner)
     elsif @version
+      stream.puts
       stream.puts @version
     end
 
     unless @banner
-      stream.puts
       stream.puts "Options: "
     end
 
@@ -307,7 +309,6 @@ class Parser
         end
       stream.puts wrap(desc, :width => width - rightcol_start, :prefix => rightcol_start)
     end
-    stream.printf("  %#{leftcol_width}s:   ", "--help, -h");
   end
 
   def wrap_line str, opts={} # :nodoc:

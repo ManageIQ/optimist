@@ -1,4 +1,4 @@
-## test/trollop.rb -- unit tests for trollop
+## test/test_trollop.rb -- unit tests for trollop
 ## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   GNU GPL version 2

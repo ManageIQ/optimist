@@ -31,8 +31,8 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
   ###### simple ######
 
   opts = Trollop::options do
-    opt :monkey, "Use monkey model."
-    opt :goat, "Use goat model.", :default => true
+    opt :monkey, "Use monkey mode."
+    opt :goat, "Use goat model", :default => true
     opt :num_limbs, "Set number of limbs", :default => 4
   end
 
@@ -42,7 +42,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
 
   opts = Trollop::options do
     version "test 1.2.3 (c) 2007 William Morgan"
-    banner <<EOS
+    banner <<-EOS
   Test is an awesome program that does something very, very important.
 
   Usage:
