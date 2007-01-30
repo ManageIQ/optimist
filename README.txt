@@ -19,42 +19,42 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
 
 - Simple usage.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
-- Support for long options, short options, short option combining,
+- Support for long options, short options, short option bundling,
   and automatic type validation and conversion.
 - Automatic help message generation, wrapped to current screen width.
 - Lots of unit tests.
 
 == SYNOPSYS:
 
-###### simple ######
+  ###### simple ######
 
-opts = Trollop::options do
-  opt :monkey, "Use monkey model."
-  opt :goat, "Use goat model.", :default => true
-  opt :num_limbs, "Set number of limbs", :default => 4
-end
+  opts = Trollop::options do
+    opt :monkey, "Use monkey model."
+    opt :goat, "Use goat model.", :default => true
+    opt :num_limbs, "Set number of limbs", :default => 4
+  end
 
-p opts
+  p opts
 
-###### complex ######
+  ###### complex ######
 
-opts = Trollop::options do
-  version "test 1.2.3 (c) 2007 William Morgan"
-  banner <<EOS
-Test is an awesome program that does something very, very important.
+  opts = Trollop::options do
+    version "test 1.2.3 (c) 2007 William Morgan"
+    banner <<EOS
+  Test is an awesome program that does something very, very important.
 
-Usage:
-       test [options] <filenames>+
-where [options] are:
-EOS
+  Usage:
+         test [options] <filenames>+
+  where [options] are:
+  EOS
 
-  opt :ignore, "Ignore incorrect values"
-  opt :file, "Extra data filename to read in, with a very long option description like this one", :type => String
-  opt :volume, "Volume level", :default => 3.0
-  opt :iters, "Number of iterations", :default => 5
-end
-Trollop::die :volume, "must be non-negative" if opts[:volume] < 0
-Trollop::die :file, "must exist" unless File.exists?(opts[:file]) if opts[:file]
+    opt :ignore, "Ignore incorrect values"
+    opt :file, "Extra data filename to read in, with a very long option description like this one", :type => String
+    opt :volume, "Volume level", :default => 3.0
+    opt :iters, "Number of iterations", :default => 5
+  end
+  Trollop::die :volume, "must be non-negative" if opts[:volume] < 0
+  Trollop::die :file, "must exist" unless File.exists?(opts[:file]) if opts[:file]
 
 == REQUIREMENTS:
 

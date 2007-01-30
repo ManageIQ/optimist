@@ -7,20 +7,39 @@ module Trollop
 
 VERSION = "1.0"
 
+## Thrown by Parser in the event of a commandline error. Not needed if
+## you're using the Trollop::options entry.
 class CommandlineError < StandardError; end
+  
+## Thrown by Parser if the user passes in '-h' or '--help'. Handled
+## automatically by Trollop#options.
 class HelpNeeded < StandardError; end
+
+## Thrown by Parser if the user passes in '-h' or '--version'. Handled
+## automatically by Trollop#options.
 class VersionNeeded < StandardError; end
 
-## regex for floating point numbers
+## Regex for floating point numbers
 FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))$/
 
-## regex for parameters
-PARAM_RE = /^-(-|\.$|[^\d\.])/ # possible parameter
+## Regex for parameters
+PARAM_RE = /^-(-|\.$|[^\d\.])/
 
+## The commandline parser. In typical usage, the methods in this class
+## will be handled internally by Trollop#options, in which case only
+## the methods #opt, #banner and #version will be called.
 class Parser
+  ## The set of values specifiable as the :type parameter to #opt.
   TYPES = [:flag, :boolean, :bool, :int, :integer, :string, :double, :float]
-  attr_reader :leftovers, :specs
 
+  ## The values from the commandline that were not interpreted by #parse.
+  attr_reader :leftovers
+
+  ## The complete configuration hashes for each option. (Mainly useful
+  ## for testing.)
+  attr_reader :specs
+
+  ## Initializes the parser, and instance-evaluates any block given.
   def initialize &b
     @version = nil
     @banner = nil
@@ -33,6 +52,31 @@ class Parser
     instance_eval(&b) if b
   end
 
+  ## Add an option. 'name' is the argument name, a unique identifier
+  ## for the option that you will use internally. 'desc' a string
+  ## description which will be displayed in help messages. Takes the
+  ## following optional arguments:
+  ##
+  ## * :long: Specify the long form of the argument, i.e. the form
+  ##   with two dashes. If unspecified, will be automatically derived
+  ##   based on the argument name.
+  ## * :short: Specify the short form of the argument, i.e. the form
+  ##   with one dash. If unspecified, will be automatically derived
+  ##   based on the argument name.
+  ## * :type: Require that the argument take a parameter of type
+  ##   'type'. Can by any member of the TYPES constant or a
+  ##   corresponding class (e.g. Integer for :int). If unset, the
+  ##   default argument type is :flag, meaning the argument does not
+  ##   take a parameter. Not necessary if :default: is specified.
+  ## * :default: Set the default value for an argument. Without a
+  ##   default value, the hash returned by #parse (and thus
+  ##   Trollop#options) will not contain the argument unless it is
+  ##   given on the commandline. The argument type is derived
+  ##   automatically from the class of the default value given, if
+  ##   any. Specifying a :flag argument on the commandline whose
+  ##   default value is true will change its value to false.
+  ## * :required: if set to true, the argument must be provided on the
+  ##   commandline.
   def opt name, desc="", opts={}
     raise ArgumentError, "you already have an argument named #{name.inspect}" if @specs.member? name
 
@@ -110,6 +154,9 @@ class Parser
     @specs[name] = opts
   end
 
+  ## Sets the version string. If set, the user can request the version
+  ## on the commandline. Should be of the form "<program name>
+  ## <version number>".
   def version s=nil;
     if s
       @version = s
@@ -117,11 +164,13 @@ class Parser
     end
     @version
   end
-  
+
+  ## Sets the banner. If set, this will be printed at the top of the
+  ## help display.
   def banner s=nil; @banner = s if s; @banner end
 
   ## yield successive arg, parameter pairs
-  def each_arg args
+  def each_arg args # :nodoc:
     remains = []
     i = 0
 
@@ -160,7 +209,7 @@ class Parser
     remains
   end
 
-  def parse args
+  def parse args #:nodoc:
     vals = {}
     required = {}
     found = {}
@@ -214,7 +263,7 @@ class Parser
     vals
   end
 
-  def width
+  def width #:nodoc:
     @width ||= 
       begin
         require 'curses'
@@ -227,6 +276,7 @@ class Parser
       end
   end
 
+  ## Print the help message to 'stream'.
   def educate stream=$stdout
     if @banner
       stream.puts wrap(@banner)
@@ -260,7 +310,7 @@ class Parser
     stream.printf("  %#{leftcol_width}s:   ", "--help, -h");
   end
 
-  def wrap_line str, opts={}
+  def wrap_line str, opts={} # :nodoc:
     prefix = opts[:prefix] || 0
     width = opts[:width] || self.width
     start = 0
@@ -280,7 +330,7 @@ class Parser
     ret
   end
 
-  def wrap str, opts={}
+  def wrap str, opts={} # :nodoc:
     if str == ""
       [""]
     else
@@ -289,6 +339,17 @@ class Parser
   end
 end
 
+## The top-level entry method into Trollop. Creates a Parser object,
+## passes the block to it, then parses ARGV with it, handling any
+## errors or requests for help or version information appropriately
+## (and then exiting). Modifies ARGV in place. Returns a hash of
+## option values.
+##
+## The block passed in should contain one or more calls to #opt
+## (Parser#opt), and optionally a call to banner (Parser#banner)
+## and a call to version (Parser#version).
+##
+## See the synopsis in README.txt for examples.
 def options &b
   @p = Parser.new(&b)
   begin
@@ -308,6 +369,16 @@ def options &b
     exit
   end
 end
+
+## Informs the user that their usage of 'arg' was wrong, as detailed by
+## 'msg', and dies. Example:
+##
+##   options do
+##     opt :volume, :default => 0.0
+##   end
+##
+##   die :volume, "too loud" if opts[:volume] > 10.0
+##   die :volume, "too soft" if opts[:volume] < 0.1
 
 def die arg, msg
   $stderr.puts "Error: parameter for option '--#{@p.specs[arg][:long]}' or '-#{@p.specs[arg][:short]}' #{msg}."
