@@ -1,0 +1,5 @@
+./lib/trollop.rb
+./test/all.rb
+./test/trollop.rb
+README.txt
+History.txt
