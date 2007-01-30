@@ -16,7 +16,7 @@ Hoe.new('trollop', Trollop::VERSION) do |p|
 end
 
 ## is there really no way to make a rule for this?
-WWW_FILES = %w(www/index.html README.txt FAQ.txt)
+WWW_FILES = %w(index.html README.txt FAQ.txt)
 
 task :upload_webpage => WWW_FILES do |t|
   sh "scp -C #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
