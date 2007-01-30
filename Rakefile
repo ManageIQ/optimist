@@ -8,9 +8,10 @@ Hoe.new('trollop', Trollop::VERSION) do |p|
   p.rubyforge_name = 'trollop'
   p.author = "William Morgan"
   p.summary = "Trollop is YAFCLAP --- yet another fine commandline argument processing library for Ruby. Trollop is designed to provide the maximal amount of GNU-style argument processing in the minimum number of lines of code (for you, the programmer)."
-  p.description = p.paragraphs_of('README.txt', 3..5).join("\n\n")
-  p.url = p.paragraphs_of('README.txt', 0).first.split(/\n/)[2].gsub(/^\s+/, "")
-  p.changes = p.paragraphs_of('History.txt', 0..1).join("\n\n")
+
+  p.description = p.paragraphs_of('README.txt', 4..5, 9..15).join("\n\n").gsub(/== SYNOPSIS/, "Synopsis")
+  p.url = "http://trollop.rubyforge.org"
+  p.changes = p.paragraphs_of('History.txt', 0..0).join("\n\n")
   p.email = "wmorgan-trollop@masanjin.net"
 end
 

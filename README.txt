@@ -1,6 +1,8 @@
-trollop
-    by William Morgan <wmorgan-trollop@masanjin.net>
-    http://trollop.rubyforge.org
+== trollop
+
+by William Morgan <wmorgan-trollop@masanjin.net>
+
+http://trollop.rubyforge.org
 
 == DESCRIPTION:
 
@@ -24,7 +26,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
 - Automatic help message generation, wrapped to current screen width.
 - Lots of unit tests.
 
-== SYNOPSYS:
+== SYNOPSIS:
 
   ###### simple ######
 
