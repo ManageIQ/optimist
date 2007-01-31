@@ -4,6 +4,10 @@ require 'rubygems'
 require 'hoe'
 require 'trollop'
 
+class Hoe
+  def extra_deps; @extra_deps.reject { |x| Array(x).first == "hoe" } end
+end # thanks to "Mike H"
+
 Hoe.new('trollop', Trollop::VERSION) do |p|
   p.rubyforge_name = 'trollop'
   p.author = "William Morgan"

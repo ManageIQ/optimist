@@ -1,3 +1,7 @@
+== 1.2 / 2007-01-31
+* Minor documentation tweaks.
+* Removed hoe dependency.
+
 == 1.1 / 2007-01-30
 * Trollop::options now passes any arguments as block arguments. Since
   instance variables are not properly captured by the block, this

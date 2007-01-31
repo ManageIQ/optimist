@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -371,8 +371,8 @@ end
 ## option values.
 ##
 ## The block passed in should contain one or more calls to #opt
-## (Parser#opt), and optionally a call to banner (Parser#banner)
-## and a call to version (Parser#version).
+## (Parser#opt), one or more calls to text (Parser#text), and
+## probably a call to version (Parser#version).
 ##
 ## See the synopsis in README.txt for examples.
 def options *a, &b
