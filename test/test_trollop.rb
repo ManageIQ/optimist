@@ -4,7 +4,7 @@
 ## License::   GNU GPL version 2
 
 require 'test/unit'
-require 'yaml'
+require 'stringio'
 require 'trollop'
 
 module Trollop
@@ -294,6 +294,53 @@ EOM
     assert_equal "hello-there", @p.specs[:hello_there][:long]
   end
 
+  def test_arguments_passed_through_block
+    @goat = 3
+    boat = 4
+    Parser.new(@goat) do |goat|
+      boat = goat
+    end
+    assert_equal @goat, boat
+  end
+
+  def test_help_has_default_banner
+    @p = Parser.new
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /options/i
+    assert_equal 2, help.length # options, then -h
+
+    @p = Parser.new
+    @p.version "my version"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /my version/i
+    assert_equal 4, help.length # version, options, -h, -v
+
+    @p = Parser.new
+    @p.banner "my own banner"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /my own banner/i
+    assert_equal 2, help.length # banner, -h
+  end
+
+  def test_help_preserves_positions
+    @p.opt :zzz, "zzz"
+    @p.opt :aaa, "aaa"
+    sio = StringIO.new "w"
+    @p.educate sio
+
+    help = sio.string.split "\n"
+    assert help[1] =~ /zzz/
+    assert help[2] =~ /aaa/
+  end
 end
 
 end

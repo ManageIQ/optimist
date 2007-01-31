@@ -1,2 +1,15 @@
+== 1.1 / 2007-01-30
+* Trollop::options now passes any arguments as block arguments. Since
+  instance variables are not properly captured by the block, this
+  makes it slightly less noisy to pass them in as local variables.
+  (A real-life use for _why's cloaker!)
+* Help display now preserves original argument order.
+* Trollop::die now also has a single string form in case death is not
+  due to a single argument.
+* Parser#text now an alias for Parser#banner, and can be called
+  multiple times, with the output being placed in the right position
+  in the help text.
+* Slightly more indicative formatting for parameterized arguments.
+
 == 1.0 / 2007-01-29
 * Initial release.

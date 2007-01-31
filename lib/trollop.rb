@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -40,16 +40,16 @@ class Parser
   attr_reader :specs
 
   ## Initializes the parser, and instance-evaluates any block given.
-  def initialize &b
+  def initialize *a, &b
     @version = nil
-    @banner = nil
     @leftovers = []
     @specs = {}
     @long = {}
     @short = {}
+    @order = []
 
-    opt :help, "Show this message"
-    instance_eval(&b) if b
+    #instance_eval(&b) if b # can't take arguments
+    cloaker(&b).bind(self).call(*a) if b
   end
 
   ## Add an option. 'name' is the argument name, a unique identifier
@@ -152,22 +152,17 @@ class Parser
     opts[:desc] ||= desc
     @short[opts[:short]] = @long[opts[:long]] = name
     @specs[name] = opts
+    @order << [:opt, name]
   end
 
   ## Sets the version string. If set, the user can request the version
   ## on the commandline. Should be of the form "<program name>
   ## <version number>".
-  def version s=nil;
-    if s
-      @version = s
-      opt :version, "Print version and exit"
-    end
-    @version
-  end
+  def version s=nil; @version = s if s; @version end
 
-  ## Sets the banner. If set, this will be printed at the top of the
-  ## help display.
-  def banner s=nil; @banner = s if s; @banner end
+  ## Adds text to the help display.
+  def banner s; @order << [:text, s] end
+  alias :text :banner
 
   ## yield successive arg, parameter pairs
   def each_arg args # :nodoc:
@@ -213,6 +208,9 @@ class Parser
     vals = {}
     required = {}
     found = {}
+
+    opt :version, "Print version and exit" if @version unless @specs[:version]
+    opt :help, "Show this message" unless @specs[:help]
 
     @specs.each do |name, opts|
       required[name] = true if opts[:required]
@@ -280,23 +278,38 @@ class Parser
   def educate stream=$stdout
     width # just calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
-    if @banner
-      stream.puts wrap(@banner)
-    elsif @version
-      stream.puts
-      stream.puts @version
+
+    left = {}
+    @specs.each do |name, spec| 
+      left[name] = "--#{spec[:long]}, -#{spec[:short]}" + 
+        case spec[:type]
+        when :flag
+          ""
+        when :int
+          " <i>"
+        when :string
+          " <s>"
+        when :float
+          " <f>"
+        end
     end
 
-    unless @banner
-      stream.puts "Options: "
-    end
-
-    specs = @long.keys.sort.map { |longname| @specs[@long[longname]] }
-    leftcols = specs.map { |spec| "--#{spec[:long]}, -#{spec[:short]}" }
-    leftcol_width = leftcols.map { |s| s.length }.max
+    leftcol_width = left.values.map { |s| s.length }.max || 0
     rightcol_start = leftcol_width + 6 # spaces
-    specs.each_with_index do |spec, i|
-      stream.printf("  %#{leftcol_width}s:   ", leftcols[i]);
+
+    unless @order.size > 0 && @order.first.first == :text
+      stream.puts "#@version\n" if @version
+      stream.puts "Options:"
+    end
+
+    @order.each do |what, opt|
+      if what == :text
+        stream.puts wrap(opt)
+        next
+      end
+
+      spec = @specs[opt]
+      stream.printf "  %#{leftcol_width}s:   ", left[opt]
       desc = spec[:desc] + 
         if spec[:default]
           if spec[:desc] =~ /\.$/
@@ -338,6 +351,17 @@ class Parser
       str.split("\n").map { |s| wrap_line s, opts }.flatten
     end
   end
+
+  ## instance_eval but with ability to handle block arguments
+  ## thanks to why: http://redhanded.hobix.com/inspect/aBlockCostume.html
+  def cloaker &b #:nodoc:
+    (class << self; self; end).class_eval do
+      define_method :cloaker_, &b
+      meth = instance_method :cloaker_
+      remove_method :cloaker_
+      meth
+    end
+  end
 end
 
 ## The top-level entry method into Trollop. Creates a Parser object,
@@ -351,8 +375,8 @@ end
 ## and a call to version (Parser#version).
 ##
 ## See the synopsis in README.txt for examples.
-def options &b
-  @p = Parser.new(&b)
+def options *a, &b
+  @p = Parser.new(*a, &b)
   begin
     vals = @p.parse ARGV
     ARGV.clear
@@ -380,9 +404,21 @@ end
 ##
 ##   die :volume, "too loud" if opts[:volume] > 10.0
 ##   die :volume, "too soft" if opts[:volume] < 0.1
-
-def die arg, msg
-  $stderr.puts "Error: parameter for option '--#{@p.specs[arg][:long]}' or '-#{@p.specs[arg][:short]}' #{msg}."
+##
+## In the one-argument case, simply print that message, a notice
+## about -h, and die. Example:
+##
+##   options do
+##     opt :whatever # ...
+##   end
+##
+##   Trollop::die "need at least one filename" if ARGV.empty?
+def die arg, msg=nil
+  if msg
+    $stderr.puts "Error: parameter for option '--#{@p.specs[arg][:long]}' or '-#{@p.specs[arg][:short]}' #{msg}."
+  else
+    $stderr.puts "Error: #{arg}."
+  end
   $stderr.puts "Try --help for help."
   exit(-1)
 end
