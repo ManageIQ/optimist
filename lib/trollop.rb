@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.2"
+VERSION = "1.3"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -78,7 +78,7 @@ class Parser
   ## * :required: if set to true, the argument must be provided on the
   ##   commandline.
   def opt name, desc="", opts={}
-    raise ArgumentError, "you already have an argument named #{name.inspect}" if @specs.member? name
+    raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
     opts[:type] = 
@@ -209,18 +209,15 @@ class Parser
     required = {}
     found = {}
 
-    opt :version, "Print version and exit" if @version unless @specs[:version]
-    opt :help, "Show this message" unless @specs[:help]
+    opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
+    opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |name, opts|
       required[name] = true if opts[:required]
       vals[name] = opts[:default]
     end
 
-    @leftovers = each_arg args do |arg, param|
-      raise VersionNeeded if @version && %w(-v --version).include?(arg)
-      raise HelpNeeded if %w(-h --help).include?(arg)
-
+   @leftovers = each_arg args do |arg, param|
       name = 
         case arg
         when /^-([^-])$/
@@ -232,6 +229,9 @@ class Parser
         end
       raise CommandlineError, "unknown argument '#{arg}'" unless name
       raise CommandlineError, "option '#{arg}' specified multiple times" if found[name]
+
+      raise VersionNeeded if name == :version
+      raise HelpNeeded if name == :help
 
       found[name] = true
       opts = @specs[name]
@@ -320,13 +320,13 @@ class Parser
         else
           ""
         end
-      stream.puts wrap(desc, :width => width - rightcol_start, :prefix => rightcol_start)
+      stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
     end
   end
 
   def wrap_line str, opts={} # :nodoc:
     prefix = opts[:prefix] || 0
-    width = opts[:width] || self.width
+    width = opts[:width] || (self.width - 1)
     start = 0
     ret = []
     until start > str.length

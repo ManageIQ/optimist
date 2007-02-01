@@ -341,6 +341,28 @@ EOM
     assert help[1] =~ /zzz/
     assert help[2] =~ /aaa/
   end
+
+  def test_version_and_help_short_args_can_be_overridden
+    @p.opt :verbose, "desc", :short => "-v"
+    @p.opt :hello, "desc", :short => "-h"
+    @p.version "version"
+
+    assert_nothing_raised { @p.parse(%w(-v)) }
+    assert_raises(VersionNeeded) { @p.parse(%w(--version)) }
+    assert_nothing_raised { @p.parse(%w(-h)) }
+    assert_raises(HelpNeeded) { @p.parse(%w(--help)) }
+  end
+
+  def test_version_and_help_long_args_cann_be_overridden
+    @p.opt :asdf, "desc", :long => "help"
+    @p.opt :asdf2, "desc2", :long => "version"
+    assert_nothing_raised { @p.parse %w() }
+    assert_nothing_raised { @p.parse %w(--help) }
+    assert_nothing_raised { @p.parse %w(--version) }
+    assert_nothing_raised { @p.parse %w(-h) }
+    assert_nothing_raised { @p.parse %w(-v) }
+  end
+
 end
 
 end
