@@ -120,6 +120,19 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal true, opts["arg3"]
   end
 
+  def test_short_can_be_nothing
+    assert_nothing_raised do
+      @p.opt "arg", "desc", :short => :none
+      @p.parse []
+    end
+
+    sio = StringIO.new "w"
+    @p.educate sio
+    assert sio.string =~ /--arg:\s+desc/
+
+    assert_raise(CommandlineError) { @p.parse %w(-a) }
+  end
+
   ## two args can't have the same name
   def test_conflicting_names_are_detected
     assert_nothing_raised { @p.opt "goodarg", "desc" }

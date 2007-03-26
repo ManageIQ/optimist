@@ -20,12 +20,14 @@ A: Because it's ambiguous whether these are arguments or negative
 
    I could be very clever and detect when there are no arguments
    that require floating-point parameters, and allow such short option
-   names in those cases, but I'd rather be simple and consistent.
+   names in those cases, but opted for simplicity and consistency.
 
 Q: Why does Trollop disallow options appearing multiple times, despite
    the POSIX standard allowing it?
 A: Because basically I think it's confusing, and more often than
    not, a symptom of you making a mistake (e.g. getting lost in a long
-   command line and accidentally setting the same thing twice.)  Given
-   that, I really don't see that much advantage to "-vvvvv" over "-v
-   5", so Trollop will produce an error if it happens.
+   command line and accidentally setting the same thing twice.) 
+   I also don't see that much advantage to "-vvvvv" over "-v 5", so
+   Trollop will produce an error if you try to use the same argument
+   multiple times.
+

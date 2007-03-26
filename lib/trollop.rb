@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -130,27 +130,33 @@ class Parser
     raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
-    opts[:short] = opts[:short].to_s if opts[:short]
+    opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
     opts[:short] =
       case opts[:short]
       when nil
-        opts[:long].split(//).find { |c| c !~ /[\d]/ && !@short.member?(c) }
+        c = opts[:long].split(//).find { |c| c !~ /[\d]/ && !@short.member?(c) }
+        raise ArgumentError, "can't generate a short option name for #{opts[:long].inspect}: out of unique characters" unless c
+        c
       when /^-(.)$/
         $1
       when /^.$/
         opts[:short]
+      when :none
+        nil
       else
-        raise ArgumentError, "invalid short option name #{opts[:long].inspect}"
+        raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
       end
-    raise ArgumentError, "can't generate a short option name (out of characters)" unless opts[:short]
-    raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
-    raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ /[\d-]/
+    if opts[:short]
+      raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
+      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ /[\d-]/
+    end
 
     ## fill in :default for flags
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
 
     opts[:desc] ||= desc
-    @short[opts[:short]] = @long[opts[:long]] = name
+    @long[opts[:long]] = name
+    @short[opts[:short]] = name if opts[:short]
     @specs[name] = opts
     @order << [:opt, name]
   end
@@ -281,7 +287,8 @@ class Parser
 
     left = {}
     @specs.each do |name, spec| 
-      left[name] = "--#{spec[:long]}, -#{spec[:short]}" + 
+      left[name] = "--#{spec[:long]}" +
+        (spec[:short] ? ", -#{spec[:short]}" : "") +
         case spec[:type]
         when :flag
           ""
