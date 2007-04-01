@@ -1,3 +1,6 @@
+== 1.6 / 2007-04-01
+* Don't attempt curses screen-width magic unless running on a terminal.
+
 == 1.5 / 2007-03-31
 * --help and --version do the right thing even if the rest of the
   command line is incorrect.

@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.5"
+VERSION = "1.6"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -302,13 +302,17 @@ class Parser
 
   def width #:nodoc:
     @width ||= 
-      begin
-        require 'curses'
-        Curses::init_screen
-        x = Curses::cols
-        Curses::close_screen
-        x
-      rescue Exception
+      if $stdout.tty?
+        begin
+          require 'curses'
+          Curses::init_screen
+          x = Curses::cols
+          Curses::close_screen
+          x
+        rescue Exception
+          80
+        end
+      else
         80
       end
   end
