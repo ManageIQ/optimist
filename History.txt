@@ -1,3 +1,10 @@
+== 1.5 / 2007-03-31
+* --help and --version do the right thing even if the rest of the
+  command line is incorrect.
+* Added #conflicts and #depends to model dependencies and exclusivity
+  between arguments.
+* Minor bugfixes.
+
 == 1.4 / 2007-03-26
 * Disable short options with :short => :none.
 * Minor bugfixes and error message improvements.

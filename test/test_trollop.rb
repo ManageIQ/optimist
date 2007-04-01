@@ -17,13 +17,13 @@ class Trollop < ::Test::Unit::TestCase
 
   def test_unknown_arguments
     assert_raise(CommandlineError) { @p.parse(%w(--arg)) }
-    @p.opt "arg", "desc"
+    @p.opt "arg"
     assert_nothing_raised { @p.parse(%w(--arg)) }
     assert_raise(CommandlineError) { @p.parse(%w(--arg2)) }
   end
 
   def test_syntax_check
-    @p.opt "arg", "desc"
+    @p.opt "arg"
 
     assert_nothing_raised { @p.parse(%w(--arg)) }
     assert_nothing_raised { @p.parse(%w(arg)) }
@@ -54,8 +54,8 @@ class Trollop < ::Test::Unit::TestCase
 
   ## flags that don't take arguments ignore them
   def test_arglessflags_refuse_args
-    @p.opt "goodarg", "desc"
-    @p.opt "goodarg2", "desc"
+    @p.opt "goodarg"
+    @p.opt "goodarg2"
     assert_nothing_raised { @p.parse(%w(--goodarg)) }
     assert_nothing_raised { @p.parse(%w(--goodarg --goodarg2)) }
     opts = @p.parse %w(--goodarg a)
@@ -135,8 +135,8 @@ class Trollop < ::Test::Unit::TestCase
 
   ## two args can't have the same name
   def test_conflicting_names_are_detected
-    assert_nothing_raised { @p.opt "goodarg", "desc" }
-    assert_raise(ArgumentError) { @p.opt "goodarg", "desc" }
+    assert_nothing_raised { @p.opt "goodarg" }
+    assert_raise(ArgumentError) { @p.opt "goodarg" }
   end
 
   ## two args can't have the same :long
@@ -195,7 +195,7 @@ class Trollop < ::Test::Unit::TestCase
   end
 
   def test_version_only_appears_if_set
-    @p.opt "arg", "desc"
+    @p.opt "arg"
     assert_raise(CommandlineError) { @p.parse %w(-v) }
     @p.version "trollop 1.2.3.4"
     assert_raise(VersionNeeded) { @p.parse %w(-v) }
@@ -374,6 +374,72 @@ EOM
     assert_nothing_raised { @p.parse %w(--version) }
     assert_nothing_raised { @p.parse %w(-h) }
     assert_nothing_raised { @p.parse %w(-v) }
+  end
+
+  def test_version_and_help_override_errors
+    @p.opt :asdf, "desc", :type => String
+    @p.version "version"
+    assert_nothing_raised { @p.parse %w(--asdf goat) }
+    assert_raises(CommandlineError) { @p.parse %w(--asdf) }
+    assert_raises(HelpNeeded) { @p.parse %w(--asdf --help) }
+    assert_raises(VersionNeeded) { @p.parse %w(--asdf --version) }
+  end
+
+  def test_conflicts
+    @p.opt :one
+    assert_raises(ArgumentError) { @p.conflicts :one, :two }
+    @p.opt :two
+    assert_nothing_raised { @p.conflicts :one, :two }
+    assert_nothing_raised { @p.parse %w(--one) }
+    assert_nothing_raised { @p.parse %w(--two) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--one --two) }
+
+    @p.opt :hello
+    @p.opt :yellow
+    @p.opt :mellow
+    @p.opt :jello
+    @p.conflicts :hello, :yellow, :mellow, :jello
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --yellow --mellow --jello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --mellow --jello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --jello) }
+
+    assert_nothing_raised { opts = @p.parse %w(--hello) }
+    assert_nothing_raised { opts = @p.parse %w(--jello) }
+    assert_nothing_raised { opts = @p.parse %w(--yellow) }
+    assert_nothing_raised { opts = @p.parse %w(--mellow) }
+
+    assert_nothing_raised { opts = @p.parse %w(--mellow --one) }
+    assert_nothing_raised { opts = @p.parse %w(--mellow --two) }
+
+    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--one --mellow --two --jello) }
+  end
+
+  def test_depends
+    @p.opt :one
+    assert_raises(ArgumentError) { @p.depends :one, :two }
+    @p.opt :two
+    assert_nothing_raised { @p.depends :one, :two }
+    assert_nothing_raised { opts = @p.parse %w(--one --two) }
+    assert_raises(CommandlineError) { @p.parse %w(--one) }
+    assert_raises(CommandlineError) { @p.parse %w(--two) }
+
+    @p.opt :hello
+    @p.opt :yellow
+    @p.opt :mellow
+    @p.opt :jello
+    @p.depends :hello, :yellow, :mellow, :jello
+    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --mellow --jello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --jello) }
+
+    assert_raises(CommandlineError) { opts = @p.parse %w(--hello) }
+    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow) }
+
+    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello --one --two) }
+    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello --one --two a b c) }
+
+    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello --one) }
   end
 
 end
