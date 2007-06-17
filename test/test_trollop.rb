@@ -442,6 +442,27 @@ EOM
     assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello --one) }
   end
 
+  ## courtesy neill zero
+  def test_two_required_one_missing_accuses_correctly
+    @p.opt "arg1", "desc1", :required => true
+    @p.opt "arg2", "desc2", :required => true
+
+    begin
+      @p.parse(%w(--arg1))
+      flunk "should have failed on a missing req"
+    rescue CommandlineError => e
+      assert e.message =~ /arg2/, "didn't mention arg2 in the error msg: #{e.message}"
+    end
+
+    begin
+      @p.parse(%w(--arg2))
+      flunk "should have failed on a missing req"
+    rescue CommandlineError => e
+      assert e.message =~ /arg1/, "didn't mention arg1 in the error msg: #{e.message}"
+    end
+
+    assert_nothing_raised { @p.parse(%w(--arg1 --arg2)) }
+  end
 end
 
 end

@@ -275,7 +275,9 @@ class Parser
       end
     end
 
-    raise CommandlineError, "option '#{required.keys.first}' must be specified" if required.any? { |sym, x| !found[sym] }
+    required.each do |sym, val|
+      raise CommandlineError, "option '#{sym}' must be specified" unless found[sym]
+    end
 
     ## parse parameters
     args.each do |sym, arg, param|
