@@ -1,34 +1,22 @@
-== trollop
+<html>
+<head>
+<title>Trollop</title>
+</head>
 
-by William Morgan <wmorgan-trollop@masanjin.net>
+<body>
 
-http://trollop.rubyforge.org
+<h1>Trollop</h1>
 
-Documentation quickstart: See Trollop::Parser.
+<p>Trollop is YAFCLAP --- yet another fine commandline argument
+processing library for Ruby.</p>
 
-== DESCRIPTION
+<p>See the <a href="README.txt">README</a>,
+   <a href="FAQ.txt">FAQ</a>,
+   <a href="trollop/">API docs</a>, or 
+   <a href="http://rubyforge.org/projects/trollop/">Rubyforge page</a>.</p>
 
-Trollop is YAFCLAP --- yet another fine commandline argument processor
-for Ruby. Trollop is designed to provide the maximal amount of GNU-style
-argument processing in the minimum number of lines of code (for you, the
-programmer).
-
-Trollop provides a nice automatically-generated help page, robust option
-parsing, and sensible defaults for everything you don't specify.
-
-Trollop: getting you 90% of the way there with only 10% of the effort.
-
-== FEATURES/PROBLEMS
-
-- Simple usage.
-- Sensible defaults. No tweaking necessary, much tweaking possible.
-- Support for long options, short options, short option bundling,
-  and automatic type validation and conversion.
-- Automatic help message generation, wrapped to current screen width.
-- Lots of unit tests.
-
-== SYNOPSIS
-
+<h2>Synopsis</h2>
+<pre>
   ###### simple ######
 
   require 'trollop'
@@ -45,7 +33,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
   require 'trollop'
   opts = Trollop::options do
     version "test 1.2.3 (c) 2007 William Morgan"
-    banner <<-EOS
+    banner &lt;&lt;-EOS
   Test is an awesome program that does something very, very important.
 
   Usage:
@@ -66,7 +54,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
   require 'trollop'
   opts = Trollop::options do
     version "sup-sync (sup #{Redwood::VERSION})"
-    banner <<EOS
+    banner &lt;&lt;EOS
   Synchronizes the Sup index with one or more message sources by adding
   messages, deleting messages, or changing message state in the index as
   appropriate.
@@ -88,7 +76,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
     opt :all, "Operate on all messages in the source, regardless of newness or changedness."
     opt :start_at, "For --changed and --all, start at a particular offset.", :type => :int
   
-  text <<EOS
+  text &lt;&lt;EOS
   
   Options controlling HOW message state is altered:
   EOS
@@ -99,7 +87,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
     opt :read, "When using the default source state, mark messages as read."
     opt :extra_labels, "When using the default source state, also apply these user-defined labels. Should be a comma-separated list.", :type => String, :short => :none
   
-  text <<EOS
+  text &lt;&lt;EOS
   
   Other options:
   EOS
@@ -117,17 +105,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
     Trollop::die :start_at, "must be non-negative" if opts[:start_at] < 0
     Trollop::die :start_at, "requires either --changed or --all" unless opts[:changed] || opts[:all]
   end
+</pre>
 
-== REQUIREMENTS
-
-* none!
-
-== INSTALL
-
-* gem install trollop
-
-== LICENSE
-
-Copyright (c) 2008 William Morgan.
-
-Trollop is distributed under the same terms as Ruby.
+</body>
+</html>

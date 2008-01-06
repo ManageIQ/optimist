@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.7"
+VERSION = "1.7.1"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -26,8 +26,9 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))$/
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
 ## The commandline parser. In typical usage, the methods in this class
-## will be handled internally by Trollop#options, in which case only
-## the methods #opt, #banner and #version will be called.
+## will be handled internally by Trollop#options, in which case only the
+## methods #opt, #banner and #version, #depends, and #conflicts will
+## typically be called.
 class Parser
   ## The set of values specifiable as the :type parameter to #opt.
   TYPES = [:flag, :boolean, :bool, :int, :integer, :string, :double, :float]
@@ -171,9 +172,9 @@ class Parser
   def banner s; @order << [:text, s] end
   alias :text :banner
 
-  ## Marks two (or more!) options as requiring each other. Only
-  ## handles undirected dependcies. Directed dependencies are better
-  ## modeled with #die.
+  ## Marks two (or more!) options as requiring each other. Only handles
+  ## undirected (i.e., mutual) dependencies. Directed dependencies are
+  ## better modeled with Trollop::die.
   def depends *syms
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]

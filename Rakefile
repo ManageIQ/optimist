@@ -2,6 +2,8 @@
 
 require 'rubygems'
 require 'hoe'
+
+$:.unshift "lib"
 require 'trollop'
 
 class Hoe
@@ -19,11 +21,13 @@ Hoe.new('trollop', Trollop::VERSION) do |p|
   p.email = "wmorgan-trollop@masanjin.net"
 end
 
-## is there really no way to make a rule for this?
-WWW_FILES = %w(index.html README.txt FAQ.txt)
-
+WWW_FILES = FileList["www/*"] + %w(README.txt FAQ.txt)
 task :upload_webpage => WWW_FILES do |t|
   sh "scp -C #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
 end
 
-# vim: syntax=Ruby
+task :upload_docs => [:docs] do |t|
+  sh "scp -Cr doc wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop"
+end
+
+# vim: syntax=ruby
