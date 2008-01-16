@@ -85,31 +85,31 @@ class Parser
     ## fill in :type
     opts[:type] = 
       case opts[:type]
-      when :flag, :boolean, :bool: :flag
-      when :int, :integer: :int
-      when :string: :string
-      when :double, :float: :float
+      when :flag, :boolean, :bool; :flag
+      when :int, :integer; :int
+      when :string; :string
+      when :double, :float; :float
       when Class
         case opts[:type].to_s # sigh... there must be a better way to do this
-        when 'TrueClass', 'FalseClass': :flag
-        when 'String': :string
-        when 'Integer': :int
-        when 'Float': :float
+        when 'TrueClass', 'FalseClass'; :flag
+        when 'String'; :string
+        when 'Integer'; :int
+        when 'Float'; :float
         else
           raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
         end
-      when nil: nil
+      when nil; nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
       end
 
     type_from_default =
       case opts[:default]
-      when Integer: :int
-      when Numeric: :float
-      when TrueClass, FalseClass: :flag
-      when String: :string
-      when nil: nil
+      when Integer; :int
+      when Numeric; :float
+      when TrueClass, FalseClass; :flag
+      when String; :string
+      when nil; nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
@@ -330,14 +330,10 @@ class Parser
       left[name] = "--#{spec[:long]}" +
         (spec[:short] ? ", -#{spec[:short]}" : "") +
         case spec[:type]
-        when :flag
-          ""
-        when :int
-          " <i>"
-        when :string
-          " <s>"
-        when :float
-          " <f>"
+        when :flag; ""
+        when :int; " <i>"
+        when :string; " <s>"
+        when :float; " <f>"
         end
     end
 
