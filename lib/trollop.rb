@@ -49,6 +49,7 @@ class Parser
     @short = {}
     @order = []
     @constraints = []
+    @stop_words = []
 
     #instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
@@ -186,12 +187,27 @@ class Parser
     @constraints << [:conflicts, syms]
   end
 
+  ## Defines a set of words which cause parsing to terminate when encountered,
+  ## such that any options to the left of the word are parsed as usual, and
+  ## options to the right of the word are left intact.
+  ##
+  ## A typical use case would be for subcommand support, where these would be
+  ## set to the list of subcommands. A subsequent Trollop invocation would
+  ## then be used to parse subcommand options.
+  def stop_on *words
+    @stop_words = [*words].flatten
+  end
+
   ## yield successive arg, parameter pairs
   def each_arg args # :nodoc:
     remains = []
     i = 0
 
     until i >= args.length
+      if @stop_words.member? args[i]
+        remains += args[i .. -1]
+        break
+      end
       case args[i]
       when /^--$/ # arg terminator
         remains += args[(i + 1) .. -1]
@@ -200,7 +216,7 @@ class Parser
         yield "--#{$1}", $2
         i += 1
       when /^--(\S+)$/ # long argument
-        if args[i + 1] && args[i + 1] !~ PARAM_RE
+        if args[i + 1] && args[i + 1] !~ PARAM_RE && !@stop_words.member?(args[i + 1])
           remains << args[i + 1] unless yield args[i], args[i + 1]
           i += 2
         else # long argument no parameter
@@ -210,7 +226,7 @@ class Parser
       when /^-(\S+)$/ # one or more short arguments
         shortargs = $1.split(//)
         shortargs.each_with_index do |a, j|
-          if j == (shortargs.length - 1) && args[i + 1] && args[i + 1] !~ PARAM_RE
+          if j == (shortargs.length - 1) && args[i + 1] && args[i + 1] !~ PARAM_RE && !@stop_words.member?(args[i + 1])
             remains << args[i + 1] unless yield "-#{a}", args[i + 1]
             i += 1 # once more below
           else

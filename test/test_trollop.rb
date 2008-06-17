@@ -463,6 +463,81 @@ EOM
 
     assert_nothing_raised { @p.parse(%w(--arg1 --arg2)) }
   end
+
+  def test_stopwords_mixed
+    @p.opt "arg1", :default => false
+    @p.opt "arg2", :default => false
+    @p.stop_on %w(happy sad)
+
+    opts = @p.parse %w(--arg1 happy --arg2)
+    assert_equal true, opts["arg1"]
+    assert_equal false, opts["arg2"]
+
+    ## restart parsing
+    @p.leftovers.shift
+    opts = @p.parse @p.leftovers
+    assert_equal false, opts["arg1"]
+    assert_equal true, opts["arg2"]
+  end
+
+  def test_stopwords_no_stopwords
+    @p.opt "arg1", :default => false
+    @p.opt "arg2", :default => false
+    @p.stop_on %w(happy sad)
+
+    opts = @p.parse %w(--arg1 --arg2)
+    assert_equal true, opts["arg1"]
+    assert_equal true, opts["arg2"]
+
+    ## restart parsing
+    @p.leftovers.shift
+    opts = @p.parse @p.leftovers
+    assert_equal false, opts["arg1"]
+    assert_equal false, opts["arg2"]
+  end
+
+  def test_stopwords_multiple_stopwords
+    @p.opt "arg1", :default => false
+    @p.opt "arg2", :default => false
+    @p.stop_on %w(happy sad)
+
+    opts = @p.parse %w(happy sad --arg1 --arg2)
+    assert_equal false, opts["arg1"]
+    assert_equal false, opts["arg2"]
+
+    ## restart parsing
+    @p.leftovers.shift
+    opts = @p.parse @p.leftovers
+    assert_equal false, opts["arg1"]
+    assert_equal false, opts["arg2"]
+
+    ## restart parsing again
+    @p.leftovers.shift
+    opts = @p.parse @p.leftovers
+    assert_equal true, opts["arg1"]
+    assert_equal true, opts["arg2"]
+  end
+
+  def test_stopwords_with_short_args
+    @p.opt :global_option, "This is a global option", :short => "-g"
+    @p.stop_on %w(sub-command-1 sub-command-2)
+
+    global_opts = @p.parse %w(-g sub-command-1 -c)
+    cmd = @p.leftovers.shift
+
+    @q = Parser.new
+    @q.opt :cmd_option, "This is an option only for the subcommand", :short => "-c"
+    cmd_opts = @q.parse @p.leftovers
+
+    assert_equal true, global_opts[:global_option]
+    assert_nil global_opts[:cmd_option]
+
+    assert_equal true, cmd_opts[:cmd_option]
+    assert_nil cmd_opts[:global_option]
+
+    assert_equal cmd, "sub-command-1"
+    assert_equal @q.leftovers, []
+  end
 end
 
 end

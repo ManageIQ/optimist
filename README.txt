@@ -61,62 +61,20 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
   Trollop::die :volume, "must be non-negative" if opts[:volume] < 0
   Trollop::die :file, "must exist" unless File.exist?(opts[:file]) if opts[:file]
 
-  ###### real-life ######
+  ##### sub-command support ######
 
   require 'trollop'
-  opts = Trollop::options do
-    version "sup-sync (sup #{Redwood::VERSION})"
-    banner <<EOS
-  Synchronizes the Sup index with one or more message sources by adding
-  messages, deleting messages, or changing message state in the index as
-  appropriate.
+  global_opts = Trollop::options do
+    opt :global_option, "This is a global option"
+    stop_on %w(sub-command-1 sub-command-2)
+  end
 
-  [...]
-  
-  Usage:
-    sup-sync [options] <source>*
-  
-  where <source>* is zero or more source URIs. If no sources are given,
-  sync from all usual sources. Supported source URI schemes can be seen
-  by running "sup-add --help".
-  
-  Options controlling WHICH messages sup-sync operates on:
-  EOS
-    opt :new, "Operate on new messages only. Don't scan over the entire source. (Default.)", :short => :none
-    opt :changed, "Scan over the entire source for messages that have been deleted, altered, or moved from another source. (In the case of mbox sources, this includes all messages AFTER an altered message.)"
-    opt :restored, "Operate only on those messages included in a dump file as specified by --restore which have changed state."
-    opt :all, "Operate on all messages in the source, regardless of newness or changedness."
-    opt :start_at, "For --changed and --all, start at a particular offset.", :type => :int
-  
-  text <<EOS
-  
-  Options controlling HOW message state is altered:
-  EOS
-    opt :asis, "If the message is already in the index, preserve its state. Otherwise, use default source state. (Default.)", :short => :none
-    opt :restore, "Restore message state from a dump file created with sup-dump. If a message is not in this dumpfile, act as --asis.", :type => String, :short => :none
-    opt :discard, "Discard any message state in the index and use the default source state. Dangerous!", :short => :none
-    opt :archive, "When using the default source state, mark messages as archived.", :short => "-x"
-    opt :read, "When using the default source state, mark messages as read."
-    opt :extra_labels, "When using the default source state, also apply these user-defined labels. Should be a comma-separated list.", :type => String, :short => :none
-  
-  text <<EOS
-  
-  Other options:
-  EOS
-    opt :verbose, "Print message ids as they're processed."
-    opt :optimize, "As the final operation, optimize the index."
-    opt :all_sources, "Scan over all sources.", :short => :none
-    opt :dry_run, "Don't actually modify the index. Probably only useful with --verbose.", :short => "-n"
-    opt :version, "Show version information", :short => :none
-  
-    conflicts :changed, :all, :new, :restored
-    conflicts :asis, :restore, :discard
+  cmd = ARGV.shift
+  cmd_opts = Trollop::options do
+    opt :cmd_option, "This is an option only for the subcommand"
   end
-  Trollop::die :restored, "requires --restore" if opts[:restored] unless opts[:restore]
-  if opts[:start_at]
-    Trollop::die :start_at, "must be non-negative" if opts[:start_at] < 0
-    Trollop::die :start_at, "requires either --changed or --all" unless opts[:changed] || opts[:all]
-  end
+
+  puts "global: #{global_opts.inspect}, cmd: #{cmd.inspect}, cmd options: #{cmd_opts.inspect}"
 
 == REQUIREMENTS
 
