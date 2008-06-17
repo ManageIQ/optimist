@@ -24,6 +24,7 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
 - Support for long options, short options, short option bundling,
   and automatic type validation and conversion.
+- Support for subcommands.
 - Automatic help message generation, wrapped to current screen width.
 - Lots of unit tests.
 
