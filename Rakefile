@@ -23,11 +23,11 @@ end
 
 WWW_FILES = FileList["www/*"] + %w(README.txt FAQ.txt)
 task :upload_webpage => WWW_FILES do |t|
-  sh "scp -C #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
+  sh "rsync -Paz -essh #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
 end
 
 task :upload_docs => [:docs] do |t|
-  sh "scp -Cr doc wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop"
+  sh "rsync -Paz -essh doc/* wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop/"
 end
 
 # vim: syntax=ruby
