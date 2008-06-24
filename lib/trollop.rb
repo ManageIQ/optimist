@@ -33,6 +33,9 @@ class Parser
   ## The set of values specifiable as the :type parameter to #opt.
   TYPES = [:flag, :boolean, :bool, :int, :integer, :string, :double, :float]
 
+  ## :nodoc:
+  INVALID_SHORT_ARG_REGEX = /[\d-]/
+
   ## The values from the commandline that were not interpreted by #parse.
   attr_reader :leftovers
 
@@ -137,7 +140,7 @@ class Parser
     opts[:short] =
       case opts[:short]
       when nil
-        c = opts[:long].split(//).find { |c| c !~ /[\d]/ && !@short.member?(c) }
+        c = opts[:long].split(//).find { |c| c !~ INVALID_SHORT_ARG_REGEX && !@short.member?(c) }
         raise ArgumentError, "can't generate a short option name for #{opts[:long].inspect}: out of unique characters" unless c
         c
       when /^-(.)$/
@@ -151,7 +154,7 @@ class Parser
       end
     if opts[:short]
       raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
-      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ /[\d-]/
+      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ INVALID_SHORT_ARG_REGEX
     end
 
     ## fill in :default for flags

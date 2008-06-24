@@ -109,7 +109,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :short => "--t" }
   end
 
-  def test_short_names_determined_automatically
+  def test_short_names_created_automatically
     @p.opt "arg"
     @p.opt "arg2"
     @p.opt "arg3"
@@ -118,6 +118,29 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal true, opts["arg"]
     assert_equal false, opts["arg2"]
     assert_equal true, opts["arg3"]
+  end
+
+  def test_short_autocreation_skips_dashes_and_numbers
+    @p.opt :arg # auto: a
+    @p.opt :arg_potato # auto: r
+    @p.opt :arg_muffin # auto: g
+    assert_nothing_raised { @p.opt :arg_daisy } # auto: d (not _)!
+    assert_nothing_raised { @p.opt :arg_r2d2f } # auto: f (not 2)!
+
+    opts = @p.parse %w(-f -d)
+    assert_equal true, opts[:arg_daisy]
+    assert_equal true, opts[:arg_r2d2f]
+    assert_equal false, opts[:arg]
+    assert_equal false, opts[:arg_potato]
+    assert_equal false, opts[:arg_muffin]
+  end
+
+  def test_short_autocreation_detects_running_out
+    @p.opt :arg1 # auto: a
+    @p.opt :arg2 # auto: r
+    @p.opt :arg3 # auto: g
+    assert_raises(ArgumentError) { @p.opt :arg4 }
+    assert_nothing_raised { @p.opt :argf }
   end
 
   def test_short_can_be_nothing
