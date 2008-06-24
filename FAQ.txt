@@ -1,15 +1,26 @@
 Trollop FAQ
 -----------
 
-Q: Whither Trollop?
-A: There are more than a few pre-existing commandline argument
-   processing libraries for Ruby. I was never too happy with any of
-   them. They all seemed to want me to type way too much for what I
-   wanted to get done. I just wanted to parse some options and be
-   done with it.
+Q: Why should I use Trollop?
+A: Because it will take you FEWER LINES OF CODE to do reasonable option
+   parsing than any other option parser in existence.
 
-Q: Whither "Trollop"?
-A: No reason. Just thought it sounded funny.
+   Look:
+
+     opts = Trollop::options do
+       opt :monkey, "Use monkey mode"
+       opt :goat, "Use goat mode", :default => true
+       opt :num_limbs, "Set number of limbs", :default => 4
+     end
+
+   That's it. And opts is a hash and you do whatever you want with it.
+   Trivial. You don't have to mix option processing code blocks with the
+   declarations. You don't have to make a class for every option (what is
+   this, Java?). You don't have to write more than 1 line of code per
+   option.
+
+Q: Why is it called "Trollop"?
+A: No reason.
 
 Q: Why does Trollop disallow numeric short argument names, like '-1'
    and '-9'?

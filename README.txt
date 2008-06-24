@@ -8,19 +8,14 @@ Documentation quickstart: See Trollop::Parser.
 
 == DESCRIPTION
 
-Trollop is YAFCLAP --- yet another fine commandline argument processor
-for Ruby. Trollop is designed to provide the maximal amount of GNU-style
-argument processing in the minimum number of lines of code (for you, the
-programmer).
-
-Trollop provides a nice automatically-generated help page, robust option
-parsing, and sensible defaults for everything you don't specify.
-
-Trollop: getting you 90% of the way there with only 10% of the effort.
+Trollop is a commandline option parser for Ruby that just gets out of your
+way. One line of code per option is all you need to write. For that, you get
+a nice automatically-generated help page, robust option parsing, command
+subcompletion, and sensible defaults for everything you don't specify.
 
 == FEATURES/PROBLEMS
 
-- Simple usage.
+- Dirt-simple usage.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
 - Support for long options, short options, short option bundling,
   and automatic type validation and conversion.
@@ -30,7 +25,9 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
 
 == SYNOPSIS
 
+  ####################
   ###### simple ######
+  ####################
 
   require 'trollop'
   opts = Trollop::options do
@@ -39,9 +36,11 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
     opt :num_limbs, "Set number of limbs", :default => 4
   end
 
-  p opts
+  p opts # { :monkey => false, :goat => true, :num_limbs => 4 }
 
+  ####################
   ###### medium ######
+  ####################
 
   require 'trollop'
   opts = Trollop::options do
@@ -61,8 +60,9 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
   end
   Trollop::die :volume, "must be non-negative" if opts[:volume] < 0
   Trollop::die :file, "must exist" unless File.exist?(opts[:file]) if opts[:file]
-
+  ################################
   ##### sub-command support ######
+  ################################
 
   require 'trollop'
   global_opts = Trollop::options do
@@ -75,11 +75,13 @@ Trollop: getting you 90% of the way there with only 10% of the effort.
     opt :cmd_option, "This is an option only for the subcommand"
   end
 
-  puts "global: #{global_opts.inspect}, cmd: #{cmd.inspect}, cmd options: #{cmd_opts.inspect}"
+  p global_opts
+  p cmd
+  p cmd_opts
 
 == REQUIREMENTS
 
-* none!
+* A burning desire to write less code.
 
 == INSTALL
 
