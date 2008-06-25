@@ -5,7 +5,7 @@
 
 module Trollop
 
-VERSION = "1.8.1"
+VERSION = "1.8.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
