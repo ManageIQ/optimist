@@ -289,9 +289,9 @@ class Parser
 
       case type
       when :depends
-        syms.each { |sym| raise CommandlineError, "--#{@long[constraint_sym]} requires --#{@long[sym]}" unless found[sym] }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless found[sym] }
       when :conflicts
-        syms.each { |sym| raise CommandlineError, "--#{@long[constraint_sym]} conflicts with --#{@long[sym]}" if found[sym] && sym != constraint_sym }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if found[sym] && sym != constraint_sym }
       end
     end
 

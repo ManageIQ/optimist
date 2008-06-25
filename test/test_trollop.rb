@@ -438,6 +438,20 @@ EOM
     assert_raises(CommandlineError) { opts = @p.parse %w(--one --mellow --two --jello) }
   end
 
+  def test_conflict_error_messages
+    @p.opt :one
+    @p.opt "two"
+    @p.conflicts :one, "two"
+
+    begin
+      @p.parse %w(--one --two)
+      flunk "no error thrown"
+    rescue CommandlineError => e
+      assert_match(/--one/, e.message)
+      assert_match(/--two/, e.message)
+    end
+  end
+
   def test_depends
     @p.opt :one
     assert_raises(ArgumentError) { @p.depends :one, :two }
@@ -463,6 +477,30 @@ EOM
     assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello --one --two a b c) }
 
     assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello --one) }
+  end
+
+  def test_depend_error_messages
+    @p.opt :one
+    @p.opt "two"
+    @p.depends :one, "two"
+
+    assert_nothing_raised { @p.parse %w(--one --two) }
+
+    begin
+      @p.parse %w(--one)
+      flunk "no error thrown"
+    rescue CommandlineError => e
+      assert_match(/--one/, e.message)
+      assert_match(/--two/, e.message)
+    end
+
+    begin
+      @p.parse %w(--two)
+      flunk "no error thrown"
+    rescue CommandlineError => e
+      assert_match(/--one/, e.message)
+      assert_match(/--two/, e.message)
+    end
   end
 
   ## courtesy neill zero
