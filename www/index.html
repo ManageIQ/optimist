@@ -1,6 +1,27 @@
 <html>
 <head>
 <title>Trollop</title>
+<style type="text/css">
+.ruby { background: #111122; padding: 10px; color: #228822; }
+.ruby .normal { color: #fff; }
+.ruby .comment { color: #99f }
+.ruby .keyword { color: #A44; font-weight: bold; }
+.ruby .method { color: #44f; }
+.ruby .class { color: #0c4; }
+.ruby .module { color: #050; }
+.ruby .punct { color: #FF0; font-weight: bold; }
+.ruby .symbol { color: #ff0; }
+.ruby .string { color: #4f4 }
+.ruby .char { color: #F07; }
+.ruby .ident { color: #fff; }
+.ruby .constant { color: #0c4; }
+.ruby .regex { color: #B66; background: #444; }
+.ruby .number { color: #F99; }
+.ruby .attribute { color: #fc4; }
+.ruby .global { color: #7FB; }
+.ruby .expr { color: #227; }
+.ruby .escape { color: #277; }
+</style>
 </head>
 
 <body>
@@ -12,68 +33,63 @@ way. One line of code per option is all you need to write. For that, you get
 a nice automatically-generated help page, robust option parsing, command
 subcompletion, and sensible defaults for everything you don't specify.</p>
 
-<p> To install, see the <a href="http://rubyforge.org/projects/trollop/">Trollop Rubyforge page</a>.</p>
+<p> To install, see the <a href="http://rubyforge.org/projects/trollop/">Trollop Rubyforge page</a>, or command your computer to <code>gem install trollop</code>.</p>
 
 <p> To hack,  see the <a href="http://gitorious.org/projects/trollop">Trollop Gitorious page</a>. </p>
 
 <p>To understand, see the <a href="README.txt">README</a>, <a href="FAQ.txt">FAQ</a>, and <a href="trollop/">API docs</a>.
 
-<h2>Synopsis</h2>
-<pre>
-  ####################
-  ###### simple ######
-  ####################
+<h2>Synopses</h2>
+<h3>Simple</h3>
+<pre class="ruby">
+<span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
+  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>
+  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>
+  <span class="ident">opt</span> <span class="symbol">:num_limbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Set number of limbs</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">4</span>
+<span class="keyword">end</span>
 
-  require 'trollop'
-  opts = Trollop::options do
-    opt :monkey, "Use monkey mode"
-    opt :goat, "Use goat mode", :default => true
-    opt :num_limbs, "Set number of limbs", :default => 4
-  end
-
-  p opts # { :monkey => false, :goat => true, :num_limbs => 4 }
-
-  ####################
-  ###### medium ######
-  ####################
-
-  require 'trollop'
-  opts = Trollop::options do
-    version "test 1.2.3 (c) 2007 William Morgan"
-    banner <<-EOS
-  Test is an awesome program that does something very, very important.
-
-  Usage:
-         test [options] <filenames>+
-  where [options] are:
-  EOS
-
-    opt :ignore, "Ignore incorrect values"
-    opt :file, "Extra data filename to read in, with a very long option description like this one", :type => String
-    opt :volume, "Volume level", :default => 3.0
-    opt :iters, "Number of iterations", :default => 5
-  end
-  Trollop::die :volume, "must be non-negative" if opts[:volume] < 0
-  Trollop::die :file, "must exist" unless File.exist?(opts[:file]) if opts[:file]
-  ################################
-  ##### sub-command support ######
-  ################################
-
-  require 'trollop'
-  global_opts = Trollop::options do
-    opt :global_option, "This is a global option"
-    stop_on %w(sub-command-1 sub-command-2)
-  end
-
-  cmd = ARGV.shift
-  cmd_opts = Trollop::options do
-    opt :cmd_option, "This is an option only for the subcommand"
-  end
-
-  p global_opts
-  p cmd
-  p cmd_opts
+<span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4 }</span>
 </pre>
 
+<h3>Medium</h3>
+<pre class="ruby">
+<span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
+  <span class="ident">version</span> <span class="punct">&quot;</span><span class="string">test 1.2.3 (c) 2007 William Morgan</span><span class="punct">&quot;</span>
+  <span class="ident">banner</span> <span class="punct">&lt;&lt;-</span><span class="constant">EOS</span><span class="string">
+Test is an awesome program that does something very, very important.
+
+Usage:
+       test [options] &lt;filenames&gt;+
+where [options] are:
+</span><span class="constant">EOS</span>
+
+  <span class="ident">opt</span> <span class="symbol">:ignore</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Ignore incorrect values</span><span class="punct">&quot;</span>
+  <span class="ident">opt</span> <span class="symbol">:file</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Extra data filename to read in, with a very long option description like this one</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="constant">String</span>
+  <span class="ident">opt</span> <span class="symbol">:volume</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Volume level</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">3.0</span>
+  <span class="ident">opt</span> <span class="symbol">:iters</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of iterations</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">5</span>
+<span class="keyword">end</span>
+<span class="constant">Trollop</span><span class="punct">::</span><span class="ident">die</span> <span class="symbol">:volume</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">must be non-negative</span><span class="punct">&quot;</span> <span class="keyword">if</span> <span class="ident">opts</span><span class="punct">[</span><span class="symbol">:volume</span><span class="punct">]</span> <span class="punct">&lt;</span> <span class="number">0</span>
+<span class="constant">Trollop</span><span class="punct">::</span><span class="ident">die</span> <span class="symbol">:file</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">must exist</span><span class="punct">&quot;</span> <span class="keyword">unless</span> <span class="constant">File</span><span class="punct">.</span><span class="ident">exist?</span><span class="punct">(</span><span class="ident">opts</span><span class="punct">[</span><span class="symbol">:file</span><span class="punct">])</span> <span class="keyword">if</span> <span class="ident">opts</span><span class="punct">[</span><span class="symbol">:file</span><span class="punct">]</span>
+</pre>
+
+<h3>Sub-commands</h3>
+<pre class="ruby">
+<span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<span class="ident">global_opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
+  <span class="ident">opt</span> <span class="symbol">:global_option</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">This is a global option</span><span class="punct">&quot;</span>
+  <span class="ident">stop_on</span> <span class="punct">%w(</span><span class="string">sub-command-1 sub-command-2</span><span class="punct">)</span>
+<span class="keyword">end</span>
+
+<span class="ident">cmd</span> <span class="punct">=</span> <span class="constant">ARGV</span><span class="punct">.</span><span class="ident">shift</span>
+<span class="ident">cmd_opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
+  <span class="ident">opt</span> <span class="symbol">:cmd_option</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">This is an option only for the subcommand</span><span class="punct">&quot;</span>
+<span class="keyword">end</span>
+
+<span class="ident">p</span> <span class="ident">global_opts</span>
+<span class="ident">p</span> <span class="ident">cmd</span>
+<span class="ident">p</span> <span class="ident">cmd_opts</span>
+</pre>
 </body>
 </html>
