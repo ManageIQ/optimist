@@ -30,11 +30,25 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## methods #opt, #banner and #version, #depends, and #conflicts will
 ## typically be called.
 class Parser
-  ## The set of values specifiable as the :type parameter to #opt.
-  TYPES = [:flag, :boolean, :bool, :int, :integer, :string, :double, :float]
 
-  ## :nodoc:
-  INVALID_SHORT_ARG_REGEX = /[\d-]/
+  ## The set of values that indicate a flag type of option when one of
+  ## the values is given to the :type parameter to #opt.
+  FLAG_TYPES = [:flag, :bool, :boolean]
+
+  ## The set of values that indicate an option that takes a single
+  ## parameter when one of the values is given to the :type parameter to
+  ## #opt.
+  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float]
+
+  ## The set of values that indicate an option that takes multiple
+  ## parameters when one of the values is given to the :type parameter to
+  ## #opt.
+  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats]
+
+  ## The set of values specifiable as the :type parameter to #opt.
+  TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
+
+  INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
 
   ## The values from the commandline that were not interpreted by #parse.
   attr_reader :leftovers
@@ -70,11 +84,14 @@ class Parser
   ## * :short: Specify the short form of the argument, i.e. the form
   ##   with one dash. If unspecified, will be automatically derived
   ##   based on the argument name.
-  ## * :type: Require that the argument take a parameter of type
-  ##   'type'. Can by any member of the TYPES constant or a
-  ##   corresponding class (e.g. Integer for :int). If unset, the
-  ##   default argument type is :flag, meaning the argument does not
-  ##   take a parameter. Not necessary if :default: is specified.
+  ## * :type: Require that the argument take a parameter or parameters
+  ##   of type 'type'. For a single parameter, the value can be a
+  ##   member of the SINGLE_ARG_TYPES constant or a corresponding class
+  ##   (e.g. Integer for :int). For multiple parameters, the value can
+  ##   be a member of the MULTI_ARG_TYPES constant. If unset, the
+  ##   default argument type is :flag, meaning that the argument does
+  ##   not take a parameter. The specification of :type is not
+  ##   necessary if :default is given.
   ## * :default: Set the default value for an argument. Without a
   ##   default value, the hash returned by #parse (and thus
   ##   Trollop#options) will not contain the argument unless it is
@@ -82,8 +99,11 @@ class Parser
   ##   automatically from the class of the default value given, if
   ##   any. Specifying a :flag argument on the commandline whose
   ##   default value is true will change its value to false.
-  ## * :required: if set to true, the argument must be provided on the
+  ## * :required: If set to true, the argument must be provided on the
   ##   commandline.
+  ## * :multi: If set to true, allows multiple instances of the
+  ##   option. Otherwise, only a single instance of the option is
+  ##   allowed.
   def opt name, desc="", opts={}
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
@@ -92,8 +112,11 @@ class Parser
       case opts[:type]
       when :flag, :boolean, :bool; :flag
       when :int, :integer; :int
+      when :ints, :integers; :ints
       when :string; :string
+      when :strings; :strings
       when :double, :float; :float
+      when :doubles, :floats; :floats
       when Class
         case opts[:type].to_s # sigh... there must be a better way to do this
         when 'TrueClass', 'FalseClass'; :flag
@@ -114,6 +137,17 @@ class Parser
       when Numeric; :float
       when TrueClass, FalseClass; :flag
       when String; :string
+      when Array
+        if opts[:default].empty?
+          raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
+        end
+        case opts[:default][0]    # the first element determines the types
+        when Integer; :ints
+        when Numeric; :floats
+        when String; :strings
+        else
+          raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
+        end
       when nil; nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
@@ -160,6 +194,9 @@ class Parser
 
     ## fill in :default for flags
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
+
+    ## fill in :multi
+    opts[:multi] ||= false
 
     opts[:desc] ||= desc
     @long[opts[:long]] = name
@@ -223,20 +260,21 @@ class Parser
         remains += args[(i + 1) .. -1]
         return remains
       when /^--(\S+?)=(\S+)$/ # long argument with equals
-        yield "--#{$1}", $2
+        yield "--#{$1}", [$2]
         i += 1
       when /^--(\S+)$/ # long argument
-        if args[i + 1] && args[i + 1] !~ PARAM_RE && !@stop_words.member?(args[i + 1])
-          take_an_argument = yield args[i], args[i + 1]
-          unless take_an_argument
+        params = collect_argument_parameters(args, i + 1)
+        unless params.empty?
+          num_params_taken = yield args[i], params
+          unless num_params_taken
             if @stop_on_unknown
               remains += args[i + 1 .. -1]
               return remains
             else
-              remains << args[i + 1]
+              remains += params
             end
           end
-          i += 2
+          i += 1 + num_params_taken
         else # long argument no parameter
           yield args[i], nil
           i += 1
@@ -244,22 +282,27 @@ class Parser
       when /^-(\S+)$/ # one or more short arguments
         shortargs = $1.split(//)
         shortargs.each_with_index do |a, j|
-          if j == (shortargs.length - 1) && args[i + 1] && args[i + 1] !~ PARAM_RE && !@stop_words.member?(args[i + 1])
-            take_an_argument = yield "-#{a}", args[i + 1]
-            unless take_an_argument
-              if @stop_on_unknown
-                remains += args[i + 1 .. -1]
-                return remains
-              else
-                remains << args[i + 1]
+          if j == (shortargs.length - 1)
+            params = collect_argument_parameters(args, i + 1)
+            unless params.empty?
+              num_params_taken = yield "-#{a}", params
+              unless num_params_taken
+                if @stop_on_unknown
+                  remains += args[i + 1 .. -1]
+                  return remains
+                else
+                  remains += params
+                end
               end
+              i += 1 + num_params_taken
+            else # argument no parameter
+              yield "-#{a}", nil
+              i += 1
             end
-            i += 1 # once more below
           else
             yield "-#{a}", nil
           end
         end
-        i += 1
       else
         if @stop_on_unknown
           remains += args[i .. -1]
@@ -270,13 +313,13 @@ class Parser
         end
       end
     end
+
     remains
   end
 
   def parse cmdline #:nodoc:
     vals = {}
     required = {}
-    found = {}
 
     opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
@@ -287,8 +330,8 @@ class Parser
     end
 
     ## resolve symbols
-    args = []
-    @leftovers = each_arg cmdline do |arg, param|
+    given_args = {}
+    @leftovers = each_arg cmdline do |arg, params|
       sym = 
         case arg
         when /^-([^-])$/
@@ -299,55 +342,105 @@ class Parser
           raise CommandlineError, "invalid argument syntax: '#{arg}'"
         end
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
-      raise CommandlineError, "option '#{arg}' specified multiple times" if found[sym]
-      args << [sym, arg, param]
-      found[sym] = true
 
-      @specs[sym][:type] != :flag # take params on all except flags
+      if given_args.include?(sym) && !@specs[sym][:multi]
+        raise CommandlineError, "option '#{arg}' specified multiple times"
+      end
+
+      given_args[sym] ||= {}
+
+      given_args[sym][:arg] = arg
+      given_args[sym][:params] ||= []
+
+      # The block returns the number of parameters taken.
+      num_params_taken = 0
+
+      unless params.nil?
+        if SINGLE_ARG_TYPES.include?(@specs[sym][:type])
+          given_args[sym][:params] << params[0, 1]  # take the first parameter
+          num_params_taken = 1
+        elsif MULTI_ARG_TYPES.include?(@specs[sym][:type])
+          given_args[sym][:params] << params        # take all the parameters
+          num_params_taken = params.size
+        end
+      end
+
+      num_params_taken
     end
 
     ## check for version and help args
-    raise VersionNeeded if args.any? { |sym, *a| sym == :version }
-    raise HelpNeeded if args.any? { |sym, *a| sym == :help }
+    raise VersionNeeded if given_args.include? :version
+    raise HelpNeeded if given_args.include? :help
 
     ## check constraint satisfaction
     @constraints.each do |type, syms|
-      constraint_sym = syms.find { |sym| found[sym] }
+      constraint_sym = syms.find { |sym| given_args[sym] }
       next unless constraint_sym
 
       case type
       when :depends
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless found[sym] }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless given_args.include? sym }
       when :conflicts
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if found[sym] && sym != constraint_sym }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if given_args.include?(sym) && (sym != constraint_sym) }
       end
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option '#{sym}' must be specified" unless found[sym]
+      raise CommandlineError, "option '#{sym}' must be specified" unless given_args.include? sym
     end
 
     ## parse parameters
-    args.each do |sym, arg, param|
-      opts = @specs[sym]
+    given_args.each do |sym, given_data|
+      arg = given_data[:arg]
+      params = given_data[:params]
 
-      raise CommandlineError, "option '#{arg}' needs a parameter" unless param || opts[:type] == :flag
+      opts = @specs[sym]
+      raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
 
       case opts[:type]
       when :flag
         vals[sym] = !opts[:default]
-      when :int
-        raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
-        vals[sym] = param.to_i
-      when :float
-        raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
-        vals[sym] = param.to_f
-      when :string
-        vals[sym] = param.to_s
+      when :int, :ints
+        vals[sym] = params.map { |pg| pg.map { |p| parse_integer_parameter p, arg } }
+      when :float, :floats
+        vals[sym] = params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
+      when :string, :strings
+        vals[sym] = params.map { |pg| pg.map { |p| p.to_s } }
       end
+
+      if SINGLE_ARG_TYPES.include?(opts[:type])
+        unless opts[:multi]       # single parameter
+          vals[sym] = vals[sym][0][0]
+        else                      # multiple options, each with a single parameter
+          vals[sym] = vals[sym].map { |p| p[0] }
+        end
+      elsif MULTI_ARG_TYPES.include?(opts[:type]) && !opts[:multi]
+        vals[sym] = vals[sym][0]  # single option, with multiple parameters
+      end
+      # else: multiple options, with multiple parameters
     end
 
     vals
+  end
+
+  def parse_integer_parameter param, arg #:nodoc:
+    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
+    param.to_i
+  end
+
+  def parse_float_parameter param, arg #:nodoc:
+    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
+    param.to_f
+  end
+
+  def collect_argument_parameters args, start_at #:nodoc:
+    params = []
+    pos = start_at
+    while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
+      params << args[pos]
+      pos += 1
+    end
+    params
   end
 
   def width #:nodoc:
@@ -379,8 +472,11 @@ class Parser
         case spec[:type]
         when :flag; ""
         when :int; " <i>"
+        when :ints; " <i+>"
         when :string; " <s>"
+        when :strings; " <s+>"
         when :float; " <f>"
+        when :floats; " <f+>"
         end
     end
 
