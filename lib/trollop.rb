@@ -53,6 +53,7 @@ class Parser
     @order = []
     @constraints = []
     @stop_words = []
+    @stop_on_unknown = false
 
     #instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
@@ -201,6 +202,12 @@ class Parser
     @stop_words = [*words].flatten
   end
 
+  ## Similar to stop_on, but stops on any unknown word when encountered (unless
+  ## it is a parameter for an argument).
+  def stop_on_unknown
+    @stop_on_unknown = true
+  end
+
   ## yield successive arg, parameter pairs
   def each_arg args # :nodoc:
     remains = []
@@ -238,8 +245,13 @@ class Parser
         end
         i += 1
       else
-        remains << args[i]
-        i += 1
+        if @stop_on_unknown
+          remains += args[i .. -1]
+          break
+        else
+          remains << args[i]
+          i += 1
+        end
       end
     end
     remains
