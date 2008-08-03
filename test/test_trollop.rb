@@ -628,6 +628,21 @@ EOM
     assert_parses_correctly @p, %w(--global-param 5 my_subcommand -c), \
       expected_opts, expected_leftovers
   end
+
+  def test_alternate_args
+    args = %w(-a -b -c)
+
+    opts = ::Trollop.options(args) do
+      opt :alpher, "Ralph Alpher", :short => "-a"
+      opt :bethe, "Hans Bethe", :short => "-b"
+      opt :gamow, "George Gamow", :short => "-c"
+    end
+
+    physicists_with_humor = [:alpher, :bethe, :gamow]
+    physicists_with_humor.each do |physicist|
+      assert_equal true, opts[physicist]
+    end
+  end
 end
 
 end
