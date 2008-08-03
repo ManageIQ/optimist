@@ -455,9 +455,9 @@ class Parser
 end
 
 ## The top-level entry method into Trollop. Creates a Parser object,
-## passes the block to it, then parses ARGV with it, handling any
+## passes the block to it, then parses +args+ with it, handling any
 ## errors or requests for help or version information appropriately
-## (and then exiting). Modifies ARGV in place. Returns a hash of
+## (and then exiting). Modifies +args+ in place. Returns a hash of
 ## option values.
 ##
 ## The block passed in should contain one or more calls to #opt
@@ -465,12 +465,12 @@ end
 ## probably a call to version (Parser#version).
 ##
 ## See the synopsis in README.txt for examples.
-def options *a, &b
+def options args = ARGV, *a, &b
   @p = Parser.new(*a, &b)
   begin
-    vals = @p.parse ARGV
-    ARGV.clear
-    @p.leftovers.each { |l| ARGV << l }
+    vals = @p.parse args
+    args.clear
+    @p.leftovers.each { |l| args << l }
     vals
   rescue CommandlineError => e
     $stderr.puts "Error: #{e.message}."
