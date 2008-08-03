@@ -599,6 +599,35 @@ EOM
     assert_equal cmd, "sub-command-1"
     assert_equal @q.leftovers, []
   end
+
+  def assert_parses_correctly(parser, commandline, expected_opts,
+                              expected_leftovers)
+    opts = parser.parse commandline
+    assert_equal expected_opts, opts
+    assert_equal expected_leftovers, parser.leftovers
+  end
+
+  def test_unknown_subcommand
+    @p.opt :global_flag, "Global flag", :short => "-g", :type => :flag
+    @p.opt :global_param, "Global parameter", :short => "-p", :default => 5
+    @p.stop_on_unknown
+
+    expected_opts = { :global_flag =>true, :help =>false, :global_param =>5 }
+    expected_leftovers = [ "my_subcommand", "-c" ]
+
+    assert_parses_correctly @p, %w(--global-flag my_subcommand -c), \
+      expected_opts, expected_leftovers
+    assert_parses_correctly @p, %w(-g my_subcommand -c), \
+      expected_opts, expected_leftovers
+
+    expected_opts = { :global_flag =>false, :help =>false, :global_param =>5 }
+    expected_leftovers = [ "my_subcommand", "-c" ]
+
+    assert_parses_correctly @p, %w(-p 5 my_subcommand -c), \
+      expected_opts, expected_leftovers
+    assert_parses_correctly @p, %w(--global-param 5 my_subcommand -c), \
+      expected_opts, expected_leftovers
+  end
 end
 
 end
