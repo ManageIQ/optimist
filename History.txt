@@ -1,3 +1,12 @@
+== 1.9 / 2008-08-20
+* Added 'stop_on_unknown' command to stop parsing on any unknown argument.
+  This is useful for handling sub-commands when you don't know the entire
+  set of commands up front. (E.g. if the initial arguments can change it.)
+* Added a :multi option for parameters, signifying that they can be specified
+  multiple times.
+* Added :ints, :strings, :doubles, and :floats option types, which can take
+  multiple arguments.
+
 == 1.8.2 / 2008-06-25
 * Bugfix for #conflicts and #depends error messages
 
