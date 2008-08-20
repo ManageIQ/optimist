@@ -13,8 +13,7 @@ end # thanks to "Mike H"
 Hoe.new('trollop', Trollop::VERSION) do |p|
   p.rubyforge_name = 'trollop'
   p.author = "William Morgan"
-  p.summary = "Trollop is YAFCLAP --- yet another fine commandline argument processing library for Ruby. Trollop is designed to provide the maximal amount of GNU-style argument processing in the minimum number of lines of code (for you, the programmer)."
-
+  p.summary = "Trollop is a commandline option parser for Ruby that just gets out of your way. One line of code per option is all you need to write. For that, you get a nice automatically-generated help page, robust option parsing, command subcompletion, and sensible defaults for everything you don't specify."
   p.description = p.paragraphs_of('README.txt', 4..5, 9..18).join("\n\n").gsub(/== SYNOPSIS/, "Synopsis")
   p.url = "http://trollop.rubyforge.org"
   p.changes = p.paragraphs_of('History.txt', 0..0).join("\n\n")
