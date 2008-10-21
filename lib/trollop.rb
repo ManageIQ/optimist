@@ -26,26 +26,28 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))$/
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
 ## The commandline parser. In typical usage, the methods in this class
-## will be handled internally by Trollop#options, in which case only the
-## methods #opt, #banner and #version, #depends, and #conflicts will
+## will be handled internally by Trollop#options. In this case, only the
+## #opt, #banner and #version, #depends, and #conflicts methods will
 ## typically be called.
+##
+## If it's necessary to instantiate this class (for more complicated
+## argument-parsing situations), be sure to call #parse to actually
+## produce the output hash.
 class Parser
 
-  ## The set of values that indicate a flag type of option when one of
-  ## the values is given to the :type parameter to #opt.
+  ## The set of values that indicate a flag option when passed as the
+  ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]
 
-  ## The set of values that indicate an option that takes a single
-  ## parameter when one of the values is given to the :type parameter to
-  ## #opt.
+  ## The set of values that indicate a single-parameter option when
+  ## passed as the +:type+ parameter of #opt.
   SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float]
 
-  ## The set of values that indicate an option that takes multiple
-  ## parameters when one of the values is given to the :type parameter to
-  ## #opt.
+  ## The set of values that indicate a multiple-parameter option when
+  ## passed as the +:type+ parameter of #opt.
   MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats]
 
-  ## The set of values specifiable as the :type parameter to #opt.
+  ## The complete set of legal values for the +:type+ parameter of #opt.
   TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
 
   INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
@@ -73,37 +75,19 @@ class Parser
     cloaker(&b).bind(self).call(*a) if b
   end
 
-  ## Add an option. 'name' is the argument name, a unique identifier
-  ## for the option that you will use internally. 'desc' a string
-  ## description which will be displayed in help messages. Takes the
-  ## following optional arguments:
+  ## Define an option. +name+ is the option name, a unique identifier
+  ## for the option that you will use internally. This should probably
+  ## be a symbol. +desc+ is a string description which will be displayed
+  ## in help messages.
   ##
-  ## * :long: Specify the long form of the argument, i.e. the form
-  ##   with two dashes. If unspecified, will be automatically derived
-  ##   based on the argument name.
-  ## * :short: Specify the short form of the argument, i.e. the form
-  ##   with one dash. If unspecified, will be automatically derived
-  ##   based on the argument name.
-  ## * :type: Require that the argument take a parameter or parameters
-  ##   of type 'type'. For a single parameter, the value can be a
-  ##   member of the SINGLE_ARG_TYPES constant or a corresponding class
-  ##   (e.g. Integer for :int). For multiple parameters, the value can
-  ##   be a member of the MULTI_ARG_TYPES constant. If unset, the
-  ##   default argument type is :flag, meaning that the argument does
-  ##   not take a parameter. The specification of :type is not
-  ##   necessary if :default is given.
-  ## * :default: Set the default value for an argument. Without a
-  ##   default value, the hash returned by #parse (and thus
-  ##   Trollop#options) will not contain the argument unless it is
-  ##   given on the commandline. The argument type is derived
-  ##   automatically from the class of the default value given, if
-  ##   any. Specifying a :flag argument on the commandline whose
-  ##   default value is true will change its value to false.
-  ## * :required: If set to true, the argument must be provided on the
-  ##   commandline.
-  ## * :multi: If set to true, allows multiple instances of the
-  ##   option. Otherwise, only a single instance of the option is
-  ##   allowed.
+  ## Takes the following optional arguments:
+  ##
+  ## [+:long+] Specify the long form of the argument, i.e. the form with two dashes. If unspecified, will be automatically derived based on the argument name by turning the +name+ option into a string, and replacing any _'s by -'s.
+  ## [+:short+] Specify the short form of the argument, i.e. the form with one dash. If unspecified, will be automatically derived from +name+.
+  ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if +:default+ is given.
+  ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Trollop#options) will have a +nil+ value for this key unless the option is set on the commandline. The argument type is derived automatically from the class of the default value given, if any.  Specifying a +:flag+ argument on the commandline whose default value is +true+ will result in a value of +false+.
+  ## [+:required+] If set to +true+, the argument must be provided on the commandline.
+  ## [+:multi+] If set to +true+, allows multiple instances of the option on the commandline. Otherwise, only a single instance of the option is allowed.
   def opt name, desc="", opts={}
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
@@ -206,11 +190,12 @@ class Parser
   end
 
   ## Sets the version string. If set, the user can request the version
-  ## on the commandline. Should be of the form "<program name>
+  ## on the commandline. Should probably be of the form "<program name>
   ## <version number>".
   def version s=nil; @version = s if s; @version end
 
-  ## Adds text to the help display.
+  ## Adds text to the help display. Can be interspersed with calls to
+  ## #opt to build a multi-section help page.
   def banner s; @order << [:text, s] end
   alias :text :banner
 
@@ -228,19 +213,23 @@ class Parser
     @constraints << [:conflicts, syms]
   end
 
-  ## Defines a set of words which cause parsing to terminate when encountered,
-  ## such that any options to the left of the word are parsed as usual, and
-  ## options to the right of the word are left intact.
+  ## Defines a set of words which cause parsing to terminate when
+  ## encountered, such that any options to the left of the word are
+  ## parsed as usual, and options to the right of the word are left
+  ## intact.
   ##
-  ## A typical use case would be for subcommand support, where these would be
-  ## set to the list of subcommands. A subsequent Trollop invocation would
-  ## then be used to parse subcommand options.
+  ## A typical use case would be for subcommand support, where these
+  ## would be set to the list of subcommands. A subsequent Trollop
+  ## invocation would then be used to parse subcommand options, after
+  ## shifting the subcommand off of ARGV.
   def stop_on *words
     @stop_words = [*words].flatten
   end
 
-  ## Similar to stop_on, but stops on any unknown word when encountered (unless
-  ## it is a parameter for an argument).
+  ## Similar to #stop_on, but stops on any unknown word when encountered
+  ## (unless it is a parameter for an argument). This is useful for
+  ## cases where you don't know the set of subcommands ahead of time,
+  ## i.e., without first parsing the global options.
   def stop_on_unknown
     @stop_on_unknown = true
   end
@@ -317,7 +306,8 @@ class Parser
     remains
   end
 
-  def parse cmdline #:nodoc:
+  ## Parses the commandline. Typically called by Trollop::options.
+  def parse cmdline=ARGV
     vals = {}
     required = {}
 
@@ -461,7 +451,7 @@ class Parser
       end || 80
   end
 
-  ## Print the help message to 'stream'.
+  ## Print the help message to +stream+.
   def educate stream=$stdout
     width # just calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
@@ -553,15 +543,15 @@ end
 
 ## The top-level entry method into Trollop. Creates a Parser object,
 ## passes the block to it, then parses +args+ with it, handling any
-## errors or requests for help or version information appropriately
-## (and then exiting). Modifies +args+ in place. Returns a hash of
-## option values.
+## errors or requests for help or version information appropriately (and
+## then exiting). Modifies +args+ in place. Returns a hash of option
+## values.
 ##
-## The block passed in should contain one or more calls to #opt
-## (Parser#opt), one or more calls to text (Parser#text), and
-## probably a call to version (Parser#version).
+## The block passed in should contain zero or more calls to +opt+
+## (Parser#opt), zero or more calls to +text+ (Parser#text), and
+## probably a call to +version+ (Parser#version).
 ##
-## See the synopsis in README.txt for examples.
+## See the examples at http://trollop.rubyforge.org.
 def options args = ARGV, *a, &b
   @p = Parser.new(*a, &b)
   begin
@@ -613,3 +603,4 @@ end
 module_function :options, :die
 
 end # module
+
