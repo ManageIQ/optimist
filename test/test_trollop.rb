@@ -870,6 +870,28 @@ EOM
       assert_equal true, opts[physicist]
     end
   end
+
+  def test_io_arg_type
+    @p.opt :arg, "desc", :type => :io
+    @p.opt :arg2, "desc", :type => IO
+    @p.opt :arg3, "desc", :default => $stdout
+
+    opts = nil
+    assert_nothing_raised { opts = @p.parse() }
+    assert_equal $stdout, opts[:arg3]
+
+    assert_nothing_raised { opts = @p.parse %w(--arg /dev/null) }
+    assert_kind_of File, opts[:arg]
+    assert_equal "/dev/null", opts[:arg].path
+
+    assert_nothing_raised { opts = @p.parse %w(--arg2 http://google.com/) }
+    assert_kind_of StringIO, opts[:arg2]
+
+    assert_nothing_raised { opts = @p.parse %w(--arg3 stdin) }
+    assert_equal $stdin, opts[:arg3]
+
+    assert_raises(CommandlineError) { opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) }
+  end
 end
 
 end

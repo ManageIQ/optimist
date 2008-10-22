@@ -41,11 +41,14 @@ class Parser
 
   ## The set of values that indicate a single-parameter option when
   ## passed as the +:type+ parameter of #opt.
-  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float]
+  ##
+  ## A value of +io+ corresponds to a readable IO resource, including
+  ## a filename, URI, or the strings 'stdin' or '-'.
+  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io]
 
   ## The set of values that indicate a multiple-parameter option when
   ## passed as the +:type+ parameter of #opt.
-  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats]
+  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios]
 
   ## The complete set of legal values for the +:type+ parameter of #opt.
   TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
@@ -92,27 +95,27 @@ class Parser
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
-    opts[:type] = 
+    opts[:type] = # normalize
       case opts[:type]
-      when :flag, :boolean, :bool; :flag
-      when :int, :integer; :int
-      when :ints, :integers; :ints
-      when :string; :string
-      when :strings; :strings
-      when :double, :float; :float
-      when :doubles, :floats; :floats
+      when :boolean, :bool; :flag
+      when :integer; :int
+      when :integers; :ints
+      when :double; :float
+      when :doubles; :floats
       when Class
         case opts[:type].to_s # sigh... there must be a better way to do this
         when 'TrueClass', 'FalseClass'; :flag
         when 'String'; :string
         when 'Integer'; :int
         when 'Float'; :float
+        when 'IO'; :io
         else
           raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
         end
       when nil; nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
+        opts[:type]
       end
 
     type_from_default =
@@ -121,6 +124,7 @@ class Parser
       when Numeric; :float
       when TrueClass, FalseClass; :flag
       when String; :string
+      when IO; :io
       when Array
         if opts[:default].empty?
           raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
@@ -129,6 +133,7 @@ class Parser
         when Integer; :ints
         when Numeric; :floats
         when String; :strings
+        when IO; :ios
         else
           raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
         end
@@ -396,6 +401,8 @@ class Parser
         vals[sym] = params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
       when :string, :strings
         vals[sym] = params.map { |pg| pg.map { |p| p.to_s } }
+      when :io, :ios
+        vals[sym] = params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
       end
 
       if SINGLE_ARG_TYPES.include?(opts[:type])
@@ -421,6 +428,19 @@ class Parser
   def parse_float_parameter param, arg #:nodoc:
     raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
     param.to_f
+  end
+
+  def parse_io_parameter param, arg #:nodoc:
+    case param
+    when /^(stdin|-)$/i; $stdin
+    else
+      require 'open-uri'
+      begin
+        open param
+      rescue SystemCallError => e
+        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
+      end
+    end
   end
 
   def collect_argument_parameters args, start_at #:nodoc:
