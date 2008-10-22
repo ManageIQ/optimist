@@ -488,6 +488,8 @@ class Parser
         when :strings; " <s+>"
         when :float; " <f>"
         when :floats; " <f+>"
+        when :io; " <filename/uri>"
+        when :ios; " <filename/uri+>"
         end
     end
 
