@@ -501,19 +501,18 @@ class Parser
   def width #:nodoc:
     @width ||= 
       if $stdout.tty?
-        if `stty size` =~ /^(\d+) (\d+)$/
-          $2.to_i
-        else
-          begin
-            require 'curses'
-            Curses::init_screen
-            x = Curses::cols
-            Curses::close_screen
-            x
-          rescue Exception
-          end
+        begin
+          require 'curses'
+          Curses::init_screen
+          x = Curses::cols
+          Curses::close_screen
+          x
+        rescue Exception
+          80
         end
-      end || 80
+      else
+        80
+      end
   end
 
   ## Print the help message to +stream+.
