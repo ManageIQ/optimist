@@ -25,8 +25,12 @@ task :upload_webpage => WWW_FILES do |t|
   sh "rsync -Paz -essh #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
 end
 
-task :upload_docs => [:docs] do |t|
-  sh "rsync -Paz -essh doc/* wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop/"
+task :my_rdoc do |t|
+  sh "rdoc lib README.txt History.txt"
+end
+
+task :upload_docs => [:my_rdoc] do |t|
+  sh "rsync -az -essh doc/* wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop/"
 end
 
 # vim: syntax=ruby
