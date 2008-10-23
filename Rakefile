@@ -26,10 +26,10 @@ task :upload_webpage => WWW_FILES do |t|
 end
 
 task :rdoc do |t|
-  sh "rdoc lib README.txt History.txt"
+  sh "rdoc lib README.txt History.txt -m README.txt"
 end
 
-task :upload_docs => [:rdoc] do |t|
+task :upload_docs => :rdoc do |t|
   sh "rsync -az -essh doc/* wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop/"
 end
 
