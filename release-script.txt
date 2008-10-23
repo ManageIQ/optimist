@@ -7,7 +7,7 @@ vi www/index.html # and integrate contributors
 rake upload_webpage
 rake upload_docs
 rake release VERSION=<releasename>
-git commit -a -v
-git tag -a release-<releasename> -m "release <releasename>"
+git commit -a -m "bump to..."
+git tag release-<releasename>
 git push
 git push --tags
