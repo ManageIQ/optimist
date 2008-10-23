@@ -417,6 +417,12 @@ class Parser
       # else: multiple options, with multiple parameters
     end
 
+    ## allow openstruct-style accessors
+    class << vals
+      def method_missing(m, *args)
+        self[m] || self[m.to_s]
+      end
+    end
     vals
   end
 

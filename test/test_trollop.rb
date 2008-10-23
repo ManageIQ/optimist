@@ -892,6 +892,18 @@ EOM
 
     assert_raises(CommandlineError) { opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) }
   end
+
+  def test_openstruct_style_access
+    @p.opt "arg1", "desc", :type => :int
+    @p.opt :arg2, "desc", :type => :int
+
+    opts = @p.parse(%w(--arg1 3 --arg2 4))
+
+    assert_nothing_raised { opts.arg1 }
+    assert_nothing_raised { opts.arg2 }
+    assert_equal 3, opts.arg1
+    assert_equal 4, opts.arg2
+  end
 end
 
 end
