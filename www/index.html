@@ -55,13 +55,13 @@ don't specify.</p>
 <h3>Simple</h3>
 <pre class="ruby"><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
 <span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
-  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>                    <span class="comment"># a flag --monkey, defaulting to false</span>
-  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>      <span class="comment"># a flag --goat, defaulting to true</span>
-  <span class="ident">opt</span> <span class="symbol">:num_limbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of limbs</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">4</span>  <span class="comment"># an integer --num-limbs &lt;i&gt;, defaulting to 4</span>
+  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>                     <span class="comment"># a flag --monkey, defaulting to false</span>
+  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>       <span class="comment"># a flag --goat, defaulting to true</span>
+  <span class="ident">opt</span> <span class="symbol">:num_limbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of limbs</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">4</span>   <span class="comment"># an integer --num-limbs &lt;i&gt;, defaulting to 4</span>
   <span class="ident">opt</span> <span class="symbol">:num_thumbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of thumbs</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="symbol">:int</span> <span class="comment"># an integer --num-thumbs &lt;i&gt;, defaulting to nil</span>
 <span class="keyword">end</span>
 
-<span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># reutrns a hash: { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4, :num_thumbs =&gt; nil }</span>
+<span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># returns a hash: { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4, :num_thumbs =&gt; nil }</span>
 </pre>
 
 <p>
