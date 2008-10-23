@@ -26,7 +26,7 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))$/
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
 ## The commandline parser. In typical usage, the methods in this class
-## will be handled internally by Trollop#options. In this case, only the
+## will be handled internally by Trollop::options. In this case, only the
 ## #opt, #banner and #version, #depends, and #conflicts methods will
 ## typically be called.
 ##
@@ -79,18 +79,36 @@ class Parser
   end
 
   ## Define an option. +name+ is the option name, a unique identifier
-  ## for the option that you will use internally. This should probably
-  ## be a symbol. +desc+ is a string description which will be displayed
-  ## in help messages.
+  ## for the option that you will use internally, which should be a
+  ## symbol or a string. +desc+ is a string description which will be
+  ## displayed in help messages.
   ##
   ## Takes the following optional arguments:
   ##
   ## [+:long+] Specify the long form of the argument, i.e. the form with two dashes. If unspecified, will be automatically derived based on the argument name by turning the +name+ option into a string, and replacing any _'s by -'s.
   ## [+:short+] Specify the short form of the argument, i.e. the form with one dash. If unspecified, will be automatically derived from +name+.
-  ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if +:default+ is given.
+  ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple-argument parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if +:default+ is given.
   ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Trollop#options) will have a +nil+ value for this key unless the option is set on the commandline. The argument type is derived automatically from the class of the default value given, if any.  Specifying a +:flag+ argument on the commandline whose default value is +true+ will result in a value of +false+.
   ## [+:required+] If set to +true+, the argument must be provided on the commandline.
-  ## [+:multi+] If set to +true+, allows multiple instances of the option on the commandline. Otherwise, only a single instance of the option is allowed.
+  ## [+:multi+] If set to +true+, allows multiple occurrences of the option on the commandline. Otherwise, only a single instance of the option is allowed. (Note that this is different from taking multiple parameters. See below.)
+  ##
+  ## Note that there are two types of argument multiplicity: an argument
+  ## can take multiple values, e.g. "--arg 1 2 3". An argument can also
+  ## be allowed to occur multiple times, e.g. "--arg 1 --arg 2".
+  ##
+  ## Arguments that take multiple values should have a +:type+ parameter
+  ## drawn from +MULTI_ARG_TYPES+ (e.g. +:strings+), or a +:default:+
+  ## value of an array of the correct type (e.g. [String]). The
+  ## value of this argument will be an array of the parameters on the
+  ## commandline.
+  ##
+  ## Arguments that can occur multiple times should be marked with
+  ## +:multi+ => +true+. The value of this argument will also be an array.
+  ##
+  ## These two attributes can be combined (e.g. +:type+ => +:strings+,
+  ## +:multi+ => +true+), in which case the value of the argument will be
+  ## an array of arrays.
+
   def opt name, desc="", opts={}
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
@@ -579,7 +597,19 @@ end
 ## (Parser#opt), zero or more calls to +text+ (Parser#text), and
 ## probably a call to +version+ (Parser#version).
 ##
-## See the examples at http://trollop.rubyforge.org.
+## Example:
+##
+##   require 'trollop'
+##   opts = Trollop::options do
+##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
+##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
+##     opt :num_limbs, "Number of limbs", :default => 4   # an integer --num-limbs <i>, defaulting to 4
+##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer --num-thumbs <i>, defaulting to nil
+##   end
+##
+##   p opts # returns a hash: { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+##
+## See more examples at http://trollop.rubyforge.org.
 def options args = ARGV, *a, &b
   @p = Parser.new(*a, &b)
   begin

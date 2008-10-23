@@ -4,7 +4,7 @@ by William Morgan <wmorgan-trollop@masanjin.net>
 
 http://trollop.rubyforge.org
 
-Documentation quickstart: See Trollop::Parser.
+Documentation quickstart: See Trollop::options and Trollop::Parser#opt.
 
 == DESCRIPTION
 
