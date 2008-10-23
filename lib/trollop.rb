@@ -554,16 +554,27 @@ class Parser
 
       spec = @specs[opt]
       stream.printf "  %#{leftcol_width}s:   ", left[opt]
-      desc = spec[:desc] + 
+      desc = spec[:desc] + begin
+        default_s = case spec[:default]
+        when $stdout; "<stdout>"
+        when $stdin; "<stdin>"
+        when $stderr; "<stderr>"
+        when Array
+          spec[:default].join(", ")
+        else
+          spec[:default].to_s
+        end
+
         if spec[:default]
           if spec[:desc] =~ /\.$/
-            " (Default: #{spec[:default]})"
+            " (Default: #{default_s})"
           else
-            " (default: #{spec[:default]})"
+            " (default: #{default_s})"
           end
         else
           ""
         end
+      end
       stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
     end
   end
