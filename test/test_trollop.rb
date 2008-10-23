@@ -926,6 +926,7 @@ EOM
     @p.opt :arg1, "desc", :default => ["potato"], :multi => true
     @p.opt :arg2, "desc", :default => ["potato"], :multi => true, :type => :strings
     @p.opt :arg3, "desc", :default => ["potato"]
+    @p.opt :arg4, "desc", :default => ["potato", "rhubarb"], :short => :none, :multi => true
 
     ## arg1 should be multi-occurring but not multi-valued
     opts = @p.parse %w(--arg1 one two)
@@ -946,7 +947,9 @@ EOM
     assert_equal ["one", "two"], opts[:arg3]
     assert_equal [], @p.leftovers
 
-    assert_raises(CommandlineError) { @p.parse %w(--arg3 one --arg3 two) }
+    ## arg4 should be multi-valued but not multi-occurring
+    opts = @p.parse %w()
+    assert_equal ["potato", "rhubarb"], opts[:arg4]
   end
 end
 

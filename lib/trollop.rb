@@ -147,12 +147,15 @@ class Parser
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
-    if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
-      opts[:default] = opts[:default].first
-    end
+    disambiguated_default =
+      if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
+        opts[:default].first
+      else
+        opts[:default]
+      end
 
     type_from_default =
-      case opts[:default]
+      case disambiguated_default
       when Integer; :int
       when Numeric; :float
       when TrueClass, FalseClass; :flag
@@ -218,7 +221,7 @@ class Parser
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
 
     ## autobox :default for :multi (multi-occurrence) arguments
-    opts[:default] = [opts[:default]] if opts[:multi] && !opts[:default].is_a?(Array)
+    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].is_a?(Array)
 
     ## fill in :multi
     opts[:multi] ||= false
