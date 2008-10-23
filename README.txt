@@ -1,8 +1,10 @@
 == trollop
 
-by William Morgan <wmorgan-trollop@masanjin.net>
+by William Morgan (wmorgan-trollop at the masanjin dot nets or http://cs.stanford.edu/~ruby)
 
-http://trollop.rubyforge.org
+Main page: http://trollop.rubyforge.org
+
+Release announcements and comments: http://all-thing.net/search/label/trollop
 
 Documentation quickstart: See Trollop::options and Trollop::Parser#opt.
 
