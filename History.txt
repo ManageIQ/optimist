@@ -1,3 +1,7 @@
+== 1.10.2 / 2008-10-23
+* No longer try `stty size` for screen size detection. Just use curses, and
+  screen users will have to deal with the screen clearing.
+
 == 1.10.1 / 2008-10-22
 * Options hash now responds to method calls as well as standard hash lookup.
 * Default values for multi-occurrence parameters now autoboxed.
