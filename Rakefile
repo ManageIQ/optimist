@@ -7,8 +7,8 @@ $:.unshift "lib"
 require 'trollop'
 
 class Hoe
-  def extra_deps; @extra_deps.reject { |x| Array(x).first == "hoe" } end
-end # thanks to "Mike H"
+  def extra_dev_deps; @extra_dev_deps.reject { |x| x[0] == "hoe" } end
+end
 
 Hoe.new('trollop', Trollop::VERSION) do |p|
   p.rubyforge_name = 'trollop'
@@ -25,11 +25,11 @@ task :upload_webpage => WWW_FILES do |t|
   sh "rsync -Paz -essh #{t.prerequisites * ' '} wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/"
 end
 
-task :my_rdoc do |t|
+task :doc do |t|
   sh "rdoc lib README.txt History.txt"
 end
 
-task :upload_docs => [:my_rdoc] do |t|
+task :upload_docs => [:rdoc] do |t|
   sh "rsync -az -essh doc/* wmorgan@rubyforge.org:/var/www/gforge-projects/trollop/trollop/"
 end
 
