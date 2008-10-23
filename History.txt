@@ -1,3 +1,10 @@
+== 1.10.1 / 2008-10-22
+* Options hash now responds to method calls as well as standard hash lookup.
+* Default values for multi-occurrence parameters now autoboxed.
+* The relationship between multi-value, multi-occurrence, and default values
+  improved and explained.
+* Documentation improvements.
+
 == 1.10 / 2008-10-21
 * Added :io type for parameters that point to IO streams (filenames, URIs, etc).
 * For screen size detection, first try `stty size` before loading Curses.
