@@ -905,6 +905,49 @@ EOM
     assert_equal 3, opts.arg1
     assert_equal 4, opts.arg2
   end
+
+  def test_multi_args_autobox_defaults
+    @p.opt :arg1, "desc", :default => "hello", :multi => true
+    @p.opt :arg2, "desc", :default => ["hello"], :multi => true
+
+    opts = @p.parse
+    assert_equal ["hello"], opts[:arg1]
+    assert_equal ["hello"], opts[:arg2]
+
+    opts = @p.parse %w(--arg1 hello)
+    assert_equal ["hello"], opts[:arg1]
+    assert_equal ["hello"], opts[:arg2]
+
+    opts = @p.parse %w(--arg1 hello --arg1 there)
+    assert_equal ["hello", "there"], opts[:arg1]
+  end
+
+  def test_ambigious_multi_plus_array_default_resolved_as_specified_by_documentation
+    @p.opt :arg1, "desc", :default => ["potato"], :multi => true
+    @p.opt :arg2, "desc", :default => ["potato"], :multi => true, :type => :strings
+    @p.opt :arg3, "desc", :default => ["potato"]
+
+    ## arg1 should be multi-occurring but not multi-valued
+    opts = @p.parse %w(--arg1 one two)
+    assert_equal ["one"], opts[:arg1]
+    assert_equal ["two"], @p.leftovers
+
+    opts = @p.parse %w(--arg1 one --arg1 two)
+    assert_equal ["one", "two"], opts[:arg1]
+    assert_equal [], @p.leftovers
+
+    ## arg2 should be multi-valued and multi-occurring
+    opts = @p.parse %w(--arg2 one two)
+    assert_equal [["one", "two"]], opts[:arg2]
+    assert_equal [], @p.leftovers
+
+    ## arg3 should be multi-valued but not multi-occurring
+    opts = @p.parse %w(--arg3 one two)
+    assert_equal ["one", "two"], opts[:arg3]
+    assert_equal [], @p.leftovers
+
+    assert_raises(CommandlineError) { @p.parse %w(--arg3 one --arg3 two) }
+  end
 end
 
 end

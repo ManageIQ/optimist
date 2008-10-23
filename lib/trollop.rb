@@ -87,8 +87,8 @@ class Parser
   ##
   ## [+:long+] Specify the long form of the argument, i.e. the form with two dashes. If unspecified, will be automatically derived based on the argument name by turning the +name+ option into a string, and replacing any _'s by -'s.
   ## [+:short+] Specify the short form of the argument, i.e. the form with one dash. If unspecified, will be automatically derived from +name+.
-  ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple-argument parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if +:default+ is given.
-  ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Trollop#options) will have a +nil+ value for this key unless the option is set on the commandline. The argument type is derived automatically from the class of the default value given, if any.  Specifying a +:flag+ argument on the commandline whose default value is +true+ will result in a value of +false+.
+  ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple-argument parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if a +:default+ is given.
+  ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Trollop::options) will have a +nil+ value for this key unless the argument is given on the commandline. The argument type is derived automatically from the class of the default value given, so specifying a +:type+ is not necessary if a +:default+ is given. (But see below for an important caveat when +:multi+: is specified too.) If the argument is a flag, and the default is set to +true+, then if it is specified on the the commandline the value will be +false+.
   ## [+:required+] If set to +true+, the argument must be provided on the commandline.
   ## [+:multi+] If set to +true+, allows multiple occurrences of the option on the commandline. Otherwise, only a single instance of the option is allowed. (Note that this is different from taking multiple parameters. See below.)
   ##
@@ -108,6 +108,13 @@ class Parser
   ## These two attributes can be combined (e.g. +:type+ => +:strings+,
   ## +:multi+ => +true+), in which case the value of the argument will be
   ## an array of arrays.
+  ##
+  ## There's one ambiguous case to be aware of: when +:multi+: is true and a
+  ## +:default+ is set to an array (of something), it's ambiguous whether this
+  ## is a multi-value argument as well as a multi-occurrence argument.
+  ## In thise case, Trollop assumes that it's not a multi-value argument.
+  ## If you want a multi-value, multi-occurrence argument with a default
+  ## value, you must specify +:type+ as well.
 
   def opt name, desc="", opts={}
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
@@ -136,6 +143,14 @@ class Parser
         opts[:type]
       end
 
+    ## for options with :multi => true, an array default doesn't imply
+    ## a multi-valued argument. for that you have to specify a :type
+    ## as well. (this is how we disambiguate an ambiguous situation;
+    ## see the docs for Parser#opt for details.)
+    if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
+      opts[:default] = opts[:default].first
+    end
+
     type_from_default =
       case opts[:default]
       when Integer; :int
@@ -162,7 +177,7 @@ class Parser
 
     raise ArgumentError, ":type specification and default type don't match" if opts[:type] && type_from_default && opts[:type] != type_from_default
 
-    opts[:type] = (opts[:type] || type_from_default || :flag)
+    opts[:type] = opts[:type] || type_from_default || :flag
 
     ## fill in :long
     opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
@@ -201,6 +216,9 @@ class Parser
 
     ## fill in :default for flags
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
+
+    ## autobox :default for :multi (multi-occurrence) arguments
+    opts[:default] = [opts[:default]] if opts[:multi] && !opts[:default].is_a?(Array)
 
     ## fill in :multi
     opts[:multi] ||= false
