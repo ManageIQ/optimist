@@ -884,8 +884,9 @@ EOM
     assert_kind_of File, opts[:arg]
     assert_equal "/dev/null", opts[:arg].path
 
-    assert_nothing_raised { opts = @p.parse %w(--arg2 http://google.com/) }
-    assert_kind_of StringIO, opts[:arg2]
+    #TODO: move to mocks
+    #assert_nothing_raised { opts = @p.parse %w(--arg2 http://google.com/) }
+    #assert_kind_of StringIO, opts[:arg2]
 
     assert_nothing_raised { opts = @p.parse %w(--arg3 stdin) }
     assert_equal $stdin, opts[:arg3]
