@@ -99,6 +99,15 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal 2, opts["argsf"]
     assert_raise(CommandlineError) { @p.parse(%w(--argsf hello)) }
 
+    # single arg: date
+    date = Date.today
+    assert_nothing_raised { @p.opt "argsd", "desc", :default => date }
+    assert_nothing_raised { opts = @p.parse("--") }
+    assert_equal Date.today, opts["argsd"]
+    assert_nothing_raised { opts = @p.parse(['--argsd', 'Jan 4, 2007']) }
+    assert_equal Date.civil(2007, 1, 4), opts["argsd"]
+    assert_raise(CommandlineError) { @p.parse(%w(--argsd hello)) }
+
     # single arg: string
     assert_nothing_raised { @p.opt "argss", "desc", :default => "foobar" }
     assert_nothing_raised { opts = @p.parse("--") }
@@ -127,14 +136,23 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal [4.0], opts["argmf"]
     assert_raise(CommandlineError) { @p.parse(%w(--argmf hello)) }
 
-    # multi args: strings
-    assert_nothing_raised { @p.opt "argms", "desc", :default => %w(hello world) }
+    # multi args: dates
+    dates = [Date.today, Date.civil(2007, 1, 4)]
+    assert_nothing_raised { @p.opt "argmd", "desc", :default => dates }
     assert_nothing_raised { opts = @p.parse("--") }
-    assert_equal %w(hello world), opts["argms"]
-    assert_nothing_raised { opts = @p.parse(%w(--argms 3.4)) }
-    assert_equal ["3.4"], opts["argms"]
-    assert_nothing_raised { opts = @p.parse(%w(--argms goodbye)) }
-    assert_equal ["goodbye"], opts["argms"]
+    assert_equal dates, opts["argmd"]
+    assert_nothing_raised { opts = @p.parse(['--argmd', 'Jan 4, 2007']) }
+    assert_equal [Date.civil(2007, 1, 4)], opts["argmd"]
+    assert_raise(CommandlineError) { @p.parse(%w(--argmd hello)) }
+
+    # multi args: strings
+    assert_nothing_raised { @p.opt "argmst", "desc", :default => %w(hello world) }
+    assert_nothing_raised { opts = @p.parse("--") }
+    assert_equal %w(hello world), opts["argmst"]
+    assert_nothing_raised { opts = @p.parse(%w(--argmst 3.4)) }
+    assert_equal ["3.4"], opts["argmst"]
+    assert_nothing_raised { opts = @p.parse(%w(--argmst goodbye)) }
+    assert_equal ["goodbye"], opts["argmst"]
   end    
 
   ## :type and :default must match if both are specified
@@ -146,10 +164,12 @@ class Trollop < ::Test::Unit::TestCase
 
     assert_nothing_raised { @p.opt "argsi", "desc", :type => :int, :default => 4 }
     assert_nothing_raised { @p.opt "argsf", "desc", :type => :float, :default => 3.14 }
+    assert_nothing_raised { @p.opt "argsd", "desc", :type => :date, :default => Date.today }
     assert_nothing_raised { @p.opt "argss", "desc", :type => :string, :default => "yo" }
     assert_nothing_raised { @p.opt "argmi", "desc", :type => :ints, :default => [4] }
     assert_nothing_raised { @p.opt "argmf", "desc", :type => :floats, :default => [3.14] }
-    assert_nothing_raised { @p.opt "argms", "desc", :type => :strings, :default => ["yo"] }
+    assert_nothing_raised { @p.opt "argmd", "desc", :type => :dates, :default => [Date.today] }
+    assert_nothing_raised { @p.opt "argmst", "desc", :type => :strings, :default => ["yo"] }
   end
 
   def test_long_detects_bad_names
@@ -350,6 +370,20 @@ EOM
     assert_raises(CommandlineError) { @p.parse %w(-f 1.0.0) }
     assert_raises(CommandlineError) { @p.parse %w(-f .) }
     assert_raises(CommandlineError) { @p.parse %w(-f -.) }
+  end
+
+  def test_date_formatting
+    @p.opt :arg, "desc", :type => :date, :short => 'd'
+    opts = nil
+    assert_nothing_raised { opts = @p.parse(['-d', 'Jan 4, 2007']) }
+    assert_equal Date.civil(2007, 1, 4), opts[:arg]
+    begin
+      require 'chronic'
+      assert_nothing_raised { opts = @p.parse(['-d', 'today']) }
+      assert_equal Date.today, opts[:arg]
+    rescue LoadError
+      # chronic is not available
+    end
   end
 
   def test_short_options_cant_be_numeric
