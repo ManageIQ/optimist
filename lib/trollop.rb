@@ -269,78 +269,6 @@ class Parser
     @stop_on_unknown = true
   end
 
-  ## yield successive arg, parameter pairs
-  def each_arg args # :nodoc:
-    remains = []
-    i = 0
-
-    until i >= args.length
-      if @stop_words.member? args[i]
-        remains += args[i .. -1]
-        return remains
-      end
-      case args[i]
-      when /^--$/ # arg terminator
-        remains += args[(i + 1) .. -1]
-        return remains
-      when /^--(\S+?)=(\S+)$/ # long argument with equals
-        yield "--#{$1}", [$2]
-        i += 1
-      when /^--(\S+)$/ # long argument
-        params = collect_argument_parameters(args, i + 1)
-        unless params.empty?
-          num_params_taken = yield args[i], params
-          unless num_params_taken
-            if @stop_on_unknown
-              remains += args[i + 1 .. -1]
-              return remains
-            else
-              remains += params
-            end
-          end
-          i += 1 + num_params_taken
-        else # long argument no parameter
-          yield args[i], nil
-          i += 1
-        end
-      when /^-(\S+)$/ # one or more short arguments
-        shortargs = $1.split(//)
-        shortargs.each_with_index do |a, j|
-          if j == (shortargs.length - 1)
-            params = collect_argument_parameters(args, i + 1)
-            unless params.empty?
-              num_params_taken = yield "-#{a}", params
-              unless num_params_taken
-                if @stop_on_unknown
-                  remains += args[i + 1 .. -1]
-                  return remains
-                else
-                  remains += params
-                end
-              end
-              i += 1 + num_params_taken
-            else # argument no parameter
-              yield "-#{a}", nil
-              i += 1
-            end
-          else
-            yield "-#{a}", nil
-          end
-        end
-      else
-        if @stop_on_unknown
-          remains += args[i .. -1]
-          return remains
-        else
-          remains << args[i]
-          i += 1
-        end
-      end
-    end
-
-    remains
-  end
-
   ## Parses the commandline. Typically called by Trollop::options.
   def parse cmdline=ARGV
     vals = {}
@@ -460,56 +388,6 @@ class Parser
     vals
   end
 
-  def parse_integer_parameter param, arg #:nodoc:
-    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
-    param.to_i
-  end
-
-  def parse_float_parameter param, arg #:nodoc:
-    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
-    param.to_f
-  end
-
-  def parse_io_parameter param, arg #:nodoc:
-    case param
-    when /^(stdin|-)$/i; $stdin
-    else
-      require 'open-uri'
-      begin
-        open param
-      rescue SystemCallError => e
-        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
-      end
-    end
-  end
-
-  def collect_argument_parameters args, start_at #:nodoc:
-    params = []
-    pos = start_at
-    while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
-      params << args[pos]
-      pos += 1
-    end
-    params
-  end
-
-  def width #:nodoc:
-    @width ||= 
-      if $stdout.tty?
-        begin
-          require 'curses'
-          Curses::init_screen
-          x = Curses::cols
-          Curses::close_screen
-          x
-        rescue Exception
-          80
-        end
-      else
-        80
-      end
-  end
-
   ## Print the help message to +stream+.
   def educate stream=$stdout
     width # just calculate it now; otherwise we have to be careful not to
@@ -573,7 +451,138 @@ class Parser
     end
   end
 
-  def resolve_default_short_options # :nodoc:
+  def width #:nodoc:
+    @width ||= if $stdout.tty?
+      begin
+        require 'curses'
+        Curses::init_screen
+        x = Curses::cols
+        Curses::close_screen
+        x
+      rescue Exception
+        80
+      end
+    else
+      80
+    end
+  end
+
+  def wrap str, opts={} # :nodoc:
+    if str == ""
+      [""]
+    else
+      str.split("\n").map { |s| wrap_line s, opts }.flatten
+    end
+  end
+
+private
+
+  ## yield successive arg, parameter pairs
+  def each_arg args
+    remains = []
+    i = 0
+
+    until i >= args.length
+      if @stop_words.member? args[i]
+        remains += args[i .. -1]
+        return remains
+      end
+      case args[i]
+      when /^--$/ # arg terminator
+        remains += args[(i + 1) .. -1]
+        return remains
+      when /^--(\S+?)=(\S+)$/ # long argument with equals
+        yield "--#{$1}", [$2]
+        i += 1
+      when /^--(\S+)$/ # long argument
+        params = collect_argument_parameters(args, i + 1)
+        unless params.empty?
+          num_params_taken = yield args[i], params
+          unless num_params_taken
+            if @stop_on_unknown
+              remains += args[i + 1 .. -1]
+              return remains
+            else
+              remains += params
+            end
+          end
+          i += 1 + num_params_taken
+        else # long argument no parameter
+          yield args[i], nil
+          i += 1
+        end
+      when /^-(\S+)$/ # one or more short arguments
+        shortargs = $1.split(//)
+        shortargs.each_with_index do |a, j|
+          if j == (shortargs.length - 1)
+            params = collect_argument_parameters(args, i + 1)
+            unless params.empty?
+              num_params_taken = yield "-#{a}", params
+              unless num_params_taken
+                if @stop_on_unknown
+                  remains += args[i + 1 .. -1]
+                  return remains
+                else
+                  remains += params
+                end
+              end
+              i += 1 + num_params_taken
+            else # argument no parameter
+              yield "-#{a}", nil
+              i += 1
+            end
+          else
+            yield "-#{a}", nil
+          end
+        end
+      else
+        if @stop_on_unknown
+          remains += args[i .. -1]
+          return remains
+        else
+          remains << args[i]
+          i += 1
+        end
+      end
+    end
+
+    remains
+  end
+
+  def parse_integer_parameter param, arg
+    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
+    param.to_i
+  end
+
+  def parse_float_parameter param, arg
+    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
+    param.to_f
+  end
+
+  def parse_io_parameter param, arg
+    case param
+    when /^(stdin|-)$/i; $stdin
+    else
+      require 'open-uri'
+      begin
+        open param
+      rescue SystemCallError => e
+        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
+      end
+    end
+  end
+
+  def collect_argument_parameters args, start_at
+    params = []
+    pos = start_at
+    while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
+      params << args[pos]
+      pos += 1
+    end
+    params
+  end
+
+  def resolve_default_short_options
     @order.each do |type, name|
       next unless type == :opt
       opts = @specs[name]
@@ -587,7 +596,7 @@ class Parser
     end
   end
 
-  def wrap_line str, opts={} # :nodoc:
+  def wrap_line str, opts={}
     prefix = opts[:prefix] || 0
     width = opts[:width] || (self.width - 1)
     start = 0
@@ -607,17 +616,9 @@ class Parser
     ret
   end
 
-  def wrap str, opts={} # :nodoc:
-    if str == ""
-      [""]
-    else
-      str.split("\n").map { |s| wrap_line s, opts }.flatten
-    end
-  end
-
   ## instance_eval but with ability to handle block arguments
   ## thanks to why: http://redhanded.hobix.com/inspect/aBlockCostume.html
-  def cloaker &b #:nodoc:
+  def cloaker &b
     (class << self; self; end).class_eval do
       define_method :cloaker_, &b
       meth = instance_method :cloaker_
