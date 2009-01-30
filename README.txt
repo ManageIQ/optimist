@@ -6,7 +6,9 @@ Main page: http://trollop.rubyforge.org
 
 Release announcements and comments: http://all-thing.net/search/label/trollop
 
-Documentation quickstart: See Trollop::options and Trollop::Parser#opt.
+Documentation quickstart: See Trollop::options (for some reason rdoc isn't
+linking that; it's in the top right of the screen if you're browsing online)
+and then Trollop::Parser#opt. Also see the examples at http://trollop.rubyforge.org/.
 
 == DESCRIPTION
 
