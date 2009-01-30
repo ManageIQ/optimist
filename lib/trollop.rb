@@ -431,6 +431,8 @@ class Parser
       opts = @specs[sym]
       raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
 
+      vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
+
       case opts[:type]
       when :flag
         vals[sym] = !opts[:default]
@@ -628,6 +630,12 @@ end
 ## (Parser#opt), zero or more calls to +text+ (Parser#text), and
 ## probably a call to +version+ (Parser#version).
 ##
+## The returned block contains a value for every option specified with
+## +opt+.  The value will be the value given on the commandline, or the
+## default value if the option was not specified on the commandline. For
+## every option specified on the commandline, a key "<option
+## name>_given" will also be set in the hash.
+##
 ## Example:
 ##
 ##   require 'trollop'
@@ -638,7 +646,11 @@ end
 ##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer --num-thumbs <i>, defaulting to nil
 ##   end
 ##
-##   p opts # returns a hash: { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+##   ## if called with no arguments
+##   p opts # => { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+##
+##   ## if called with --monkey
+##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true, :num_limbs=>4, :help=>false, :num_thumbs=>nil}
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args = ARGV, *a, &b
