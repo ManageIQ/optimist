@@ -951,6 +951,27 @@ EOM
     opts = @p.parse %w()
     assert_equal ["potato", "rhubarb"], opts[:arg4]
   end
+
+  def test_given_keys
+    @p.opt :arg1
+    @p.opt :arg2
+
+    opts = @p.parse %w(--arg1)
+    assert opts[:arg1_given]
+    assert !opts[:arg2_given]
+
+    opts = @p.parse %w(--arg2)
+    assert !opts[:arg1_given]
+    assert opts[:arg2_given]
+
+    opts = @p.parse []
+    assert !opts[:arg1_given]
+    assert !opts[:arg2_given]
+
+    opts = @p.parse %w(--arg1 --arg2)
+    assert opts[:arg1_given]
+    assert opts[:arg2_given]
+  end
 end
 
 end
