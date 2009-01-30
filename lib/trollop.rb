@@ -197,21 +197,12 @@ class Parser
 
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
-    opts[:short] =
-      case opts[:short]
-      when nil
-        c = opts[:long].split(//).find { |c| c !~ INVALID_SHORT_ARG_REGEX && !@short.member?(c) }
-        raise ArgumentError, "can't generate a short option name for #{opts[:long].inspect}: out of unique characters" unless c
-        c
-      when /^-(.)$/
-        $1
-      when /^.$/
-        opts[:short]
-      when :none
-        nil
-      else
-        raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
-      end
+    opts[:short] = case opts[:short]
+      when /^-(.)$/; $1
+      when nil, :none, /^.$/; opts[:short]
+      else raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
+    end
+
     if opts[:short]
       raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
       raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ INVALID_SHORT_ARG_REGEX
@@ -228,7 +219,7 @@ class Parser
 
     opts[:desc] ||= desc
     @long[opts[:long]] = name
-    @short[opts[:short]] = name if opts[:short]
+    @short[opts[:short]] = name if opts[:short] && opts[:short] != :none
     @specs[name] = opts
     @order << [:opt, name]
   end
@@ -362,6 +353,8 @@ class Parser
       required[sym] = true if opts[:required]
       vals[sym] = opts[:default]
     end
+
+    resolve_default_short_options
 
     ## resolve symbols
     given_args = {}
@@ -525,7 +518,7 @@ class Parser
     left = {}
     @specs.each do |name, spec| 
       left[name] = "--#{spec[:long]}" +
-        (spec[:short] ? ", -#{spec[:short]}" : "") +
+        (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
         case spec[:type]
         when :flag; ""
         when :int; " <i>"
@@ -577,6 +570,20 @@ class Parser
         end
       end
       stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
+    end
+  end
+
+  def resolve_default_short_options # :nodoc:
+    @order.each do |type, name|
+      next unless type == :opt
+      opts = @specs[name]
+      next if opts[:short]
+
+      c = opts[:long].split(//).find { |c| c !~ INVALID_SHORT_ARG_REGEX && !@short.member?(c) }
+      raise ArgumentError, "can't generate a default short option name for #{opts[:long].inspect}: out of unique characters" unless c
+
+      opts[:short] = c
+      @short[c] = name
     end
   end
 
@@ -704,4 +711,3 @@ end
 module_function :options, :die
 
 end # module
-

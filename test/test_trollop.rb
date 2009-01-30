@@ -173,7 +173,6 @@ class Trollop < ::Test::Unit::TestCase
     @p.opt "arg"
     @p.opt "arg2"
     @p.opt "arg3"
-    assert_raise(ArgumentError) { @p.opt "gra" }
     opts = @p.parse %w(-a -g)
     assert_equal true, opts["arg"]
     assert_equal false, opts["arg2"]
@@ -199,8 +198,8 @@ class Trollop < ::Test::Unit::TestCase
     @p.opt :arg1 # auto: a
     @p.opt :arg2 # auto: r
     @p.opt :arg3 # auto: g
-    assert_raises(ArgumentError) { @p.opt :arg4 }
-    assert_nothing_raised { @p.opt :argf }
+    @p.opt :arg4 # auto: uh oh!
+    assert_raises(ArgumentError) { @p.parse [] }
   end
 
   def test_short_can_be_nothing
@@ -971,6 +970,25 @@ EOM
     opts = @p.parse %w(--arg1 --arg2)
     assert opts[:arg1_given]
     assert opts[:arg2_given]
+  end
+
+  def test_default_shorts_assigned_only_after_user_shorts
+    @p.opt :aab, "aaa" # should be assigned to -b
+    @p.opt :ccd, "bbb" # should be assigned to -d
+    @p.opt :user1, "user1", :short => 'a'
+    @p.opt :user2, "user2", :short => 'c'
+
+    opts = @p.parse %w(-a -b)
+    assert opts[:user1]
+    assert !opts[:user2]
+    assert opts[:aab]
+    assert !opts[:ccd]
+
+    opts = @p.parse %w(-c -d)
+    assert !opts[:user1]
+    assert opts[:user2]
+    assert !opts[:aab]
+    assert opts[:ccd]
   end
 end
 
