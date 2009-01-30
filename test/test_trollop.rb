@@ -839,7 +839,7 @@ EOM
     @p.opt :global_param, "Global parameter", :short => "-p", :default => 5
     @p.stop_on_unknown
 
-    expected_opts = { :global_flag =>true, :help =>false, :global_param =>5 }
+    expected_opts = { :global_flag => true, :help => false, :global_param => 5, :global_flag_given => true }
     expected_leftovers = [ "my_subcommand", "-c" ]
 
     assert_parses_correctly @p, %w(--global-flag my_subcommand -c), \
@@ -847,7 +847,7 @@ EOM
     assert_parses_correctly @p, %w(-g my_subcommand -c), \
       expected_opts, expected_leftovers
 
-    expected_opts = { :global_flag =>false, :help =>false, :global_param =>5 }
+    expected_opts = { :global_flag => false, :help => false, :global_param => 5, :global_param_given => true }
     expected_leftovers = [ "my_subcommand", "-c" ]
 
     assert_parses_correctly @p, %w(-p 5 my_subcommand -c), \
