@@ -1,3 +1,9 @@
+== 1.12 / 2009-01-30
+* Fix some unit test failures in the last release. Should be more careful.
+* Make default short options only be assigned *after* all user-specified
+  short options. Now there's a little less juggling to do when you just
+  want to specify a few short options.
+
 == 1.11 / 2009-01-29
 * Set <opt>_given keys in the results hash for options that were specified
   on the commandline.
