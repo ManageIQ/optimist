@@ -548,7 +548,9 @@ EOM
     assert_equal "goat", opts[:arg]
     assert_nothing_raised { opts = @p.parse %w(--arg=goat) }
     assert_equal "goat", opts[:arg]
-    assert_raises(CommandlineError) { opts = @p.parse %w(--arg= goat) }
+    ## actually, this next one is valid. empty string for --arg, and goat as a
+    ## leftover.
+    ## assert_raises(CommandlineError) { opts = @p.parse %w(--arg= goat) }
   end
 
   def test_auto_generated_long_names_convert_underscores_to_hyphens
@@ -989,6 +991,16 @@ EOM
     assert opts[:user2]
     assert !opts[:aab]
     assert opts[:ccd]
+  end
+
+  def test_accepts_arguments_with_spaces
+    @p.opt :arg1, "arg", :type => String
+    @p.opt :arg2, "arg2", :type => String
+
+    opts = @p.parse ["--arg1", "hello there", "--arg2=hello there"]
+    assert_equal "hello there", opts[:arg1]
+    assert_equal "hello there", opts[:arg2]
+    assert_equal 0, @p.leftovers.size
   end
 end
 

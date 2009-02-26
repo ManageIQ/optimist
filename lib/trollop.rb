@@ -287,15 +287,14 @@ class Parser
     ## resolve symbols
     given_args = {}
     @leftovers = each_arg cmdline do |arg, params|
-      sym = 
-        case arg
-        when /^-([^-])$/
-          @short[$1]
-        when /^--([^-]\S*)$/
-          @long[$1]
-        else
-          raise CommandlineError, "invalid argument syntax: '#{arg}'"
-        end
+      sym = case arg
+      when /^-([^-])$/
+        @short[$1]
+      when /^--([^-]\S*)$/
+        @long[$1]
+      else
+        raise CommandlineError, "invalid argument syntax: '#{arg}'"
+      end
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
       if given_args.include?(sym) && !@specs[sym][:multi]
@@ -491,7 +490,7 @@ private
       when /^--$/ # arg terminator
         remains += args[(i + 1) .. -1]
         return remains
-      when /^--(\S+?)=(\S+)$/ # long argument with equals
+      when /^--(\S+?)=(.*)$/ # long argument with equals
         yield "--#{$1}", [$2]
         i += 1
       when /^--(\S+)$/ # long argument
