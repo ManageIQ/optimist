@@ -1,3 +1,6 @@
+== 1.13 / 2009-03-16
+* Fix parsing of "--longarg=<value with spaces>".
+
 == 1.12 / 2009-01-30
 * Fix some unit test failures in the last release. Should be more careful.
 * Make default short options only be assigned *after* all user-specified
