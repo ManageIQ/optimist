@@ -587,7 +587,7 @@ private
       opts = @specs[name]
       next if opts[:short]
 
-      c = opts[:long].split(//).find { |c| c !~ INVALID_SHORT_ARG_REGEX && !@short.member?(c) }
+      c = opts[:long].split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
       raise ArgumentError, "can't generate a default short option name for #{opts[:long].inspect}: out of unique characters" unless c
 
       opts[:short] = c
