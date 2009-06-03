@@ -19,7 +19,7 @@
 .ruby .number { color: #F99; }
 .ruby .attribute { color: #fc4; }
 .ruby .global { color: #7FB; }
-.ruby .expr { color: #227; }
+.ruby .expr { color: #827; }
 .ruby .escape { color: #277; }
 </style>
 </head>
@@ -29,7 +29,7 @@
 <h1>Trollop</h1>
 
 <p style="border: solid 1px black; background: #ccc; padding: 0.5em;">
-Current project news: see the <a href="http://all-thing.net/search/label/trollop">blog</a>.
+Current project news: see the <a href="http://all-thing.net/label/trollop">blog</a>.
 </p>
 
 <p>Trollop is a commandline option parser for Ruby that <i>gets out of your
@@ -48,10 +48,14 @@ don't specify.</p>
 </ol>
 </p>
 
-<p> To install, get the "raw blob data" for <a href="http://gitorious.org/projects/trollop/repos/mainline/blobs/master/lib%2Ftrollop.rb">lib/trollop.rb</a>, or download the tarball from the <a href="http://rubyforge.org/projects/trollop/">Trollop Rubyforge page</a>, or command your computer to <code>gem install trollop</code>.</p>
+<p> To install, you have three options:
+<ul>
+<li>Trollop is a single file with no dependencies. You can <a href="http://gitorious.org/trollop/mainline/blobs/raw/master/lib/trollop.rb">just download it</a> and throw it in your code directory.</li>
+<li>You can use rubygems and command your computer to <code>gem install trollop</gem>.</li>
+<li>You can download the tarball (why?) from the <a href="http://rubyforge.org/projects/trollop/">Trollop Rubyforge page</a>.</p>
+</ul>
 
-
-<p> To hack,  see the <a href="http://gitorious.org/projects/trollop">Trollop Gitorious page</a>. </p>
+<p> To hack, command your computer to <code>git clone git://gitorious.org/trollop/mainline.git</code>, or see the <a href="http://gitorious.org/projects/trollop">Trollop Gitorious page</a>.</p>
 
 <p>To understand, read the examples below, the <a href="FAQ.txt">FAQ</a>, and the <a href="trollop/">API docs</a>.
 
@@ -65,7 +69,7 @@ don't specify.</p>
   <span class="ident">opt</span> <span class="symbol">:num_thumbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of thumbs</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="symbol">:int</span> <span class="comment"># an integer --num-thumbs &lt;i&gt;, defaulting to nil</span>
 <span class="keyword">end</span>
 
-<span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># returns a hash: { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4, :num_thumbs =&gt; nil }</span>
+<span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># a hash: { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4, :num_thumbs =&gt; nil }</span>
 </pre>
 
 <p>
@@ -124,7 +128,7 @@ where [options] are:
 <span class="comment">##</span>
 <span class="comment">## We do this by calling Trollop twice; one for the global options and once for</span>
 <span class="comment">## the subcommand options. We need to tell Trollop what the subcommands are, so</span>
-<span class="comment">## that it stops on them.</span>
+<span class="comment">## that it stops processing the global options when it encounters one of them.</span>
 
 <span class="constant">SUB_COMMANDS</span> <span class="punct">=</span> <span class="punct">%w(</span><span class="string">delete copy</span><span class="punct">)</span>
 <span class="ident">global_opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
@@ -160,6 +164,7 @@ where [options] are:
 <ul>
 <li>Tuomas Kareinen &lt;tkareine at the gmail dot coms&gt;</li>
 <li>Ohad Lutzky &lt;ohad at the lutzky dot nets&gt;</li>
+<li>Erik Ostrom &lt;erik at the echographia dot coms&gt;</li>
 </ul>
 </p>
 
