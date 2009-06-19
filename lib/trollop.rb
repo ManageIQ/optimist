@@ -41,15 +41,16 @@ class Parser
   ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]
 
-  ## The set of values that indicate a single-parameter option when
+  ## The set of values that indicate a single-parameter (normal) option when
   ## passed as the +:type+ parameter of #opt.
   ##
   ## A value of +io+ corresponds to a readable IO resource, including
   ## a filename, URI, or the strings 'stdin' or '-'.
   SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date]
 
-  ## The set of values that indicate a multiple-parameter option when
-  ## passed as the +:type+ parameter of #opt.
+  ## The set of values that indicate a multiple-parameter option (i.e., that
+  ## takes multiple space-separated values on the commandline) when passed as
+  ## the +:type+ parameter of #opt.
   MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates]
 
   ## The complete set of legal values for the +:type+ parameter of #opt.
@@ -183,7 +184,7 @@ class Parser
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
 
-    raise ArgumentError, ":type specification and default type don't match" if opts[:type] && type_from_default && opts[:type] != type_from_default
+    raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})" if opts[:type] && type_from_default && opts[:type] != type_from_default
 
     opts[:type] = opts[:type] || type_from_default || :flag
 
