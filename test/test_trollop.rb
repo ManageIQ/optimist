@@ -1036,6 +1036,12 @@ EOM
     assert_equal "hello there", opts[:arg2]
     assert_equal 0, @p.leftovers.size
   end
+
+  def test_multi_args_default_to_empty_array
+    @p.opt :arg1, "arg", :multi => true
+    opts = @p.parse ""
+    assert_equal [], opts[:arg1]
+  end
 end
 
 end

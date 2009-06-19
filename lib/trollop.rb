@@ -107,6 +107,8 @@ class Parser
   ##
   ## Arguments that can occur multiple times should be marked with
   ## +:multi+ => +true+. The value of this argument will also be an array.
+  ## In contrast with regular non-multi options, if not specified on
+  ## the commandline, the default value will be [], not nil.
   ##
   ## These two attributes can be combined (e.g. +:type+ => +:strings+,
   ## +:multi+ => +true+), in which case the value of the argument will be
@@ -286,6 +288,7 @@ class Parser
     @specs.each do |sym, opts|
       required[sym] = true if opts[:required]
       vals[sym] = opts[:default]
+      vals[sym] = [] if opts[:multi] && !opts[:default] # multi arguments default to [], not nil
     end
 
     resolve_default_short_options
