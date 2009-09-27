@@ -214,12 +214,12 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal false, opts[:arg_muffin]
   end
 
-  def test_short_autocreation_detects_running_out
+  def test_short_autocreation_is_ok_with_running_out_of_chars
     @p.opt :arg1 # auto: a
     @p.opt :arg2 # auto: r
     @p.opt :arg3 # auto: g
     @p.opt :arg4 # auto: uh oh!
-    assert_raises(ArgumentError) { @p.parse [] }
+    assert_nothing_raised { @p.parse [] }
   end
 
   def test_short_can_be_nothing
