@@ -1,3 +1,7 @@
+== 1.15 / 2009-09-30
+* Don't raise an exception when out of short arguments (thanks to Rafael
+  Sevilla for pointing out how dumb this behavior was).
+
 == 1.14 / 2009-06-19
 * Make :multi arguments default to [], not nil, when not set on the commandline.
 * Minor commenting and error message improvements

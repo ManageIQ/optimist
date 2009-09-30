@@ -7,7 +7,7 @@ require 'date'
 
 module Trollop
 
-VERSION = "1.14"
+VERSION = "1.15"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
