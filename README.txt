@@ -4,7 +4,7 @@ by William Morgan (http://masanjin.net/)
 
 Main page: http://trollop.rubyforge.org
 
-Release announcements and comments: http://all-thing.net/search/label/trollop
+Release announcements and comments: http://all-thing.net/label/trollop
 
 Documentation quickstart: See Trollop::options (for some reason rdoc isn't
 linking that; it's in the top right of the screen if you're browsing online)
