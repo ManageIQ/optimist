@@ -349,7 +349,7 @@ class Parser
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option '#{sym}' must be specified" unless given_args.include? sym
+      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
     end
 
     ## parse parameters
