@@ -1,7 +1,7 @@
 ## lib/trollop.rb -- trollop command-line processing library
 ## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
 ## Copyright:: Copyright 2007 William Morgan
-## License::   GNU GPL version 2
+## License::   the same terms as ruby itself
 
 require 'date'
 
