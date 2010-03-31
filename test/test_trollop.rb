@@ -97,6 +97,8 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal 2.41, opts["argsf"]
     assert_nothing_raised { opts = @p.parse(%w(--argsf 2)) }
     assert_equal 2, opts["argsf"]
+    assert_nothing_raised { opts = @p.parse(%w(--argsf 1.0e-2)) }
+    assert_equal 1.0e-2, opts["argsf"]
     assert_raise(CommandlineError) { @p.parse(%w(--argsf hello)) }
 
     # single arg: date
