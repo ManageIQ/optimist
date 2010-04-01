@@ -82,7 +82,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # single arg: int
     assert_nothing_raised { @p.opt "argsi", "desc", :default => 0 }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal 0, opts["argsi"]
     assert_nothing_raised { opts = @p.parse(%w(--argsi 4)) }
     assert_equal 4, opts["argsi"]
@@ -91,7 +91,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # single arg: float
     assert_nothing_raised { @p.opt "argsf", "desc", :default => 3.14 }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal 3.14, opts["argsf"]
     assert_nothing_raised { opts = @p.parse(%w(--argsf 2.41)) }
     assert_equal 2.41, opts["argsf"]
@@ -104,7 +104,7 @@ class Trollop < ::Test::Unit::TestCase
     # single arg: date
     date = Date.today
     assert_nothing_raised { @p.opt "argsd", "desc", :default => date }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal Date.today, opts["argsd"]
     assert_nothing_raised { opts = @p.parse(['--argsd', 'Jan 4, 2007']) }
     assert_equal Date.civil(2007, 1, 4), opts["argsd"]
@@ -112,7 +112,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # single arg: string
     assert_nothing_raised { @p.opt "argss", "desc", :default => "foobar" }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal "foobar", opts["argss"]
     assert_nothing_raised { opts = @p.parse(%w(--argss 2.41)) }
     assert_equal "2.41", opts["argss"]
@@ -121,7 +121,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # multi args: ints
     assert_nothing_raised { @p.opt "argmi", "desc", :default => [3, 5] }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal [3, 5], opts["argmi"]
     assert_nothing_raised { opts = @p.parse(%w(--argmi 4)) }
     assert_equal [4], opts["argmi"]
@@ -130,7 +130,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # multi args: floats
     assert_nothing_raised { @p.opt "argmf", "desc", :default => [3.34, 5.21] }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal [3.34, 5.21], opts["argmf"]
     assert_nothing_raised { opts = @p.parse(%w(--argmf 2)) }
     assert_equal [2], opts["argmf"]
@@ -141,7 +141,7 @@ class Trollop < ::Test::Unit::TestCase
     # multi args: dates
     dates = [Date.today, Date.civil(2007, 1, 4)]
     assert_nothing_raised { @p.opt "argmd", "desc", :default => dates }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal dates, opts["argmd"]
     assert_nothing_raised { opts = @p.parse(['--argmd', 'Jan 4, 2007']) }
     assert_equal [Date.civil(2007, 1, 4)], opts["argmd"]
@@ -149,7 +149,7 @@ class Trollop < ::Test::Unit::TestCase
 
     # multi args: strings
     assert_nothing_raised { @p.opt "argmst", "desc", :default => %w(hello world) }
-    assert_nothing_raised { opts = @p.parse("--") }
+    assert_nothing_raised { opts = @p.parse(%w(--)) }
     assert_equal %w(hello world), opts["argmst"]
     assert_nothing_raised { opts = @p.parse(%w(--argmst 3.4)) }
     assert_equal ["3.4"], opts["argmst"]
@@ -1041,7 +1041,7 @@ EOM
 
   def test_multi_args_default_to_empty_array
     @p.opt :arg1, "arg", :multi => true
-    opts = @p.parse ""
+    opts = @p.parse []
     assert_equal [], opts[:arg1]
   end
 end

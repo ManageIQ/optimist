@@ -277,7 +277,10 @@ class Parser
     @stop_on_unknown = true
   end
 
-  ## Parses the commandline. Typically called by Trollop::options.
+  ## Parses the commandline. Typically called by Trollop::options,
+  ## but you can call it directly if you need more control.
+  ##
+  ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
   def parse cmdline=ARGV
     vals = {}
     required = {}
@@ -388,6 +391,11 @@ class Parser
       end
       # else: multiple options, with multiple parameters
     end
+
+    ## modify input in place with only those
+    ## arguments we didn't process
+    cmdline.clear
+    @leftovers.each { |l| cmdline << l }
 
     ## allow openstruct-style accessors
     class << vals
@@ -686,13 +694,10 @@ end
 ##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true, :num_limbs=>4, :help=>false, :num_thumbs=>nil}
 ##
 ## See more examples at http://trollop.rubyforge.org.
-def options args = ARGV, *a, &b
+def options args=ARGV, *a, &b
   @p = Parser.new(*a, &b)
   begin
-    vals = @p.parse args
-    args.clear
-    @p.leftovers.each { |l| args << l }
-    vals
+    @p.parse args
   rescue CommandlineError => e
     $stderr.puts "Error: #{e.message}."
     $stderr.puts "Try --help for help."
