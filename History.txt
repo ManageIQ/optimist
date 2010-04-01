@@ -1,3 +1,8 @@
+== 1.16 / 2010-04-01
+* Add Trollop::with_standard_exception_handling method for easing the use of Parser directly.
+* Handle scientific notation in float arguments, thanks to Will Fitzgerald.
+* Drop hoe dependency.
+
 == 1.15 / 2009-09-30
 * Don't raise an exception when out of short arguments (thanks to Rafael
   Sevilla for pointing out how dumb this behavior was).
