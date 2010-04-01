@@ -32,9 +32,10 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## #opt, #banner and #version, #depends, and #conflicts methods will
 ## typically be called.
 ##
-## If it's necessary to instantiate this class (for more complicated
-## argument-parsing situations), be sure to call #parse to actually
-## produce the output hash.
+## If you want to instantiate this class yourself (for more complicated
+## argument-parsing logic), call #parse to actually produce the output hash,
+## and consider calling it from within
+## Trollop::with_standard_exception_handling.
 class Parser
 
   ## The set of values that indicate a flag option when passed as the
@@ -661,11 +662,10 @@ private
   end
 end
 
-## The top-level entry method into Trollop. Creates a Parser object,
-## passes the block to it, then parses +args+ with it, handling any
-## errors or requests for help or version information appropriately (and
-## then exiting). Modifies +args+ in place. Returns a hash of option
-## values.
+## The easy, syntactic-sugary entry method into Trollop. Creates a Parser,
+## passes the block to it, then parses +args+ with it, handling any errors or
+## requests for help or version information appropriately (and then exiting).
+## Modifies +args+ in place. Returns a hash of option values.
 ##
 ## The block passed in should contain zero or more calls to +opt+
 ## (Parser#opt), zero or more calls to +text+ (Parser#text), and
@@ -695,18 +695,46 @@ end
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
-  @p = Parser.new(*a, &b)
+  p = Parser.new(*a, &b)
+  with_standard_exception_handling(p) { p.parse args }
+end
+
+## If Trollop::options doesn't do quite what you want, you can create a Parser
+## object and call Parser#parse on it. That method will throw CommandlineError,
+## HelpNeeded and VersionNeeded exceptions when necessary; if you want to
+## have these handled for you in the standard manner (e.g. show the help
+## and then exit upon an HelpNeeded exception), call your code from within
+## a block passed to this method.
+##
+## Note that this method will call System#exit after handling an exception!
+##
+## Usage example:
+##
+##   require 'trollop'
+##   p = Trollop::Parser.new do
+##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
+##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
+##   end
+##
+##   opts = Trollop::with_standard_exception_handling p do
+##     p.parse ARGV
+##     raise Trollop::HelpNeeded if ARGV.empty? # show help screen
+##   end
+##
+## Requires passing in the parser object.
+
+def with_standard_exception_handling parser
   begin
-    @p.parse args
+    yield
   rescue CommandlineError => e
     $stderr.puts "Error: #{e.message}."
     $stderr.puts "Try --help for help."
     exit(-1)
   rescue HelpNeeded
-    @p.educate
+    parser.educate
     exit
   rescue VersionNeeded
-    puts @p.version
+    puts parser.version
     exit
   end
 end
@@ -739,6 +767,6 @@ def die arg, msg=nil
   exit(-1)
 end
 
-module_function :options, :die
+module_function :options, :die, :with_standard_exception_handling
 
 end # module
