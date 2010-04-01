@@ -2,7 +2,9 @@
 <head>
 <title>Trollop</title>
 <style type="text/css">
-.ruby { background: #111122; padding: 10px; color: #228822; width: 70em; }
+body { width: 800px; margin-left: auto; margin-right: auto; }
+code { font-size: 14px; }
+.ruby { background: #111122; padding: 10px; color: #228822; width: 800px; }
 .ruby .normal { color: #fff; }
 .ruby .comment { color: #99f }
 .ruby .keyword { color: #A44; font-weight: bold; }
@@ -61,16 +63,16 @@ don't specify.</p>
 
 <h2>Examples</h2>
 <h3>Simple</h3>
-<pre class="ruby"><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<pre class="ruby"><code><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
 <span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
-  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>                     <span class="comment"># a flag --monkey, defaulting to false</span>
-  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>       <span class="comment"># a flag --goat, defaulting to true</span>
-  <span class="ident">opt</span> <span class="symbol">:num_limbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of limbs</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">4</span>   <span class="comment"># an integer --num-limbs &lt;i&gt;, defaulting to 4</span>
-  <span class="ident">opt</span> <span class="symbol">:num_thumbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of thumbs</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="symbol">:int</span> <span class="comment"># an integer --num-thumbs &lt;i&gt;, defaulting to nil</span>
+  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>                     <span class="comment"># flag --monkey, default false</span>
+  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>       <span class="comment"># flag --goat, default true</span>
+  <span class="ident">opt</span> <span class="symbol">:num_limbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of limbs</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">4</span>   <span class="comment"># integer --num-limbs &lt;i&gt;, default to 4</span>
+  <span class="ident">opt</span> <span class="symbol">:num_thumbs</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of thumbs</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="symbol">:int</span> <span class="comment"># integer --num-thumbs &lt;i&gt;, default nil</span>
 <span class="keyword">end</span>
 
 <span class="ident">p</span> <span class="ident">opts</span> <span class="comment"># a hash: { :monkey =&gt; false, :goat =&gt; true, :num_limbs =&gt; 4, :num_thumbs =&gt; nil }</span>
-</pre>
+</code></pre>
 
 <p>
 <ul>
@@ -82,8 +84,7 @@ don't specify.</p>
 </p>
 
 <h3>Medium</h3>
-<pre class="ruby">
-<span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<pre class="ruby"><code><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
 <span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">options</span> <span class="keyword">do</span>
   <span class="ident">version</span> <span class="punct">&quot;</span><span class="string">test 1.2.3 (c) 2008 William Morgan</span><span class="punct">&quot;</span>
   <span class="ident">banner</span> <span class="punct">&lt;&lt;-</span><span class="constant">EOS</span><span class="string">
@@ -95,13 +96,14 @@ where [options] are:
 </span><span class="constant">EOS</span>
 
   <span class="ident">opt</span> <span class="symbol">:ignore</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Ignore incorrect values</span><span class="punct">&quot;</span>
-  <span class="ident">opt</span> <span class="symbol">:file</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Extra data filename to read in, with a very long option description like this one</span><span class="punct">&quot;,</span> <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="constant">String</span>
+  <span class="ident">opt</span> <span class="symbol">:file</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Extra data filename to read in, with a very long option description like this one</span><span class="punct">&quot;,</span>
+        <span class="symbol">:type</span> <span class="punct">=&gt;</span> <span class="constant">String</span>
   <span class="ident">opt</span> <span class="symbol">:volume</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Volume level</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">3.0</span>
   <span class="ident">opt</span> <span class="symbol">:iters</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Number of iterations</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="number">5</span>
 <span class="keyword">end</span>
 <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">die</span> <span class="symbol">:volume</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">must be non-negative</span><span class="punct">&quot;</span> <span class="keyword">if</span> <span class="ident">opts</span><span class="punct">[</span><span class="symbol">:volume</span><span class="punct">]</span> <span class="punct">&lt;</span> <span class="number">0</span>
 <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">die</span> <span class="symbol">:file</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">must exist</span><span class="punct">&quot;</span> <span class="keyword">unless</span> <span class="constant">File</span><span class="punct">.</span><span class="ident">exist?</span><span class="punct">(</span><span class="ident">opts</span><span class="punct">[</span><span class="symbol">:file</span><span class="punct">])</span> <span class="keyword">if</span> <span class="ident">opts</span><span class="punct">[</span><span class="symbol">:file</span><span class="punct">]</span>
-</pre>
+</code></pre>
 
 <p>
 <ul>
@@ -111,7 +113,7 @@ where [options] are:
 </p>
 
 <h3>Sub-commands, a la SVN and Git</h3>
-<pre class="ruby"><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<pre class="ruby"><code><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
 
 <span class="comment">## Here's a program called &quot;magic&quot;. We want this behavior:</span>
 <span class="comment">##</span>
@@ -154,9 +156,21 @@ where [options] are:
 <span class="ident">puts</span> <span class="punct">&quot;</span><span class="string">Global options: <span class="expr">#{global_opts.inspect}</span></span><span class="punct">&quot;</span>
 <span class="ident">puts</span> <span class="punct">&quot;</span><span class="string">Subcommand: <span class="expr">#{cmd.inspect}</span></span><span class="punct">&quot;</span>
 <span class="ident">puts</span> <span class="punct">&quot;</span><span class="string">Subcommand options: <span class="expr">#{cmd_opts.inspect}</span></span><span class="punct">&quot;</span>
-<span class="ident">puts</span> <span class="punct">&quot;</span><span class="string">Remaining arguments: <span class="expr">#{ARGV.inspect}</span></span><span class="punct">&quot;</span>
+<span class="ident">puts</span> <span class="punct">&quot;</span><span class="string">Remaining arguments: <span class="expr">#{ARGV.inspect}</span></span><span class="punct">&quot;</span></code></pre>
 
-</pre>
+<h3>Specialized parsing behavior</h3>
+<p>Sometimes calling <code>Trollop::options</code> does too much for us. In this example, we create the parser without using <code>Trollop::options</code>, and force it to display the help message (and exit) if the user doesn't supply any arguments. The <code>with_standard_exception_handling</code> method takes care of dealing with the <code>VersionNeeded</code>, <code>HelpNeeded</code> and <code>CommandlineError</code> exceptions that <code>Parser#parse</code> throws, but we could handle those manually as well.</p>
+
+<pre class="ruby"><code><span class="ident">require</span> <span class="punct">'</span><span class="string">trollop</span><span class="punct">'</span>
+<span class="ident">p</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="constant">Parser</span><span class="punct">.</span><span class="ident">new</span> <span class="keyword">do</span>
+  <span class="ident">opt</span> <span class="symbol">:monkey</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use monkey mode</span><span class="punct">&quot;</span>                     <span class="comment"># a flag --monkey, defaulting to false</span>
+  <span class="ident">opt</span> <span class="symbol">:goat</span><span class="punct">,</span> <span class="punct">&quot;</span><span class="string">Use goat mode</span><span class="punct">&quot;,</span> <span class="symbol">:default</span> <span class="punct">=&gt;</span> <span class="constant">true</span>       <span class="comment"># a flag --goat, defaulting to true</span>
+<span class="keyword">end</span>
+
+<span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">with_standard_exception_handling</span> <span class="ident">p</span> <span class="keyword">do</span>
+  <span class="ident">p</span><span class="punct">.</span><span class="ident">parse</span> <span class="constant">ARGV</span>
+  <span class="keyword">raise</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="constant">HelpNeeded</span> <span class="keyword">if</span> <span class="constant">ARGV</span><span class="punct">.</span><span class="ident">empty?</span> <span class="comment"># show help screen</span>
+<span class="keyword">end</span></code></pre>
 
 <h2> Contributors </h2>
 
@@ -165,6 +179,7 @@ where [options] are:
 <li>Tuomas Kareinen &lt;tkareine at the gmail dot coms&gt;</li>
 <li>Ohad Lutzky &lt;ohad at the lutzky dot nets&gt;</li>
 <li>Erik Ostrom &lt;erik at the echographia dot coms&gt;</li>
+<li>Will Fitzgerald &lt;will.fitzgerald at the pobox dot coms&gt;</li>
 </ul>
 </p>
 
