@@ -1079,6 +1079,15 @@ EOM
     end
     assert opts[:potato]
   end
+
+  def test_simple_interface_handles_die
+    ARGV.clear
+    ARGV.unshift "--potato"
+    opts = ::Trollop::options do
+      opt :potato
+    end
+    assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
+  end
 end
 
 end
