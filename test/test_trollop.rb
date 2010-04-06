@@ -1044,6 +1044,41 @@ EOM
     opts = @p.parse []
     assert_equal [], opts[:arg1]
   end
+
+  def test_simple_interface_handles_help
+    ARGV.clear
+    ARGV.unshift "-h"
+    assert_raises(SystemExit) do
+      opts = ::Trollop::options do
+        opt :potato
+      end
+      raise "broken"
+    end
+  end
+
+  def test_simple_interface_handles_version
+    ARGV.clear
+    ARGV.unshift "-v"
+    assert_raises(SystemExit) do
+      opts = ::Trollop::options do
+        version "1.2"
+        opt :potato
+      end
+      raise "broken"
+    end
+  end
+
+  def test_simple_interface_handles_regular_usage
+    ARGV.clear
+    ARGV.unshift "--potato"
+    opts = nil
+    assert_nothing_raised do
+      opts = ::Trollop::options do
+        opt :potato
+      end
+    end
+    assert opts[:potato]
+  end
 end
 
 end

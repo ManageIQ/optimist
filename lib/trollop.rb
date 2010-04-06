@@ -707,7 +707,7 @@ end
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
   @last_parser = Parser.new(*a, &b)
-  with_standard_exception_handling(p) { @last_parser.parse args }
+  with_standard_exception_handling(@last_parser) { @last_parser.parse args }
 end
 
 ## If Trollop::options doesn't do quite what you want, you can create a Parser
