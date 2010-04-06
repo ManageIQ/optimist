@@ -1,3 +1,6 @@
+== 1.16.2 / 2010-04-06
+* Bugfix in Trollop::options. Thanks to Brian C. Thomas for pointing it out.
+
 == 1.16.1 / 2010-04-05
 * Bugfix in Trollop::die method introduced in last release.
 
