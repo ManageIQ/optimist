@@ -6,10 +6,8 @@ Main page: http://trollop.rubyforge.org
 
 Release announcements and comments: http://all-thing.net/label/trollop
 
-Documentation quickstart: See Trollop::options (for some reason rdoc isn't
-linking that; it's in the top right of the screen if you're browsing online)
-and then Trollop::Parser#opt. Also see the examples at
-http://trollop.rubyforge.org/.
+Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
+Also see the examples at http://trollop.rubyforge.org/.
 
 == DESCRIPTION
 
@@ -35,6 +33,18 @@ subcompletion, and sensible defaults for everything you don't specify.
 == INSTALL
 
 * gem install trollop
+
+== SYNOPSIS
+
+  require 'trollop'
+  opts = Trollop::options do
+    opt :monkey, "Use monkey mode"                     # flag --monkey, default false
+    opt :goat, "Use goat mode", :default => true       # flag --goat, default true
+    opt :num_limbs, "Number of limbs", :default => 4   # integer --num-limbs <i>, default to 4
+    opt :num_thumbs, "Number of thumbs", :type => :int # integer --num-thumbs <i>, default nil
+  end
+
+  p opts # a hash: { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
 
 == LICENSE
 
