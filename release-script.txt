@@ -8,8 +8,8 @@ vi lib/trollop.rb # and bump version number
 git commit -a -m "bump to..."
 git tag release-<releasename>
 rake gem
-rake tarball
 gem push pkg/<gem name>
 git push
 git push --tags
+rake upload_docs
 rake upload_webpage
