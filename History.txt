@@ -1,3 +1,6 @@
+== 1.16.1 / 2010-04-05
+* Bugfix in Trollop::die method introduced in last release.
+
 == 1.16 / 2010-04-01
 * Add Trollop::with_standard_exception_handling method for easing the use of Parser directly.
 * Handle scientific notation in float arguments, thanks to Will Fitzgerald.
