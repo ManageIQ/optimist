@@ -509,6 +509,17 @@ class Parser
     end
   end
 
+  ## The per-parser version of Trollop::die (see that for documentation).
+  def die arg, msg
+    if msg
+      $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
+    else
+      $stderr.puts "Error: #{arg}."
+    end
+    $stderr.puts "Try --help for help."
+    exit(-1)
+  end
+
 private
 
   ## yield successive arg, parameter pairs
@@ -695,8 +706,8 @@ end
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
-  p = Parser.new(*a, &b)
-  with_standard_exception_handling(p) { p.parse args }
+  @last_parser = Parser.new(*a, &b)
+  with_standard_exception_handling(p) { @last_parser.parse args }
 end
 
 ## If Trollop::options doesn't do quite what you want, you can create a Parser
@@ -758,13 +769,11 @@ end
 ##
 ##   Trollop::die "need at least one filename" if ARGV.empty?
 def die arg, msg=nil
-  if msg
-    $stderr.puts "Error: argument --#{@p.specs[arg][:long]} #{msg}."
+  if @last_parser
+    @last_parser.die arg, msg
   else
-    $stderr.puts "Error: #{arg}."
+    raise ArgumentError, "Trollop::die can only be called after Trollop::options"
   end
-  $stderr.puts "Try --help for help."
-  exit(-1)
 end
 
 module_function :options, :die, :with_standard_exception_handling
