@@ -168,8 +168,9 @@ where [options] are:
 <span class="keyword">end</span>
 
 <span class="ident">opts</span> <span class="punct">=</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="ident">with_standard_exception_handling</span> <span class="ident">p</span> <span class="keyword">do</span>
-  <span class="ident">p</span><span class="punct">.</span><span class="ident">parse</span> <span class="constant">ARGV</span>
+  <span class="ident">o</span> <span class="punct">=</span> <span class="ident">p</span><span class="punct">.</span><span class="ident">parse</span> <span class="constant">ARGV</span>
   <span class="keyword">raise</span> <span class="constant">Trollop</span><span class="punct">::</span><span class="constant">HelpNeeded</span> <span class="keyword">if</span> <span class="constant">ARGV</span><span class="punct">.</span><span class="ident">empty?</span> <span class="comment"># show help screen</span>
+  <span class="ident">o</span>
 <span class="keyword">end</span></code></pre>
 
 <h2> Contributors </h2>

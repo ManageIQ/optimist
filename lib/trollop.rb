@@ -728,8 +728,9 @@ end
 ##   end
 ##
 ##   opts = Trollop::with_standard_exception_handling p do
-##     p.parse ARGV
+##     o = p.parse ARGV
 ##     raise Trollop::HelpNeeded if ARGV.empty? # show help screen
+##     o
 ##   end
 ##
 ## Requires passing in the parser object.
