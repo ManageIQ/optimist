@@ -14,6 +14,11 @@ class Trollop < ::Test::Unit::TestCase
     @p = Parser.new
   end
 
+  def test_die_without_options_ever_run
+    ::Trollop.send(:instance_variable_set, "@last_parser", nil)
+    assert_raise(ArgumentError) { ::Trollop.die 'hello' }
+  end
+
   def test_unknown_arguments
     assert_raise(CommandlineError) { @p.parse(%w(--arg)) }
     @p.opt "arg"
@@ -76,6 +81,8 @@ class Trollop < ::Test::Unit::TestCase
   ## type is correctly derived from :default
   def test_type_correctly_derived_from_default
     assert_raise(ArgumentError) { @p.opt "badarg", "desc", :default => [] }
+    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
+    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", :default => Hash.new }
 
     opts = nil
 
@@ -738,6 +745,44 @@ EOM
     assert help[2] =~ /aaa/
   end
 
+  def test_help_includes_option_types
+    @p.opt :arg1, 'arg', :type => :int
+    @p.opt :arg2, 'arg', :type => :ints
+    @p.opt :arg3, 'arg', :type => :string
+    @p.opt :arg4, 'arg', :type => :strings
+    @p.opt :arg5, 'arg', :type => :float
+    @p.opt :arg6, 'arg', :type => :floats
+    @p.opt :arg7, 'arg', :type => :io
+    @p.opt :arg8, 'arg', :type => :ios
+    @p.opt :arg9, 'arg', :type => :date
+    @p.opt :arg10, 'arg', :type => :dates
+    sio = StringIO.new "w"
+    @p.educate sio
+
+    help = sio.string.split "\n"
+    assert help[1] =~ /<i>/
+    assert help[2] =~ /<i\+>/
+    assert help[3] =~ /<s>/
+    assert help[4] =~ /<s\+>/
+    assert help[5] =~ /<f>/
+    assert help[6] =~ /<f\+>/
+    assert help[7] =~ /<filename\/uri>/
+    assert help[8] =~ /<filename\/uri\+>/
+    assert help[9] =~ /<date>/
+    assert help[10] =~ /<date\+>/
+  end
+
+  def test_help_has_grammatical_default_text
+    @p.opt :arg1, 'description with period.', :default => 'hello'
+    @p.opt :arg2, 'description without period', :default => 'world'
+    sio = StringIO.new 'w'
+    @p.educate sio
+
+    help = sio.string.split "\n"
+    assert help[1] =~ /Default/
+    assert help[2] =~ /default/
+  end
+
   def test_version_and_help_short_args_can_be_overridden
     @p.opt :verbose, "desc", :short => "-v"
     @p.opt :hello, "desc", :short => "-h"
@@ -1004,6 +1049,31 @@ EOM
     end
   end
 
+  def test_date_arg_type
+    temp = Date.new
+    @p.opt :arg, 'desc', :type => :date
+    @p.opt :arg2, 'desc', :type => Date
+    @p.opt :arg3, 'desc', :default => temp
+
+    opts = nil
+    assert_nothing_raised { opts = @p.parse }
+    assert_equal temp, opts[:arg3]
+
+    assert_nothing_raised { opts = @p.parse %w(--arg 5/1/2010) }
+    assert_kind_of Date, opts[:arg]
+    assert_equal Date.new(2010, 5, 1), opts[:arg]
+
+    assert_nothing_raised { opts = @p.parse %w(--arg2 5/1/2010) }
+    assert_kind_of Date, opts[:arg2]
+    assert_equal Date.new(2010, 5, 1), opts[:arg2]
+  end
+
+  def test_unknown_arg_class_type
+    assert_raise ArgumentError do
+      @p.opt :arg, 'desc', :type => Hash
+    end
+  end
+
   def test_io_arg_type
     @p.opt :arg, "desc", :type => :io
     @p.opt :arg2, "desc", :type => IO
@@ -1177,12 +1247,36 @@ EOM
   end
 
   def test_simple_interface_handles_die
+    old_stderr, $stderr = $stderr, StringIO.new('w')
     ARGV.clear
     ARGV.unshift "--potato"
     ::Trollop::options do
       opt :potato
     end
     assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
+  ensure
+    $stderr = old_stderr
+  end
+
+  def test_simple_interface_handles_die_without_message
+    old_stderr, $stderr = $stderr, StringIO.new('w')
+    ARGV.clear
+    ARGV.unshift "--potato"
+    opts = ::Trollop::options do
+      opt :potato
+    end
+    assert_raises(SystemExit) { ::Trollop::die :potato }
+    assert $stderr.string =~ /Error:/
+  ensure
+    $stderr = old_stderr
+  end
+
+  def test_with_standard_exception_handling
+    assert_raise(SystemExit) do
+      ::Trollop.with_standard_exception_handling(@p) do
+        raise ::Trollop::CommandlineError.new('cl error')
+      end
+    end
   end
 end
 
