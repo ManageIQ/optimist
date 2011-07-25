@@ -776,6 +776,27 @@ def die arg, msg=nil
   end
 end
 
-module_function :options, :die, :with_standard_exception_handling
+## Displays the help message and dies. Example:
+##
+##   options do
+##     opt :volume, :default => 0.0
+##     banner <<-EOS
+##   Usage:
+##          #$0 [options] <name>
+##   where [options] are:
+##   EOS
+##   end
+##
+##   Trollop::educate if ARGV.empty?
+def educate
+  if @last_parser
+    @last_parser.educate
+    exit
+  else
+    raise ArgumentError, "Trollop::educate can only be called after Trollop::options"
+  end
+end
+
+module_function :options, :die, :educate, :with_standard_exception_handling
 
 end # module
