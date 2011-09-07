@@ -4,6 +4,7 @@
 # trollop is licensed under the MIT license.
 
 require 'date'
+require 'pathname'
 
 module Trollop
   # note: this is duplicated in gemspec
@@ -56,12 +57,13 @@ class Parser
   ##
   ## A value of +io+ corresponds to a readable IO resource, including
   ## a filename, URI, or the strings 'stdin' or '-'.
-  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date]
+  ## A value of +pathname+ corresponds to a path which may or may not yet exist
+  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :pathname, :date]
 
   ## The set of values that indicate a multiple-parameter option (i.e., that
   ## takes multiple space-separated values on the commandline) when passed as
   ## the +:type+ parameter of #opt.
-  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates]
+  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :pathnames, :dates]
 
   ## The complete set of legal values for the +:type+ parameter of #opt.
   TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
@@ -157,6 +159,7 @@ class Parser
         when 'Float'       then :float
         when 'IO'          then :io
         when 'Date'        then :date
+        when 'Pathname'    then :pathname
         else
           raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
         end
@@ -184,6 +187,7 @@ class Parser
            FalseClass  then :flag
       when String      then :string
       when IO          then :io
+      when Pathname    then :pathname
       when Date        then :date
       when Array
         if opts[:default].empty?
@@ -428,6 +432,8 @@ class Parser
         vals[sym] = params.map { |pg| pg.map(&:to_s) }
       when :io, :ios
         vals[sym] = params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
+      when :pathname, :pathnames
+        vals[sym] = params.map { |pg| pg.map { |p| parse_pathname_parameter p, arg } }
       when :date, :dates
         vals[sym] = params.map { |pg| pg.map { |p| parse_date_parameter p, arg } }
       end
@@ -491,6 +497,8 @@ class Parser
         when :floats  then "=<f+>"
         when :io      then "=<filename/uri>"
         when :ios     then "=<filename/uri+>"
+        when :pathname then "=<pathname>"
+        when :pathnames then "=<pathname+>"
         when :date    then "=<date>"
         when :dates   then "=<date+>"
         end +
@@ -680,6 +688,12 @@ private
         raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
       end
     end
+  end
+
+  def parse_pathname_parameter(param, arg)
+    Pathname.new(param)
+  rescue ArgumentError
+    raise CommandlineError, "pathname for option '#{arg}' is not valid"
   end
 
   def collect_argument_parameters(args, start_at)

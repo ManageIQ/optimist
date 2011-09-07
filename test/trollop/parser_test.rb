@@ -941,6 +941,20 @@ Options:
     assert_raises(CommandlineError) { opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) }
   end
 
+  def test_pathname_arg_type
+    @p.opt :arg, "desc", :type => :pathname
+    @p.opt :arg2, "desc", :type => Pathname
+    @p.opt :arg3, "desc", :default => Pathname.new('.')
+
+    opts = nil
+    assert_nothing_raised { opts = @p.parse() }
+    assert_equal Pathname.new('.'), opts[:arg3]
+
+    assert_nothing_raised { opts = @p.parse %w(--arg /tmp) }
+    assert_kind_of Pathname , opts[:arg]
+    assert_equal Pathname.new('/tmp'), opts[:arg]
+  end
+
   def test_openstruct_style_access
     @p.opt "arg1", "desc", :type => :int
     @p.opt :arg2, "desc", :type => :int
