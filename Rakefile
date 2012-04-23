@@ -6,7 +6,7 @@ require 'rake/gempackagetask.rb'
 spec = Gem::Specification.new do |s|
  s.name = "trollop"
  s.version = Trollop::VERSION
- s.date = Time.now.to_s
+ s.date = Time.now
  s.email = "wmorgan-trollop@masanjin.net"
  s.authors = ["William Morgan"]
  s.summary = "Trollop is a commandline option parser for Ruby that just gets out of your way."
@@ -35,7 +35,7 @@ task :upload_docs => :rdoc do |t|
 end
 
 task :test do
-  sh %!ruby -w -Ilib:ext:bin:test -e 'require "rubygems"; require "test/unit"; require "test/test_trollop.rb"'!
+  sh %!ruby -w -Ilib:ext:bin:test -e 'require "rubygems"; require "test/unit"; require "./test/test_trollop.rb"'!
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
