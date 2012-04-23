@@ -679,27 +679,27 @@ EOM
     assert_nothing_raised { @p.conflicts :one, :two }
     assert_nothing_raised { @p.parse %w(--one) }
     assert_nothing_raised { @p.parse %w(--two) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--one --two) }
+    assert_raises(CommandlineError) { @p.parse %w(--one --two) }
 
     @p.opt :hello
     @p.opt :yellow
     @p.opt :mellow
     @p.opt :jello
     @p.conflicts :hello, :yellow, :mellow, :jello
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --yellow --mellow --jello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --mellow --jello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --yellow --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
 
-    assert_nothing_raised { opts = @p.parse %w(--hello) }
-    assert_nothing_raised { opts = @p.parse %w(--jello) }
-    assert_nothing_raised { opts = @p.parse %w(--yellow) }
-    assert_nothing_raised { opts = @p.parse %w(--mellow) }
+    assert_nothing_raised { @p.parse %w(--hello) }
+    assert_nothing_raised { @p.parse %w(--jello) }
+    assert_nothing_raised { @p.parse %w(--yellow) }
+    assert_nothing_raised { @p.parse %w(--mellow) }
 
-    assert_nothing_raised { opts = @p.parse %w(--mellow --one) }
-    assert_nothing_raised { opts = @p.parse %w(--mellow --two) }
+    assert_nothing_raised { @p.parse %w(--mellow --one) }
+    assert_nothing_raised { @p.parse %w(--mellow --two) }
 
-    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--one --mellow --two --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--one --mellow --two --jello) }
   end
 
   def test_conflict_error_messages
@@ -721,7 +721,7 @@ EOM
     assert_raises(ArgumentError) { @p.depends :one, :two }
     @p.opt :two
     assert_nothing_raised { @p.depends :one, :two }
-    assert_nothing_raised { opts = @p.parse %w(--one --two) }
+    assert_nothing_raised { @p.parse %w(--one --two) }
     assert_raises(CommandlineError) { @p.parse %w(--one) }
     assert_raises(CommandlineError) { @p.parse %w(--two) }
 
@@ -730,17 +730,17 @@ EOM
     @p.opt :mellow
     @p.opt :jello
     @p.depends :hello, :yellow, :mellow, :jello
-    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --mellow --jello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello --jello) }
+    assert_nothing_raised { @p.parse %w(--hello --yellow --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
 
-    assert_raises(CommandlineError) { opts = @p.parse %w(--hello) }
-    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello) }
+    assert_raises(CommandlineError) { @p.parse %w(--mellow) }
 
-    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello --one --two) }
-    assert_nothing_raised { opts = @p.parse %w(--hello --yellow --mellow --jello --one --two a b c) }
+    assert_nothing_raised { @p.parse %w(--hello --yellow --mellow --jello --one --two) }
+    assert_nothing_raised { @p.parse %w(--hello --yellow --mellow --jello --one --two a b c) }
 
-    assert_raises(CommandlineError) { opts = @p.parse %w(--mellow --two --jello --one) }
+    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello --one) }
   end
 
   def test_depend_error_messages
@@ -1049,7 +1049,7 @@ EOM
     ARGV.clear
     ARGV.unshift "-h"
     assert_raises(SystemExit) do
-      opts = ::Trollop::options do
+      ::Trollop::options do
         opt :potato
       end
       raise "broken"
@@ -1060,7 +1060,7 @@ EOM
     ARGV.clear
     ARGV.unshift "-v"
     assert_raises(SystemExit) do
-      opts = ::Trollop::options do
+      ::Trollop::options do
         version "1.2"
         opt :potato
       end
@@ -1083,7 +1083,7 @@ EOM
   def test_simple_interface_handles_die
     ARGV.clear
     ARGV.unshift "--potato"
-    opts = ::Trollop::options do
+    ::Trollop::options do
       opt :potato
     end
     assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
