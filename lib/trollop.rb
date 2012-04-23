@@ -295,7 +295,8 @@ class Parser
       vals[sym] = [] if opts[:multi] && !opts[:default] # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options
+    resolve_default_short_options!
+    rewrite_long_true_flags!
 
     ## resolve symbols
     given_args = {}
@@ -627,7 +628,15 @@ private
     params
   end
 
-  def resolve_default_short_options
+  def rewrite_long_true_flags!
+    @specs.each do |name, spec|
+      negative = "no-" + spec[:long]
+      spec[:long] = negative if spec[:type] == :flag && spec[:default] == true
+      @long[negative] = name
+    end
+  end
+
+  def resolve_default_short_options!
     @order.each do |type, name|
       next unless type == :opt
       opts = @specs[name]
