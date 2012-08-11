@@ -4,27 +4,26 @@ by William Morgan (http://masanjin.net/)
 
 Main page: http://trollop.rubyforge.org
 
-Release announcements and comments: http://all-thing.net/label/trollop
+Release announcements and comments: http://masanjin.net/blog/label/trollop/.
 
 Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
 Also see the examples at http://trollop.rubyforge.org/.
 
 == DESCRIPTION
 
-Trollop is a commandline option parser for Ruby that just gets out of your
-way. One line of code per option is all you need to write. For that, you get a
-nice automatically-generated help page, robust option parsing, command
-subcompletion, and sensible defaults for everything you don't specify.
+Trollop is a commandline option parser for Ruby that just gets out of your way.
+One line of code per option is all you need to write. For that, you get a nice
+automatically-generated help page, robust option parsing, and sensible defaults
+for everything you don't specify.
 
-== FEATURES/PROBLEMS
+== FEATURES
 
 - Dirt-simple usage.
+- Single file. Throw it in lib/ if you don't want to make it a Rubygem dependency.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
-- Support for long options, short options, short option bundling, and
-  automatic type validation and conversion.
-- Support for subcommands.
+- Support for long options, short options, subcommands, and automatic type validation and
+  conversion.
 - Automatic help message generation, wrapped to current screen width.
-- Lots of unit tests.
 
 == REQUIREMENTS
 
@@ -38,15 +37,14 @@ subcompletion, and sensible defaults for everything you don't specify.
 
   require 'trollop'
   opts = Trollop::options do
-    opt :monkey, "Use monkey mode"                     # flag --monkey, default false
-    opt :goat, "Use goat mode", :default => true       # flag --goat, default true
-    opt :num_limbs, "Number of limbs", :default => 4   # integer --num-limbs <i>, default to 4
-    opt :num_thumbs, "Number of thumbs", :type => :int # integer --num-thumbs <i>, default nil
+    opt :monkey, "Use monkey mode"                    # flag --monkey, default false
+    opt :name, "Monkey name", :type => :string        # string --name <s>, default nil
+    opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
   end
 
-  p opts # a hash: { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+  p opts # a hash: { :monkey=>false, :name=>nil, :num_limbs=>4, :help=>false }
 
 == LICENSE
 
-Copyright (c) 2008--2009 William Morgan. Trollop is distributed under the same
+Copyright (c) 2008--2012 William Morgan. Trollop is distributed under the same
 terms as Ruby.

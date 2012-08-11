@@ -2,45 +2,37 @@ Trollop FAQ
 -----------
 
 Q: Why is it called "Trollop"?
-A: No reason.
+A: No good reason. Something something option parsing.
 
 Q: Why should I use Trollop?
-A: Because it will take you FEWER LINES OF CODE to do reasonable option parsing
-   than any other option parser out there.
+A: Because it will take you fewer lines of code to parse commandline arguments
+   than anything else out there.
 
-   Look at this:
-
+   Like this:
      opts = Trollop::options do
        opt :monkey, "Use monkey mode"
        opt :goat, "Use goat mode", :default => true
        opt :num_limbs, "Set number of limbs", :default => 4
      end
 
-   That's it. And opts is a hash and you do whatever you want with it.
-   Trivial. You don't have to mix option processing code blocks with the
-   declarations. You don't have to make a class for every option (what is this,
-   Java?). You don't have to write more than 1 line of code per option.
+   That's it. 'opts' will be a hash and you can do whatever you want with it.
+   You don't have to mix processing code with the declarations. You don't have
+   to make a class for every option (what is this, Java?). You don't have to
+   write more than 1 line of code per option.
 
    Plus, you get a beautiful help screen that detects your terminal width and
-   wraps appropriately. C'mon, that's hot.
+   wraps appropriately.
 
 Q: What is the philosophy behind Trollop?
-A: Must a commandline option processor have a philosophy?
+A: Trollop does the parsing and gives you a hash table of options. You then
+   write whatever fancy constraint logic you need as regular Ruby code operating
+   on that hash table.
 
-Q: Seriously now. What is it?
-A: Ok, it's this: Trollop *just* does the parsing and gives you a hash table
-   of the result. So whatever fancy logic or constraints you need, you can
-   implement by operating on that hash table. Options that disable other
-   options, fancy constraints involving multiple sets of values across multiple
-   sets of options, etc. are all left for you to do manually.
+   (Trollop does support limited constraints (see #conflicts and #depends), but
+   any non-trivial program will probably need to get fancier.)
 
-   (Trollop does support limited constraint setting (see #conflicts and
-   #depends), but any non-trivial program will need to get fancier.)
-
-   The result is that using Trollop is pretty simple, and whatever bizarre
-   logic you want, you can write yourself. And don't forget, you can call
-   Trollop::die to abort the program and give a fancy options-related error
-   message.
+   Then if you need to abort and tell the user to fix their command line at any
+   point, you can call #die and Trollop will do that for you in a pretty way.
 
 Q: What happens to the other stuff on the commandline?
 A: Anything Trollop doesn't recognize as an option or as an option parameter is
@@ -49,36 +41,25 @@ A: Anything Trollop doesn't recognize as an option or as an option parameter is
 Q: Does Trollop support multiple-value arguments?
 A: Yes. If you set the :type of an option to something plural, like ":ints",
    ":strings", ":doubles", ":floats", ":ios", it will accept multiple arguments
-   on the commandline and the value will be an array of these.
+   on the commandline, and the value will be an array of the parameters.
 
 Q: Does Trollop support arguments that can be given multiple times?
 A: Yes. If you set :multi to true, then the argument can appear multiple times
    on the commandline, and the value will be an array of the parameters.
 
 Q: Does Trollop support subcommands?
-A: Yes. You get subcommand support by adding a call #stop_on within the options
-   block, and passing the names of the subcommands to it. (See the third
-   example on the webpage.) When Trollop encounters one of these subcommands on
-   the commandline, it stops processing and returns.
+A: Yes: you can direct Trollop to stop processing when it encounters certain
+   tokens. Then you can re-call Trollop with the subcommand-specific
+   configuration to process the rest of the commandline.
 
-   ARGV at that point will contain the subcommand followed by any subcommand
-   options, since Trollop has contained the rest. So you can consume the
-   subcommand and call Trollop.options again with the particular options set
-   for that subcommand.
+   See the third example on the webpage.
 
-   If you don't know the subcommands ahead of time, you can call
+   (And if you don't know the subcommands ahead of time, you can call
    #stop_on_unknown, which will cause Trollop to stop when it encounters any
    unknown token. This might be more trouble than its worth if you're also
-   passing filenames on the commandline.
-
-   It's probably easier to see the example on the webpage than to read all
-   that.
+   passing filenames on the commandline.)
 
 Q: Why does Trollop disallow numeric short argument names, like '-1' and '-9'?
 A: Because it's ambiguous whether these are arguments or negative integer or
-   floating-point parameters to arguments. E.g., what about "-f -3".  Is that a
-   negative three parameter to -f, or two separate parameters? 
-
-   I could be very clever and detect when there are no arguments that require
-   floating-point parameters, and allow such short option names in those cases,
-   but opted for simplicity and consistency.
+   floating-point parameters to arguments. E.g., is "-f -3" a negative floating
+   point parameter to -f, or two separate arguments?

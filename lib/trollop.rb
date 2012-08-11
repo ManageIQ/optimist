@@ -671,7 +671,7 @@ private
   end
 
   ## instance_eval but with ability to handle block arguments
-  ## thanks to why: http://redhanded.hobix.com/inspect/aBlockCostume.html
+  ## thanks to _why: http://redhanded.hobix.com/inspect/aBlockCostume.html
   def cloaker &b
     (class << self; self; end).class_eval do
       define_method :cloaker_, &b
@@ -701,17 +701,16 @@ end
 ##
 ##   require 'trollop'
 ##   opts = Trollop::options do
-##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
-##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
-##     opt :num_limbs, "Number of limbs", :default => 4   # an integer --num-limbs <i>, defaulting to 4
-##     opt :num_thumbs, "Number of thumbs", :type => :int # an integer --num-thumbs <i>, defaulting to nil
+##     opt :monkey, "Use monkey mode"                    # a flag --monkey, defaulting to false
+##     opt :name, "Monkey name", :type => :string        # a string --name <s>, defaulting to nil
+##     opt :num_limbs, "Number of limbs", :default => 4  # an integer --num-limbs <i>, defaulting to 4
 ##   end
 ##
 ##   ## if called with no arguments
-##   p opts # => { :monkey => false, :goat => true, :num_limbs => 4, :num_thumbs => nil }
+##   p opts # => {:monkey=>false, :name=>nil, :num_limbs=>4, :help=>false}
 ##
 ##   ## if called with --monkey
-##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true, :num_limbs=>4, :help=>false, :num_thumbs=>nil}
+##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
 ## See more examples at http://trollop.rubyforge.org.
 def options args=ARGV, *a, &b
