@@ -247,24 +247,66 @@ class Trollop < ::Test::Unit::TestCase
   def test_conflicting_longs_detected
     assert_nothing_raised { @p.opt "goodarg", "desc", :long => "--goodarg" }
     assert_raise(ArgumentError) { @p.opt "badarg", "desc", :long => "--goodarg" }
-  end  
+  end
 
   ## two args can't have the same :short
   def test_conflicting_shorts_detected
     assert_nothing_raised { @p.opt "goodarg", "desc", :short => "-g" }
     assert_raise(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
-  end  
+  end
 
-  def test_flag_defaults
-    @p.opt "defaultfalse", "desc"
-    @p.opt "defaulttrue", "desc", :default => true
+  ## note: this behavior has changed in trollop 2.0!
+  def test_flag_parameters
+    @p.opt :defaultnone, "desc"
+    @p.opt :defaultfalse, "desc", :default => false
+    @p.opt :defaulttrue, "desc", :default => true
+
+    ## default state
     opts = @p.parse []
-    assert_equal false, opts["defaultfalse"]
-    assert_equal true, opts["defaulttrue"]
+    assert_equal false, opts[:defaultnone]
+    assert_equal false, opts[:defaultfalse]
+    assert_equal true, opts[:defaulttrue]
 
-    opts = @p.parse %w(--defaultfalse --defaulttrue)
-    assert_equal true, opts["defaultfalse"]
-    assert_equal false, opts["defaulttrue"]
+    ## specifying turns them on, regardless of default
+    opts = @p.parse %w(--defaultfalse --defaulttrue --defaultnone)
+    assert_equal true, opts[:defaultnone]
+    assert_equal true, opts[:defaultfalse]
+    assert_equal true, opts[:defaulttrue]
+
+    ## using --no- form turns them off, regardless of default
+    opts = @p.parse %w(--no-defaultfalse --no-defaulttrue --no-defaultnone)
+    assert_equal false, opts[:defaultnone]
+    assert_equal false, opts[:defaultfalse]
+    assert_equal false, opts[:defaulttrue]
+  end
+
+  ## note: this behavior has changed in trollop 2.0!
+  def test_flag_parameters_for_inverted_flags
+    @p.opt :no_default_none, "desc"
+    @p.opt :no_default_false, "desc", :default => false
+    @p.opt :no_default_true, "desc", :default => true
+
+    ## default state
+    opts = @p.parse []
+    assert_equal false, opts[:no_default_none]
+    assert_equal false, opts[:no_default_false]
+    assert_equal true, opts[:no_default_true]
+
+    ## specifying turns them all on, regardless of default
+    opts = @p.parse %w(--no-default-false --no-default-true --no-default-none)
+    p opts
+    assert_equal true, opts[:no_default_none]
+    assert_equal true, opts[:no_default_false]
+    assert_equal true, opts[:no_default_true]
+
+    ## using dropped-no form turns them all off, regardless of default
+    opts = @p.parse %w(--default-false --default-true --default-none)
+    assert_equal false, opts[:no_default_none]
+    assert_equal false, opts[:no_default_false]
+    assert_equal false, opts[:no_default_true]
+
+    ## disallow double negatives for reasons of sanity preservation
+    assert_raise(CommandlineError) { @p.parse %w(--no-no-default-true) }
   end
 
   def test_special_flags_work

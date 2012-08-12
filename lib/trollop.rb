@@ -296,19 +296,25 @@ class Parser
     end
 
     resolve_default_short_options!
-    rewrite_long_true_flags!
 
     ## resolve symbols
     given_args = {}
     @leftovers = each_arg cmdline do |arg, params|
-      sym = case arg
-      when /^-([^-])$/
-        @short[$1]
-      when /^--([^-]\S*)$/
-        @long[$1]
+      ## handle --no- forms
+      arg, negative_given = if arg =~ /^--no-([^-]\S*)$/
+        ["--#{$1}", true]
       else
-        raise CommandlineError, "invalid argument syntax: '#{arg}'"
+        [arg, false]
       end
+
+      sym = case arg
+        when /^-([^-])$/; @short[$1]
+        when /^--([^-]\S*)$/; @long[$1] || @long["no-#{$1}"]
+        else; raise CommandlineError, "invalid argument syntax: '#{arg}'"
+      end
+
+      sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
       if given_args.include?(sym) && !@specs[sym][:multi]
@@ -316,8 +322,8 @@ class Parser
       end
 
       given_args[sym] ||= {}
-
       given_args[sym][:arg] = arg
+      given_args[sym][:negative_given] = negative_given
       given_args[sym][:params] ||= []
 
       # The block returns the number of parameters taken.
@@ -359,8 +365,7 @@ class Parser
 
     ## parse parameters
     given_args.each do |sym, given_data|
-      arg = given_data[:arg]
-      params = given_data[:params]
+      arg, params, negative_given = given_data.values_at :arg, :params, :negative_given
 
       opts = @specs[sym]
       raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
@@ -369,7 +374,7 @@ class Parser
 
       case opts[:type]
       when :flag
-        vals[sym] = !opts[:default]
+        vals[sym] = (sym.to_s =~ /^no_/ ? negative_given : !negative_given)
       when :int, :ints
         vals[sym] = params.map { |pg| pg.map { |p| parse_integer_parameter p, arg } }
       when :float, :floats
@@ -423,12 +428,12 @@ class Parser
 
   ## Print the help message to +stream+.
   def educate stream=$stdout
-    width # just calculate it now; otherwise we have to be careful not to
+    width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
-
     left = {}
-    @specs.each do |name, spec| 
+    @specs.each do |name, spec|
       left[name] = "--#{spec[:long]}" +
+        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "") +
         (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
         case spec[:type]
         when :flag; ""
@@ -626,14 +631,6 @@ private
       pos += 1
     end
     params
-  end
-
-  def rewrite_long_true_flags!
-    @specs.each do |name, spec|
-      negative = "no-" + spec[:long]
-      spec[:long] = negative if spec[:type] == :flag && spec[:default] == true
-      @long[negative] = name
-    end
   end
 
   def resolve_default_short_options!
