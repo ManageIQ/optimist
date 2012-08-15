@@ -35,7 +35,7 @@ task :upload_docs => :rdoc do |t|
 end
 
 task :test do
-  sh %!ruby -w -Ilib:ext:bin:test -e 'require "rubygems"; require "test/unit"; require "./test/test_trollop.rb"'!
+  sh %!ruby -Ilib:ext:bin:test test/test_trollop.rb!
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
