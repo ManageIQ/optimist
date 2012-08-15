@@ -12,7 +12,7 @@ VERSION = "1.16.2"
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
 class CommandlineError < StandardError; end
-  
+
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by Trollop#options.
 class HelpNeeded < StandardError; end
@@ -154,12 +154,11 @@ class Parser
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
-    disambiguated_default =
-      if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
-        opts[:default].first
-      else
-        opts[:default]
-      end
+    disambiguated_default = if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
+      opts[:default].first
+    else
+      opts[:default]
+    end
 
     type_from_default =
       case disambiguated_default
@@ -193,15 +192,11 @@ class Parser
 
     ## fill in :long
     opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
-    opts[:long] =
-      case opts[:long]
-      when /^--([^-].*)$/
-        $1
-      when /^[^-]/
-        opts[:long]
-      else
-        raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
-      end
+    opts[:long] = case opts[:long]
+      when /^--([^-].*)$/; $1
+      when /^[^-]/; opts[:long]
+      else; raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
+    end
     raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short

@@ -3,6 +3,7 @@
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   GNU GPL version 2
 
+require 'rubygems'
 require 'test/unit'
 require 'stringio'
 require 'trollop'
@@ -41,7 +42,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(CommandlineError) { @p.parse(%w(--arg2)) }
     assert_raise(CommandlineError) { @p.parse(%w(--arg2 --arg3)) }
   end
-  
+
   ## flags that take an argument error unless given one
   def test_argflags_demand_args
     @p.opt "goodarg", "desc", :type => String
