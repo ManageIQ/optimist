@@ -1,3 +1,12 @@
+== 2.0 / 2012-08-11
+* Change flag logic: --no-X will always be false, and --X will always be true,
+  regardless of default.
+* For flags that default to true, display --no-X instead of --X in the help
+  menu. Accept both versions on the commandline.
+* Fix a spurious warning
+* Update Rakefile to 1.9
+* Minor documentation fixes
+
 == 1.16.2 / 2010-04-06
 * Bugfix in Trollop::options. Thanks to Brian C. Thomas for pointing it out.
 
