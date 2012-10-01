@@ -362,7 +362,10 @@ class Parser
       arg, params, negative_given = given_data.values_at :arg, :params, :negative_given
 
       opts = @specs[sym]
-      raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
+      if params.empty? && opts[:type] != :flag
+        raise CommandlineError, "option '#{arg}' needs a parameter" unless opts[:default]
+        params << [opts[:default]]
+      end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
