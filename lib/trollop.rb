@@ -595,7 +595,7 @@ private
   end
 
   def parse_integer_parameter param, arg
-    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^[\d_]+$/
+    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
     param.to_i
   end
 
