@@ -16,7 +16,7 @@ class CommandlineError < StandardError; end
 ## automatically by Trollop#options.
 class HelpNeeded < StandardError; end
 
-## Thrown by Parser if the user passes in '-h' or '--version'. Handled
+## Thrown by Parser if the user passes in '-v' or '--version'. Handled
 ## automatically by Trollop#options.
 class VersionNeeded < StandardError; end
 
