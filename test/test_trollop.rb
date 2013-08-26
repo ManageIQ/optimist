@@ -236,7 +236,7 @@ class Trollop < ::Test::Unit::TestCase
 
     sio = StringIO.new "w"
     @p.educate sio
-    assert sio.string =~ /--arg:\s+desc/
+    assert sio.string =~ /--arg\s+desc/
 
     assert_raise(CommandlineError) { @p.parse %w(-a) }
   end

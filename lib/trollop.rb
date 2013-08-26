@@ -441,22 +441,23 @@ class Parser
           # call this unless the cursor's at the beginning of a line.
     left = {}
     @specs.each do |name, spec|
-      left[name] = "--#{spec[:long]}" +
-        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "") +
-        (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
+      left[name] =
+        (spec[:short] && spec[:short] != :none ? "-#{spec[:short]}" : "") +
+        (spec[:short] && spec[:short] != :none ? ", " : "") + "--#{spec[:long]}" +
         case spec[:type]
         when :flag; ""
-        when :int; " <i>"
-        when :ints; " <i+>"
-        when :string; " <s>"
-        when :strings; " <s+>"
-        when :float; " <f>"
-        when :floats; " <f+>"
-        when :io; " <filename/uri>"
-        when :ios; " <filename/uri+>"
-        when :date; " <date>"
-        when :dates; " <date+>"
-        end
+        when :int; "=<i>"
+        when :ints; "=<i+>"
+        when :string; "=<s>"
+        when :strings; "=<s+>"
+        when :float; "=<f>"
+        when :floats; "=<f+>"
+        when :io; "=<filename/uri>"
+        when :ios; "=<filename/uri+>"
+        when :date; "=<date>"
+        when :dates; "=<date+>"
+        end +
+        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
     end
 
     leftcol_width = left.values.map { |s| s.length }.max || 0
@@ -478,7 +479,7 @@ class Parser
       end
 
       spec = @specs[opt]
-      stream.printf "  %#{leftcol_width}s:   ", left[opt]
+      stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
         when $stdout; "<stdout>"
