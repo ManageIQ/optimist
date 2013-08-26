@@ -683,6 +683,30 @@ EOM
     assert_equal 4, help.length # line break, options, then -h
   end
 
+  def test_help_has_optional_synopsis
+    @p = Parser.new
+    @p.synopsis "About this program"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /About this program/i
+    assert_equal 4, help.length # line break, options, then -h
+  end
+
+  def test_help_has_specific_order_for_usage_and_synopsis
+    @p = Parser.new
+    @p.usage "OPTIONS FILES"
+    @p.synopsis "About this program"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /OPTIONS FILES/i
+    assert help[1] =~ /About this program/i
+    assert_equal 5, help.length # line break, options, then -h
+  end
+
   def test_help_preserves_positions
     @p.opt :zzz, "zzz"
     @p.opt :aaa, "aaa"

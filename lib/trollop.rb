@@ -237,6 +237,15 @@ class Parser
   ## lines.
   def usage s=nil; @usage = s if s; @usage end
 
+  ## Sets the usage string. If set the message will be printed as the
+  ## first line in the help (educate) output and ending in two new
+  ## lines.
+  def usage s=nil; @usage = s if s; @usage end
+
+  ## Adds a synopsis (command summary description) right below the
+  ## usage line, or as the first line if usage isn't specified.
+  def synopsis s=nil; @synopsis = s if s; @synopsis end
+
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
   def banner s; @order << [:text, s] end
@@ -455,7 +464,9 @@ class Parser
 
     unless @order.size > 0 && @order.first.first == :text
       command_name = File.basename($0).split('.')[0...-1].join('.')
-      stream.puts "Usage: #{command_name} #@usage\n\n" if @usage
+      stream.puts "Usage: #{command_name} #@usage\n" if @usage
+      stream.puts "#@synopsis\n" if @synopsis
+      stream.puts if @usage or @synopsis
       stream.puts "#@version\n" if @version
       stream.puts "Options:"
     end
