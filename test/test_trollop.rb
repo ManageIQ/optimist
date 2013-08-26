@@ -672,6 +672,17 @@ EOM
     assert_equal 2, help.length # banner, -h
   end
 
+  def test_help_has_optional_usage
+    @p = Parser.new
+    @p.usage "OPTIONS FILES"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /OPTIONS FILES/i
+    assert_equal 4, help.length # line break, options, then -h
+  end
+
   def test_help_preserves_positions
     @p.opt :zzz, "zzz"
     @p.opt :aaa, "aaa"

@@ -232,6 +232,11 @@ class Parser
   ## <version number>".
   def version s=nil; @version = s if s; @version end
 
+  ## Sets the usage string. If set the message will be printed as the
+  ## first line in the help (educate) output and ending in two new
+  ## lines.
+  def usage s=nil; @usage = s if s; @usage end
+
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
   def banner s; @order << [:text, s] end
@@ -449,6 +454,8 @@ class Parser
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
+      command_name = File.basename($0).split('.')[0...-1].join('.')
+      stream.puts "Usage: #{command_name} #@usage\n\n" if @usage
       stream.puts "#@version\n" if @version
       stream.puts "Options:"
     end
