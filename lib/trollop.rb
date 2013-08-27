@@ -464,7 +464,7 @@ class Parser
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
-      command_name = File.basename($0).split('.')[0...-1].join('.')
+      command_name = File.basename($0).gsub /\.[^.]+$/, ''
       stream.puts "Usage: #{command_name} #@usage\n" if @usage
       stream.puts "#@synopsis\n" if @synopsis
       stream.puts if @usage or @synopsis
