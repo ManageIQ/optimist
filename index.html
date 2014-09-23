@@ -1,0 +1,187 @@
+<html>
+<head>
+<style>
+body {
+  background-color: rgb(204, 204, 204); border-width: 1px; border-style: solid; padding: 0.5em; border-color: black;
+  text-align:left;
+}
+pre {
+ background-color: rgb(17, 17, 34); color:rgb(34, 136, 34);width:800px;padding: 10px;
+}
+code {
+  font-size:14px;
+}
+  </style>
+</head>
+<body>
+<h1>Trollop</h1>
+<p>
+Current project news: see the <a href="http://masanjin.net/blog/label/trollop">blog</a>.
+</p>
+<p>Trollop is a commandline option parser for Ruby that just gets out of your way. One line of code per option is all you need to write. For that, you get a nice automatically-generated help page, robust option parsing, and sensible defaults for everything you don't specify.</p>
+<p>Features
+</p><ol>
+<li>
+Dirt-simple usage. </li>
+<li>
+Single file. Throw it in lib/ if you don't want to make it a Rubygem dependency. </li>
+<li>
+Sensible defaults. No tweaking necessary, much tweaking possible. </li>
+<li>
+Support for long options, short options, subcommands, and automatic type validation and conversion. </li>
+<li>
+Automatic help message generation, wrapped to current screen width. </li>
+<li>
+This gradient-free webpage. Fight the candy!</li>
+</ol>
+<p></p>
+<p>
+To install, you have three options:</p>
+<ul>
+<li>Trollop is a single file with no dependencies.
+<a href="https://github.com/manageiq/trollop">Download it</a>
+and throw it in your code directory.</li>
+<li>You can use rubygems and command your computer to
+<code style="font-size:14px;">gem install trollop</code>.</li>
+</ul>
+<p>To hack on it, command your computer to <code style="font-size:14px;">git clone git://github.com/manageiq/trollop.git</code>, or see the
+<a href="https://github.com/manageiq/trollop">Trollop GitHub page</a>.</p>
+<!-- TODO: (can't find)
+<p>To understand, read the examples below, the
+<a href="http://trollop.rubyforge.org/FAQ.txt">FAQ</a>, and the
+<a href="http://trollop.rubyforge.org/trollop/">API docs</a>.
+-->
+</p><h2>Examples</h2>
+<h3>Simple</h3>
+<pre>
+<code><span style="color:rgb(255, 255, 255);">require</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">'</span><span style="color:rgb(68, 255, 68);">trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">'</span>
+  <span style="color:rgb(255, 255, 255);">opts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">options</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+    <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:monkey</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Use monkey mode</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>                    <span style="color:rgb(153, 153, 255);"># flag --monkey, default false</span>
+    <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:name</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Monkey name</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:type</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(255, 255, 0);">:string</span>        <span style="color:rgb(153, 153, 255);"># string --name &lt;s&gt;, default nil</span>
+    <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:num_limbs</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Number of limbs</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:default</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(255, 153, 153);">4</span>  <span style="color:rgb(153, 153, 255);"># integer --num-limbs &lt;i&gt;, default to 4</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+
+  <span style="color:rgb(255, 255, 255);">p</span> <span style="color:rgb(255, 255, 255);">opts</span> <span style="color:rgb(153, 153, 255);"># a hash: { :monkey=&gt;false, :name=&gt;nil, :num_limbs=&gt;4, :help=&gt;false }</span>
+</code></pre>
+<p>
+</p><ul>
+<li><tt>Trollop::options</tt>
+returns a hash of values. That's all the output you get.</li>
+<li>Underscores are converted to dashes.
+<tt>opt :hello_there</tt>
+corresponds to an option <tt>--hello-there</tt>.
+</li><li>All options are taken to be boolean flags, defaulting to false, unless you specify a default or a type. The type will be inferred from the default if given, so no need to specify both.</li>
+<li>Short (one-character) option names are created automatically. You can set them manually with
+<tt>:short</tt>.
+</li></ul>
+<p></p>
+<h3>Medium</h3>
+<pre><span style="color:rgb(255, 255, 255);">require</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">'</span><span style="color:rgb(68, 255, 68);">trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">'</span>
+<span style="color:rgb(255, 255, 255);">opts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">options</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+  <span style="color:rgb(255, 255, 255);">version</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">test 1.2.3 (c) 2008 William Morgan</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+  <span style="color:rgb(255, 255, 255);">banner</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">&lt;&lt;-</span><span style="color:rgb(0, 204, 68);">EOS</span><span style="color:rgb(68, 255, 68);">
+Test is an awesome program that does something very, very important.
+
+Usage:
+       test [options] &lt;filenames&gt;+
+where [options] are:
+</span><span style="color:rgb(0, 204, 68);">EOS</span>
+
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:ignore</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Ignore incorrect values</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:file</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Extra data filename to read in, with a very long option description like this one</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span>
+        <span style="color:rgb(255, 255, 0);">:type</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(0, 204, 68);">String</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:volume</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Volume level</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:default</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(255, 153, 153);">3.0</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:iters</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Number of iterations</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:default</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(255, 153, 153);">5</span>
+<span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+<span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">die</span> <span style="color:rgb(255, 255, 0);">:volume</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">must be non-negative</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">if</span> <span style="color:rgb(255, 255, 255);">opts</span><span style="color:rgb(255, 255, 0);font-weight:bold;">[</span><span style="color:rgb(255, 255, 0);">:volume</span><span style="color:rgb(255, 255, 0);font-weight:bold;">]</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(255, 153, 153);">0</span>
+<span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">die</span> <span style="color:rgb(255, 255, 0);">:file</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">must exist</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">unless</span> <span style="color:rgb(0, 204, 68);">File</span><span style="color:rgb(255, 255, 0);font-weight:bold;">.</span><span style="color:rgb(255, 255, 255);">exist?</span><span style="color:rgb(255, 255, 0);font-weight:bold;">(</span><span style="color:rgb(255, 255, 255);">opts</span><span style="color:rgb(255, 255, 0);font-weight:bold;">[</span><span style="color:rgb(255, 255, 0);">:file</span><span style="color:rgb(255, 255, 0);font-weight:bold;">])</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">if</span> <span style="color:rgb(255, 255, 255);">opts</span><span style="color:rgb(255, 255, 0);font-weight:bold;">[</span><span style="color:rgb(255, 255, 0);">:file</span><span style="color:rgb(255, 255, 0);font-weight:bold;">]</span>
+</code></pre>
+<p>
+</p><ul>
+<li>You can specify a version and some banner text for the help message.
+<tt>--help</tt>
+and <tt>--version</tt>
+are defined for you.</li>
+<li>Any special error-checking is done by you, on the option hash. You can call
+<tt>Trollop::die</tt>
+to die with a nice message.</li>
+</ul>
+<p></p>
+<h3>Sub-commands, a la SVN and Git</h3>
+<pre><code><span style="color:rgb(255, 255, 255);">require</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">'</span><span style="color:rgb(68, 255, 68);">trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">'</span>
+
+<span style="color:rgb(153, 153, 255);">## Here's a program called "magic". We want this behavior:</span>
+<span style="color:rgb(153, 153, 255);">##</span>
+<span style="color:rgb(153, 153, 255);">##   magic delete &lt;fn&gt; =&gt; deletes a file</span>
+<span style="color:rgb(153, 153, 255);">##   magic copy &lt;fn&gt;   =&gt; copies a file</span>
+<span style="color:rgb(153, 153, 255);">##</span>
+<span style="color:rgb(153, 153, 255);">## So 'delete' and 'copy' are subcommands.</span>
+<span style="color:rgb(153, 153, 255);">##</span>
+<span style="color:rgb(153, 153, 255);">## There are some global options, which appear to the left of the subcommand.</span>
+<span style="color:rgb(153, 153, 255);">## There are some subcommand options, which appear to the right.</span>
+<span style="color:rgb(153, 153, 255);">##</span>
+<span style="color:rgb(153, 153, 255);">## Subcommand options can be specific to the subcommand. 'delete' might take</span>
+<span style="color:rgb(153, 153, 255);">## different options from 'copy'.</span>
+<span style="color:rgb(153, 153, 255);">##</span>
+<span style="color:rgb(153, 153, 255);">## We do this by calling Trollop twice; one for the global options and once for</span>
+<span style="color:rgb(153, 153, 255);">## the subcommand options. We need to tell Trollop what the subcommands are, so</span>
+<span style="color:rgb(153, 153, 255);">## that it stops processing the global options when it encounters one of them.</span>
+
+<span style="color:rgb(0, 204, 68);">SUB_COMMANDS</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">%w(</span><span style="color:rgb(68, 255, 68);">delete copy</span><span style="color:rgb(255, 255, 0);font-weight:bold;">)</span>
+<span style="color:rgb(255, 255, 255);">global_opts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">options</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+  <span style="color:rgb(255, 255, 255);">banner</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">magic file deleting and copying utility</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:dry_run</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Don't actually do anything</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:short</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">-n</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+  <span style="color:rgb(255, 255, 255);">stop_on</span> <span style="color:rgb(0, 204, 68);">SUB_COMMANDS</span>
+<span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+
+<span style="color:rgb(255, 255, 255);">cmd</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">ARGV</span><span style="color:rgb(255, 255, 0);font-weight:bold;">.</span><span style="color:rgb(255, 255, 255);">shift</span> <span style="color:rgb(153, 153, 255);"># get the subcommand</span>
+<span style="color:rgb(255, 255, 255);">cmd_opts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">case</span> <span style="color:rgb(255, 255, 255);">cmd</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">when</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">delete</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span> <span style="color:rgb(153, 153, 255);"># parse delete options</span>
+    <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">options</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+      <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:force</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Force deletion</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+    <span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">when</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">copy</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>  <span style="color:rgb(153, 153, 255);"># parse copy options</span>
+    <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">options</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+      <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:double</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Copy twice for safety's sake</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+    <span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">else</span>
+    <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">die</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">unknown subcommand <span style="color:rgb(136, 34, 119);">#{cmd.inspect}</span></span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+
+<span style="color:rgb(255, 255, 255);">puts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Global options: <span style="color:rgb(136, 34, 119);">#{global_opts.inspect}</span></span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+<span style="color:rgb(255, 255, 255);">puts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Subcommand: <span style="color:rgb(136, 34, 119);">#{cmd.inspect}</span></span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+<span style="color:rgb(255, 255, 255);">puts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Subcommand options: <span style="color:rgb(136, 34, 119);">#{cmd_opts.inspect}</span></span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>
+<span style="color:rgb(255, 255, 255);">puts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Remaining arguments: <span style="color:rgb(136, 34, 119);">#{ARGV.inspect}</span></span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span></code></pre>
+<h3>Specialized parsing behavior</h3>
+<p>Sometimes calling
+<code>Trollop::options</code>
+does too much for us. In this example, we create the parser without using <code>Trollop::options</code>, and force it to display the help message (and exit) if the user doesn't supply any arguments. The
+<code>with_standard_exception_handling</code>
+method takes care of dealing with the <code>VersionNeeded</code>,
+<code>HelpNeeded</code>
+and <code>CommandlineError</code>
+exceptions that <code>Parser#parse</code>
+throws, but we could handle those manually as well.</p>
+<pre><code><span style="color:rgb(255, 255, 255);">require</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">'</span><span style="color:rgb(68, 255, 68);">trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">'</span>
+<span style="color:rgb(255, 255, 255);">p</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(0, 204, 68);">Parser</span><span style="color:rgb(255, 255, 0);font-weight:bold;">.</span><span style="color:rgb(255, 255, 255);">new</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:monkey</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Use monkey mode</span><span style="color:rgb(255, 255, 0);font-weight:bold;">"</span>                     <span style="color:rgb(153, 153, 255);"># a flag --monkey, defaulting to false</span>
+  <span style="color:rgb(255, 255, 255);">opt</span> <span style="color:rgb(255, 255, 0);">:goat</span><span style="color:rgb(255, 255, 0);font-weight:bold;">,</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">"</span><span style="color:rgb(68, 255, 68);">Use goat mode</span><span style="color:rgb(255, 255, 0);font-weight:bold;">",</span> <span style="color:rgb(255, 255, 0);">:default</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(0, 204, 68);">true</span>       <span style="color:rgb(153, 153, 255);"># a flag --goat, defaulting to true</span>
+<span style="color:rgb(170, 68, 68);font-weight:bold;">end</span>
+
+<span style="color:rgb(255, 255, 255);">opts</span> <span style="color:rgb(255, 255, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(255, 255, 255);">with_standard_exception_handling</span> <span style="color:rgb(255, 255, 255);">p</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">do</span>
+  <span style="color:rgb(170, 68, 68);font-weight:bold;">raise</span> <span style="color:rgb(0, 204, 68);">Trollop</span><span style="color:rgb(255, 255, 0);font-weight:bold;">::</span><span style="color:rgb(0, 204, 68);">HelpNeeded</span> <span style="color:rgb(170, 68, 68);font-weight:bold;">if</span> <span style="color:rgb(0, 204, 68);">ARGV</span><span style="color:rgb(255, 255, 0);font-weight:bold;">.</span><span style="color:rgb(255, 255, 255);">empty?</span> <span style="color:rgb(153, 153, 255);"># show help screen</span>
+  <span style="color:rgb(255, 255, 255);">p</span><span style="color:rgb(255, 255, 0);font-weight:bold;">.</span><span style="color:rgb(255, 255, 255);">parse</span> <span style="color:rgb(0, 204, 68);">ARGV</span>
+<span style="color:rgb(170, 68, 68);font-weight:bold;">end</span></code></pre>
+<h2>
+Contributors </h2>
+<p>Trollop is brought to you by
+<a href="http://cs.stanford.edu/~ruby/">William Morgan</a>
+and by: </p><ul>
+<li>Tuomas Kareinen &lt;tkareine at the gmail dot coms&gt;</li>
+<li>Ohad Lutzky &lt;ohad at the lutzky dot nets&gt;</li>
+<li>Erik Ostrom &lt;erik at the echographia dot coms&gt;</li>
+<li>Will Fitzgerald &lt;will.fitzgerald at the pobox dot coms&gt;</li>
+</ul>
+<p></p>
+</body>
+</html>
