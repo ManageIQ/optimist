@@ -3,7 +3,6 @@
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   GNU GPL version 2
 
-require 'rubygems'
 require 'test/unit'
 require 'stringio'
 require 'trollop'
