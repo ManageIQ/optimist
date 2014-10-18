@@ -3,11 +3,10 @@
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   the same terms as ruby itself
 
+require "trollop/version"
 require 'date'
 
 module Trollop
-
-VERSION = "2.0"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
