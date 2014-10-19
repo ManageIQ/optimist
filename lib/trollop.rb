@@ -410,6 +410,7 @@ class Parser
   def parse_date_parameter param, arg #:nodoc:
     begin
       begin
+        require 'chronic'
         time = Chronic.parse(param)
       rescue NameError
         # chronic is not available
