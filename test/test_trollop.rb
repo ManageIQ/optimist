@@ -85,6 +85,11 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal 0, opts["argsi"]
     assert_nothing_raised { opts = @p.parse(%w(--argsi 4)) }
     assert_equal 4, opts["argsi"]
+    assert_nothing_raised { opts = @p.parse(%w(--argsi=4)) }
+    assert_equal 4, opts["argsi"]
+    assert_nothing_raised { opts = @p.parse(%w(--argsi=-4)) }
+    assert_equal -4, opts["argsi"]
+
     assert_raise(CommandlineError) { @p.parse(%w(--argsi 4.2)) }
     assert_raise(CommandlineError) { @p.parse(%w(--argsi hello)) }
 
