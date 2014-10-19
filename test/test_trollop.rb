@@ -3,9 +3,8 @@
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   GNU GPL version 2
 
-require 'test/unit'
 require 'stringio'
-require 'trollop'
+require_relative 'test_helper'
 
 module Trollop
 module Test
@@ -421,13 +420,8 @@ EOM
     opts = nil
     assert_nothing_raised { opts = @p.parse(['-d', 'Jan 4, 2007']) }
     assert_equal Date.civil(2007, 1, 4), opts[:arg]
-    begin
-      require 'chronic'
-      assert_nothing_raised { opts = @p.parse(['-d', 'today']) }
-      assert_equal Date.today, opts[:arg]
-    rescue LoadError
-      # chronic is not available
-    end
+    assert_nothing_raised { opts = @p.parse(['-d', 'today']) }
+    assert_equal Date.today, opts[:arg]
   end
 
   def test_short_options_cant_be_numeric
@@ -470,7 +464,7 @@ EOM
     assert_equal [], @p.leftovers
   end
 
-  def short_options_with_multiple_options_does_not_affect_flags_type
+  def test_short_options_with_multiple_options_does_not_affect_flags_type
     opts = nil
 
     assert_nothing_raised do
