@@ -776,6 +776,14 @@ def die arg, msg=nil
   end
 end
 
-module_function :options, :die, :with_standard_exception_handling
+def help
+  if @last_parser
+    @last_parser.educate
+  else
+    raise ArgumentError, "Trollop::help can only be called after Trollop::options"
+  end
+end
+
+module_function :options, :die, :with_standard_exception_handling, :help
 
 end # module
