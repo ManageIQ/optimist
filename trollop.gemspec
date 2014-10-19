@@ -29,4 +29,5 @@ specify."
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "chronic"
   spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "coveralls"
 end
