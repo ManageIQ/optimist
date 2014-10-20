@@ -1,4 +1,4 @@
-== trollop
+# trollop
 
 by William Morgan (http://masanjin.net/)
 
@@ -9,14 +9,14 @@ Release announcements and comments: http://masanjin.net/blog/label/trollop/.
 Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
 Also see the examples at http://trollop.rubyforge.org/.
 
-== DESCRIPTION
+## Description
 
 Trollop is a commandline option parser for Ruby that just gets out of your way.
 One line of code per option is all you need to write. For that, you get a nice
 automatically-generated help page, robust option parsing, and sensible defaults
 for everything you don't specify.
 
-== FEATURES
+## Features
 
 - Dirt-simple usage.
 - Single file. Throw it in lib/ if you don't want to make it a Rubygem dependency.
@@ -25,24 +25,26 @@ for everything you don't specify.
   conversion.
 - Automatic help message generation, wrapped to current screen width.
 
-== REQUIREMENTS
+## Requirements
 
 * A burning desire to write less code.
 
-== INSTALL
+## Install
 
 * gem install trollop
 
-== SYNOPSIS
+## Synopsis
 
-  require 'trollop'
-  opts = Trollop::options do
-    opt :monkey, "Use monkey mode"                    # flag --monkey, default false
-    opt :name, "Monkey name", :type => :string        # string --name <s>, default nil
-    opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
-  end
+```ruby
+require 'trollop'
+opts = Trollop::options do
+  opt :monkey, "Use monkey mode"                    # flag --monkey, default false
+  opt :name, "Monkey name", :type => :string        # string --name <s>, default nil
+  opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
+end
 
-  p opts # a hash: { :monkey=>false, :name=>nil, :num_limbs=>4, :help=>false }
+p opts # a hash: { :monkey=>false, :name=>nil, :num_limbs=>4, :help=>false }
+```
 
 == LICENSE
 
