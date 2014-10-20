@@ -2,12 +2,12 @@
 
 by William Morgan (http://masanjin.net/)
 
-Main page: http://trollop.rubyforge.org
+Main page: http://manageiq.github.io/trollop/
 
 Release announcements and comments: http://masanjin.net/blog/label/trollop/.
 
 Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
-Also see the examples at http://trollop.rubyforge.org/.
+Also see the examples at http://manageiq.github.io/trollop/.
 
 ## Description
 
@@ -46,7 +46,7 @@ end
 p opts # a hash: { :monkey=>false, :name=>nil, :num_limbs=>4, :help=>false }
 ```
 
-== LICENSE
+## License
 
 Copyright (c) 2008--2012 William Morgan. Trollop is distributed under the same
 terms as Ruby.
