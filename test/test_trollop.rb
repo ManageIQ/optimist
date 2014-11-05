@@ -178,6 +178,26 @@ class Trollop < ::Test::Unit::TestCase
     assert_nothing_raised { @p.opt "argmst", "desc", :type => :strings, :default => ["yo"] }
   end
 
+  ##
+  def test_flags_with_defaults_and_no_args_act_as_switches
+    opts = nil
+
+    @p.opt :argd, "desc", :default => "default_string"
+
+    opts = @p.parse(%w(--))
+    assert !opts[:argd_given]
+    assert_equal "default_string", opts[:argd]
+
+    opts = @p.parse(%w( --argd ))
+    assert opts[:argd_given]
+    assert_equal "default_string", opts[:argd]
+
+    opts = @p.parse(%w(--argd different_string))
+    assert opts[:argd_given]
+    assert_equal "different_string", opts[:argd]
+
+  end
+
   def test_long_detects_bad_names
     assert_nothing_raised { @p.opt "goodarg", "desc", :long => "none" }
     assert_nothing_raised { @p.opt "goodarg2", "desc", :long => "--two" }
