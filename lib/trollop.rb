@@ -232,6 +232,20 @@ class Parser
   ## <version number>".
   def version s=nil; @version = s if s; @version end
 
+  ## Sets the usage string. If set the message will be printed as the
+  ## first line in the help (educate) output and ending in two new
+  ## lines.
+  def usage s=nil; @usage = s if s; @usage end
+
+  ## Sets the usage string. If set the message will be printed as the
+  ## first line in the help (educate) output and ending in two new
+  ## lines.
+  def usage s=nil; @usage = s if s; @usage end
+
+  ## Adds a synopsis (command summary description) right below the
+  ## usage line, or as the first line if usage isn't specified.
+  def synopsis s=nil; @synopsis = s if s; @synopsis end
+
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
   def banner s; @order << [:text, s] end
@@ -430,28 +444,33 @@ class Parser
           # call this unless the cursor's at the beginning of a line.
     left = {}
     @specs.each do |name, spec|
-      left[name] = "--#{spec[:long]}" +
-        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "") +
-        (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
+      left[name] =
+        (spec[:short] && spec[:short] != :none ? "-#{spec[:short]}" : "") +
+        (spec[:short] && spec[:short] != :none ? ", " : "") + "--#{spec[:long]}" +
         case spec[:type]
         when :flag; ""
-        when :int; " <i>"
-        when :ints; " <i+>"
-        when :string; " <s>"
-        when :strings; " <s+>"
-        when :float; " <f>"
-        when :floats; " <f+>"
-        when :io; " <filename/uri>"
-        when :ios; " <filename/uri+>"
-        when :date; " <date>"
-        when :dates; " <date+>"
-        end
+        when :int; "=<i>"
+        when :ints; "=<i+>"
+        when :string; "=<s>"
+        when :strings; "=<s+>"
+        when :float; "=<f>"
+        when :floats; "=<f+>"
+        when :io; "=<filename/uri>"
+        when :ios; "=<filename/uri+>"
+        when :date; "=<date>"
+        when :dates; "=<date+>"
+        end +
+        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
     end
 
     leftcol_width = left.values.map { |s| s.length }.max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
+      command_name = File.basename($0).gsub /\.[^.]+$/, ''
+      stream.puts "Usage: #{command_name} #@usage\n" if @usage
+      stream.puts "#@synopsis\n" if @synopsis
+      stream.puts if @usage or @synopsis
       stream.puts "#@version\n" if @version
       stream.puts "Options:"
     end
@@ -463,7 +482,7 @@ class Parser
       end
 
       spec = @specs[opt]
-      stream.printf "  %#{leftcol_width}s:   ", left[opt]
+      stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
         when $stdout; "<stdout>"

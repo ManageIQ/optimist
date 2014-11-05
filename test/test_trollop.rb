@@ -256,7 +256,7 @@ class Trollop < ::Test::Unit::TestCase
 
     sio = StringIO.new "w"
     @p.educate sio
-    assert sio.string =~ /--arg:\s+desc/
+    assert sio.string =~ /--arg\s+desc/
 
     assert_raise(CommandlineError) { @p.parse %w(-a) }
   end
@@ -690,6 +690,41 @@ EOM
     help = sio.string.split "\n"
     assert help[0] =~ /my own banner/i
     assert_equal 2, help.length # banner, -h
+  end
+
+  def test_help_has_optional_usage
+    @p = Parser.new
+    @p.usage "OPTIONS FILES"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /OPTIONS FILES/i
+    assert_equal 4, help.length # line break, options, then -h
+  end
+
+  def test_help_has_optional_synopsis
+    @p = Parser.new
+    @p.synopsis "About this program"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /About this program/i
+    assert_equal 4, help.length # line break, options, then -h
+  end
+
+  def test_help_has_specific_order_for_usage_and_synopsis
+    @p = Parser.new
+    @p.usage "OPTIONS FILES"
+    @p.synopsis "About this program"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /OPTIONS FILES/i
+    assert help[1] =~ /About this program/i
+    assert_equal 5, help.length # line break, options, then -h
   end
 
   def test_help_preserves_positions
