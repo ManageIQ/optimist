@@ -528,7 +528,12 @@ class Parser
     if str == ""
       [""]
     else
-      str.split("\n").map { |s| wrap_line s, opts }.flatten
+      inner = false
+      str.split("\n").map do |s|
+        line = wrap_line s, opts.merge(:inner => inner)
+        inner = true
+        line
+      end.flatten
     end
   end
 
@@ -678,7 +683,7 @@ private
           x = str.index(/\s/, start) if x && x < start
           x || str.length
         end
-      ret << (ret.empty? ? "" : " " * prefix) + str[start ... nextt]
+      ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start ... nextt]
       start = nextt + 1
     end
     ret
