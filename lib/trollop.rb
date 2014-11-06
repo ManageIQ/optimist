@@ -169,7 +169,11 @@ class Parser
       when Date; :date
       when Array
         if opts[:default].empty?
-          raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
+          if opts[:type]
+            nil
+          else
+            raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
+          end
         end
         case opts[:default][0]    # the first element determines the types
         when Integer; :ints
