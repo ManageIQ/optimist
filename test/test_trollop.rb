@@ -197,7 +197,22 @@ class Trollop < ::Test::Unit::TestCase
     opts = @p.parse(%w(--argd different_string))
     assert opts[:argd_given]
     assert_equal "different_string", opts[:argd]
+  end
 
+  def test_type_and_empty_array
+    assert_nothing_raised { @p.opt "argmi", "desc", :type => :ints, :default => [] }
+    assert_nothing_raised { @p.opt "argmf", "desc", :type => :floats, :default => [] }
+    assert_nothing_raised { @p.opt "argmd", "desc", :type => :dates, :default => [] }
+    assert_nothing_raised { @p.opt "argms", "desc", :type => :strings, :default => [] }
+    assert_raise(ArgumentError) { @p.opt "badi", "desc", :type => :int, :default => [] }
+    assert_raise(ArgumentError) { @p.opt "badf", "desc", :type => :float, :default => [] }
+    assert_raise(ArgumentError) { @p.opt "badd", "desc", :type => :date, :default => [] }
+    assert_raise(ArgumentError) { @p.opt "bads", "desc", :type => :string, :default => [] }
+    opts = @p.parse("")
+    assert_equal(opts["argmi"], [])
+    assert_equal(opts["argmf"], [])
+    assert_equal(opts["argmd"], [])
+    assert_equal(opts["argms"], [])
   end
 
   def test_long_detects_bad_names
