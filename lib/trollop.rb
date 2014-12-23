@@ -65,6 +65,11 @@ class Parser
   ## for testing.)
   attr_reader :specs
 
+  ## A flag that determines whether or not to raise an error if the parser is passed one or more
+  ##  options that were not registered ahead of time.  If 'true', then the parser will simply
+  ##  ignore options that it does not recognize.
+  attr_accessor :ignore_invalid_options
+
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize *a, &b
     @version = nil
@@ -121,7 +126,7 @@ class Parser
   ## If you want a multi-value, multi-occurrence argument with a default
   ## value, you must specify +:type+ as well.
 
-  def opt name, desc="", opts={}
+  def opt name, desc="", opts={}, &b
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
@@ -219,7 +224,7 @@ class Parser
 
     ## fill in :multi
     opts[:multi] ||= false
-
+    opts[:callback] ||= b if block_given?
     opts[:desc] ||= desc
     @long[opts[:long]] = name
     @short[opts[:short]] = name if opts[:short] && opts[:short] != :none
@@ -323,7 +328,10 @@ class Parser
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
-      raise CommandlineError, "unknown argument '#{arg}'" unless sym
+      unless sym
+        next 0 if ignore_invalid_options
+        raise CommandlineError, "unknown argument '#{arg}'" unless sym
+      end
 
       if given_args.include?(sym) && !@specs[sym][:multi]
         raise CommandlineError, "option '#{arg}' specified multiple times"
@@ -408,6 +416,8 @@ class Parser
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
+
+      opts[:callback].call(vals[sym]) if opts.has_key?(:callback)
     end
 
     ## modify input in place with only those
