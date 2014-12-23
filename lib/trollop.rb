@@ -126,7 +126,7 @@ class Parser
   ## If you want a multi-value, multi-occurrence argument with a default
   ## value, you must specify +:type+ as well.
 
-  def opt name, desc="", opts={}
+  def opt name, desc="", opts={}, &b
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
@@ -224,7 +224,7 @@ class Parser
 
     ## fill in :multi
     opts[:multi] ||= false
-
+    opts[:callback] ||= b if block_given?
     opts[:desc] ||= desc
     @long[opts[:long]] = name
     @short[opts[:short]] = name if opts[:short] && opts[:short] != :none

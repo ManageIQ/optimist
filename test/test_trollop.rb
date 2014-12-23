@@ -1278,6 +1278,22 @@ EOM
       end
     end
   end
+
+  def test_supports_callback_inline
+    assert_raises(RuntimeError, "good") do
+      @p.opt :cb1 do |vals|
+        raise "good"
+      end
+      @p.parse(%w(--cb1))
+    end
+  end
+
+  def test_supports_callback_param
+    assert_raises(RuntimeError, "good") do
+      @p.opt :cb1, "with callback", :callback => lambda { |vals| raise "good" }
+      @p.parse(%w(--cb1))
+    end
+  end
 end
 
 end
