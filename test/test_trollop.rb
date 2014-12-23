@@ -417,6 +417,20 @@ where [options] are:
 EOM
   end
 
+  def test_multi_line_description
+    out = StringIO.new
+    @p.opt :arg, <<-EOM, :type => :int
+This is an arg
+with a multi-line description
+    EOM
+    @p.educate(out)
+    assert_equal <<-EOM, out.string
+Options:
+  --arg=<i>    This is an arg
+               with a multi-line description
+    EOM
+  end
+
   def test_floating_point_formatting
     @p.opt :arg, "desc", :type => :float, :short => "f"
     opts = nil
