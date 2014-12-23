@@ -1,7 +1,7 @@
-## lib/trollop.rb -- trollop command-line processing library
-## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
-## Copyright:: Copyright 2007 William Morgan
-## License::   the same terms as ruby itself
+# lib/trollop.rb -- trollop command-line processing library
+# Copyright (c) 2008-2014 William Morgan.
+# Copyright (c) 2014 Red Hat, Inc.
+# trollop is licensed under the same terms as Ruby.
 
 require 'date'
 
@@ -263,7 +263,7 @@ class Parser
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
-  
+
   ## Marks two (or more!) options as conflicting.
   def conflicts *syms
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
@@ -685,7 +685,7 @@ private
     start = 0
     ret = []
     until start > str.length
-      nextt = 
+      nextt =
         if start + width >= str.length
           str.length
         else

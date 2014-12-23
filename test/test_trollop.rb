@@ -1,8 +1,3 @@
-## test/test_trollop.rb -- unit tests for trollop
-## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
-## Copyright:: Copyright 2007 William Morgan
-## License::   GNU GPL version 2
-
 require 'stringio'
 require_relative 'test_helper'
 
@@ -166,7 +161,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal ["3.4"], opts["argmst"]
     assert_nothing_raised { opts = @p.parse(%w(--argmst goodbye)) }
     assert_equal ["goodbye"], opts["argmst"]
-  end    
+  end
 
   ## :type and :default must match if both are specified
   def test_type_and_default_must_match

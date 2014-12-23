@@ -1,16 +1,12 @@
 # trollop
 
-by William Morgan (http://masanjin.net/)
-
-Main page: http://manageiq.github.io/trollop/
+http://manageiq.github.io/trollop/
 
 [![Gem Version](https://badge.fury.io/rb/trollop.svg)](http://badge.fury.io/rb/trollop)
 [![Build Status](https://travis-ci.org/ManageIQ/trollop.svg)](https://travis-ci.org/ManageIQ/trollop)
 [![Code Climate](https://codeclimate.com/github/ManageIQ/trollop/badges/gpa.svg)](https://codeclimate.com/github/ManageIQ/trollop)
 [![Coverage Status](http://img.shields.io/coveralls/ManageIQ/trollop.svg)](https://coveralls.io/r/ManageIQ/trollop)
 [![Dependency Status](https://gemnasium.com/ManageIQ/trollop.svg)](https://gemnasium.com/ManageIQ/trollop)
-
-Release announcements and comments: http://masanjin.net/blog/label/trollop/.
 
 Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
 Also see the examples at http://manageiq.github.io/trollop/.
@@ -54,5 +50,8 @@ p opts # a hash: { :monkey=>false, :name=>nil, :num_limbs=>4, :help=>false }
 
 ## License
 
-Copyright (c) 2008--2012 William Morgan. Trollop is distributed under the same
-terms as Ruby.
+Copyright &copy; 2008-2014 [William Morgan](http://masanjin.net/).
+
+Copyright &copy; 2014 Red Hat, Inc.
+
+Trollop is licensed under the same terms as Ruby.
