@@ -1,5 +1,17 @@
-== 2.0.1 / 2014-10-20
-* extract Gemfile / gemspec to follow bundler pattern
+== Unreleased / 2014-12-23
+* Integer parser now supports underscore separator.
+* Add Parser#usage and Parser#synopsis commands for creating a standard banner
+  message. Using Parser#banner directly will override both of those.
+* Add Parser#ignore_invalid_options to prevent erroring on unknown options.
+* Allow flags to act as switches if they have defaults set and no value is
+  passed on the commandline
+* Parser#opt learned to accept a block or a :callback option which it will call
+  after parsing the option.
+* Add Trollop::educate which displays the help message and dies.
+* Reformat help message to be more GNUish.
+* Fix command name in help message when script has no extension.
+* Fix handling of newlines inside descriptions
+* Documentation and other fixes.
 
 == 2.0 / 2012-08-11
 * Change flag logic: --no-X will always be false, and --X will always be true,
