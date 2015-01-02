@@ -1,4 +1,4 @@
-== Unreleased / 2014-12-23
+== 2.1.0 / 2014-12-23
 * Integer parser now supports underscore separator.
 * Add Parser#usage and Parser#synopsis commands for creating a standard banner
   message. Using Parser#banner directly will override both of those.
