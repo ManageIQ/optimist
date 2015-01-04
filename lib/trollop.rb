@@ -235,21 +235,16 @@ class Parser
   ## Sets the version string. If set, the user can request the version
   ## on the commandline. Should probably be of the form "<program name>
   ## <version number>".
-  def version s=nil; @version = s if s; @version end
+  def version(s = nil); @version = s if s; @version end
 
   ## Sets the usage string. If set the message will be printed as the
   ## first line in the help (educate) output and ending in two new
   ## lines.
-  def usage s=nil; @usage = s if s; @usage end
-
-  ## Sets the usage string. If set the message will be printed as the
-  ## first line in the help (educate) output and ending in two new
-  ## lines.
-  def usage s=nil; @usage = s if s; @usage end
+  def usage(s = nil) ; @usage = s if s; @usage end
 
   ## Adds a synopsis (command summary description) right below the
   ## usage line, or as the first line if usage isn't specified.
-  def synopsis s=nil; @synopsis = s if s; @synopsis end
+  def synopsis(s = nil) ; @synopsis = s if s; @synopsis end
 
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
@@ -477,7 +472,7 @@ class Parser
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
-      command_name = File.basename($0).gsub /\.[^.]+$/, ''
+      command_name = File.basename($0).gsub(/\.[^.]+$/, '')
       stream.puts "Usage: #{command_name} #@usage\n" if @usage
       stream.puts "#@synopsis\n" if @synopsis
       stream.puts if @usage or @synopsis
