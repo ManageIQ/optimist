@@ -1,4 +1,8 @@
-== 2.1.0 / 2014-12-23
+== 2.1.1 / 2015-01-03
+* Remove curses as a hard dependency. It is optional. This can leverage the gem if it is present.
+* Fix ruby -w warnings
+
+== 2.1.0 / 2015-01-02
 * Integer parser now supports underscore separator.
 * Add Parser#usage and Parser#synopsis commands for creating a standard banner
   message. Using Parser#banner directly will override both of those.
