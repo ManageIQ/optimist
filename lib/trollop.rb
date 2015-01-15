@@ -516,18 +516,23 @@ class Parser
   def width #:nodoc:
     @width ||= if $stdout.tty?
       begin
-        require 'curses'
-        Curses::init_screen
-        x = Curses::cols
-        Curses::close_screen
-        x
-      rescue Exception
-        80
+        require 'io/console'
+        IO.console.winsize.last
+      rescue LoadError
+        legacy_width
       end
     else
       80
     end
   end
+
+  def legacy_width
+    # Support for older Rubies where io/console is not available
+    `tput cols`.to_i
+  rescue Errno::ENOENT
+    80
+  end
+  private :legacy_width
 
   def wrap str, opts={} # :nodoc:
     if str == ""
