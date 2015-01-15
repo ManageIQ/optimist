@@ -27,6 +27,7 @@ specify."
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "chronic"
-  spec.add_development_dependency "simplecov"
   spec.add_development_dependency "coveralls"
+  # mime-types is required by coveralls. Set to a jruby 1.8 friendly version
+  spec.add_development_dependency "mime-types", "~> 1.16"
 end
