@@ -174,16 +174,22 @@ class Parser
       when Date; :date
       when Array
         if opts[:default].empty?
-          raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
-        end
-        case opts[:default][0]    # the first element determines the types
-        when Integer; :ints
-        when Numeric; :floats
-        when String; :strings
-        when IO; :ios
-        when Date; :dates
+          if opts[:type]
+            raise ArgumentError, "multiple argument type must be plural" unless MULTI_ARG_TYPES.include?(opts[:type])
+            nil
+          else
+            raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
+          end
         else
-          raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
+          case opts[:default][0]    # the first element determines the types
+          when Integer; :ints
+          when Numeric; :floats
+          when String; :strings
+          when IO; :ios
+          when Date; :dates
+          else
+            raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
+          end
         end
       when nil; nil
       else
