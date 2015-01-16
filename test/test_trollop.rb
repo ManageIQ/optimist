@@ -208,7 +208,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_raise(ArgumentError) { @p.opt "badf", "desc", :type => :float, :default => [] }
     assert_raise(ArgumentError) { @p.opt "badd", "desc", :type => :date, :default => [] }
     assert_raise(ArgumentError) { @p.opt "bads", "desc", :type => :string, :default => [] }
-    opts = @p.parse("")
+    opts = @p.parse([])
     assert_equal(opts["argmi"], [])
     assert_equal(opts["argmf"], [])
     assert_equal(opts["argmd"], [])
