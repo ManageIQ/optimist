@@ -195,6 +195,15 @@ class Trollop < ::MiniTest::Unit::TestCase
     assert_equal "different_string", opts[:argd]
   end
 
+  def test_flag_with_no_defaults_and_no_args_act_as_switches_array
+    opts = nil
+
+    @p.opt :argd, "desc", :type => :strings, :default => ["default_string"]
+
+    opts = @p.parse(%w(--argd))
+    assert_equal ["default_string"], opts[:argd]
+  end
+
   def test_type_and_empty_array
     @p.opt "argmi", "desc", :type => :ints, :default => []
     @p.opt "argmf", "desc", :type => :floats, :default => []
