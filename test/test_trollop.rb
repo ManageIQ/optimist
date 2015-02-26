@@ -4,7 +4,7 @@ require 'test_helper'
 module Trollop
 module Test
 
-class Trollop < ::Test::Unit::TestCase
+class Trollop < ::MiniTest::Unit::TestCase
   def setup
     @p = Parser.new
   end

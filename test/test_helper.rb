@@ -16,7 +16,7 @@ begin
 rescue LoadError
 end
 
-require 'test/unit'
+require 'minitest/autorun'
 
 SimpleCov.start unless ENV['MUTANT']
 
