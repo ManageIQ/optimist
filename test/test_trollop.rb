@@ -11,14 +11,14 @@ class Trollop < ::Test::Unit::TestCase
 
   def test_die_without_options_ever_run
     ::Trollop.send(:instance_variable_set, "@last_parser", nil)
-    assert_raise(ArgumentError) { ::Trollop.die 'hello' }
+    assert_raises(ArgumentError) { ::Trollop.die 'hello' }
   end
 
   def test_unknown_arguments
-    assert_raise(CommandlineError) { @p.parse(%w(--arg)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
     @p.opt "arg"
     assert_nothing_raised { @p.parse(%w(--arg)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--arg2)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
   end
 
   def test_syntax_check
@@ -26,8 +26,8 @@ class Trollop < ::Test::Unit::TestCase
 
     assert_nothing_raised { @p.parse(%w(--arg)) }
     assert_nothing_raised { @p.parse(%w(arg)) }
-    assert_raise(CommandlineError) { @p.parse(%w(---arg)) }
-    assert_raise(CommandlineError) { @p.parse(%w(-arg)) }
+    assert_raises(CommandlineError) { @p.parse(%w(---arg)) }
+    assert_raises(CommandlineError) { @p.parse(%w(-arg)) }
   end
 
   def test_required_flags_are_required
@@ -37,8 +37,8 @@ class Trollop < ::Test::Unit::TestCase
 
     assert_nothing_raised { @p.parse(%w(--arg)) }
     assert_nothing_raised { @p.parse(%w(--arg --arg2)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--arg2)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--arg2 --arg3)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--arg2 --arg3)) }
   end
 
   ## flags that take an argument error unless given one
@@ -47,8 +47,8 @@ class Trollop < ::Test::Unit::TestCase
     @p.opt "goodarg2", "desc", :type => String
 
     assert_nothing_raised { @p.parse(%w(--goodarg goat)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--goodarg --goodarg2 goat)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--goodarg)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--goodarg --goodarg2 goat)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--goodarg)) }
   end
 
   ## flags that don't take arguments ignore them
@@ -66,18 +66,18 @@ class Trollop < ::Test::Unit::TestCase
   ## types
   def test_typed_args_refuse_args_of_other_types
     assert_nothing_raised { @p.opt "goodarg", "desc", :type => :int }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :type => :asdf }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :type => :asdf }
 
     assert_nothing_raised { @p.parse(%w(--goodarg 3)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--goodarg 4.2)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--goodarg hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--goodarg 4.2)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--goodarg hello)) }
   end
 
   ## type is correctly derived from :default
   def test_type_correctly_derived_from_default
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :default => [] }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
-    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", :default => Hash.new }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :default => [] }
+    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
+    assert_raises(ArgumentError) { @p.opt "badarg4", "desc", :default => Hash.new }
 
     opts = nil
 
@@ -92,8 +92,8 @@ class Trollop < ::Test::Unit::TestCase
     assert_nothing_raised { opts = @p.parse(%w(--argsi=-4)) }
     assert_equal -4, opts["argsi"]
 
-    assert_raise(CommandlineError) { @p.parse(%w(--argsi 4.2)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--argsi hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argsi 4.2)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argsi hello)) }
 
     # single arg: float
     assert_nothing_raised { @p.opt "argsf", "desc", :default => 3.14 }
@@ -105,7 +105,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal 2, opts["argsf"]
     assert_nothing_raised { opts = @p.parse(%w(--argsf 1.0e-2)) }
     assert_equal 1.0e-2, opts["argsf"]
-    assert_raise(CommandlineError) { @p.parse(%w(--argsf hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argsf hello)) }
 
     # single arg: date
     date = Date.today
@@ -114,7 +114,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal Date.today, opts["argsd"]
     assert_nothing_raised { opts = @p.parse(['--argsd', 'Jan 4, 2007']) }
     assert_equal Date.civil(2007, 1, 4), opts["argsd"]
-    assert_raise(CommandlineError) { @p.parse(%w(--argsd hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argsd hello)) }
 
     # single arg: string
     assert_nothing_raised { @p.opt "argss", "desc", :default => "foobar" }
@@ -131,8 +131,8 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal [3, 5], opts["argmi"]
     assert_nothing_raised { opts = @p.parse(%w(--argmi 4)) }
     assert_equal [4], opts["argmi"]
-    assert_raise(CommandlineError) { @p.parse(%w(--argmi 4.2)) }
-    assert_raise(CommandlineError) { @p.parse(%w(--argmi hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argmi 4.2)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argmi hello)) }
 
     # multi args: floats
     assert_nothing_raised { @p.opt "argmf", "desc", :default => [3.34, 5.21] }
@@ -142,7 +142,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal [2], opts["argmf"]
     assert_nothing_raised { opts = @p.parse(%w(--argmf 4.0)) }
     assert_equal [4.0], opts["argmf"]
-    assert_raise(CommandlineError) { @p.parse(%w(--argmf hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argmf hello)) }
 
     # multi args: dates
     dates = [Date.today, Date.civil(2007, 1, 4)]
@@ -151,7 +151,7 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal dates, opts["argmd"]
     assert_nothing_raised { opts = @p.parse(['--argmd', 'Jan 4, 2007']) }
     assert_equal [Date.civil(2007, 1, 4)], opts["argmd"]
-    assert_raise(CommandlineError) { @p.parse(%w(--argmd hello)) }
+    assert_raises(CommandlineError) { @p.parse(%w(--argmd hello)) }
 
     # multi args: strings
     assert_nothing_raised { @p.opt "argmst", "desc", :default => %w(hello world) }
@@ -165,10 +165,10 @@ class Trollop < ::Test::Unit::TestCase
 
   ## :type and :default must match if both are specified
   def test_type_and_default_must_match
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :type => :int, :default => "hello" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => 4 }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => ["hi"] }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :type => :ints, :default => [3.14] }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :type => :int, :default => "hello" }
+    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => 4 }
+    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => ["hi"] }
+    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :ints, :default => [3.14] }
 
     assert_nothing_raised { @p.opt "argsi", "desc", :type => :int, :default => 4 }
     assert_nothing_raised { @p.opt "argsf", "desc", :type => :float, :default => 3.14 }
@@ -204,10 +204,10 @@ class Trollop < ::Test::Unit::TestCase
     assert_nothing_raised { @p.opt "argmf", "desc", :type => :floats, :default => [] }
     assert_nothing_raised { @p.opt "argmd", "desc", :type => :dates, :default => [] }
     assert_nothing_raised { @p.opt "argms", "desc", :type => :strings, :default => [] }
-    assert_raise(ArgumentError) { @p.opt "badi", "desc", :type => :int, :default => [] }
-    assert_raise(ArgumentError) { @p.opt "badf", "desc", :type => :float, :default => [] }
-    assert_raise(ArgumentError) { @p.opt "badd", "desc", :type => :date, :default => [] }
-    assert_raise(ArgumentError) { @p.opt "bads", "desc", :type => :string, :default => [] }
+    assert_raises(ArgumentError) { @p.opt "badi", "desc", :type => :int, :default => [] }
+    assert_raises(ArgumentError) { @p.opt "badf", "desc", :type => :float, :default => [] }
+    assert_raises(ArgumentError) { @p.opt "badd", "desc", :type => :date, :default => [] }
+    assert_raises(ArgumentError) { @p.opt "bads", "desc", :type => :string, :default => [] }
     opts = @p.parse([])
     assert_equal(opts["argmi"], [])
     assert_equal(opts["argmf"], [])
@@ -218,18 +218,18 @@ class Trollop < ::Test::Unit::TestCase
   def test_long_detects_bad_names
     assert_nothing_raised { @p.opt "goodarg", "desc", :long => "none" }
     assert_nothing_raised { @p.opt "goodarg2", "desc", :long => "--two" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :long => "" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :long => "--" }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :long => "-one" }
-    assert_raise(ArgumentError) { @p.opt "badarg4", "desc", :long => "---toomany" }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :long => "" }
+    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :long => "--" }
+    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :long => "-one" }
+    assert_raises(ArgumentError) { @p.opt "badarg4", "desc", :long => "---toomany" }
   end
 
   def test_short_detects_bad_names
     assert_nothing_raised { @p.opt "goodarg", "desc", :short => "a" }
     assert_nothing_raised { @p.opt "goodarg2", "desc", :short => "-b" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :short => "" }
-    assert_raise(ArgumentError) { @p.opt "badarg2", "desc", :short => "-ab" }
-    assert_raise(ArgumentError) { @p.opt "badarg3", "desc", :short => "--t" }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :short => "" }
+    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :short => "-ab" }
+    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :short => "--t" }
   end
 
   def test_short_names_created_automatically
@@ -275,25 +275,25 @@ class Trollop < ::Test::Unit::TestCase
     @p.educate sio
     assert sio.string =~ /--arg\s+desc/
 
-    assert_raise(CommandlineError) { @p.parse %w(-a) }
+    assert_raises(CommandlineError) { @p.parse %w(-a) }
   end
 
   ## two args can't have the same name
   def test_conflicting_names_are_detected
     assert_nothing_raised { @p.opt "goodarg" }
-    assert_raise(ArgumentError) { @p.opt "goodarg" }
+    assert_raises(ArgumentError) { @p.opt "goodarg" }
   end
 
   ## two args can't have the same :long
   def test_conflicting_longs_detected
     assert_nothing_raised { @p.opt "goodarg", "desc", :long => "--goodarg" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :long => "--goodarg" }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :long => "--goodarg" }
   end
 
   ## two args can't have the same :short
   def test_conflicting_shorts_detected
     assert_nothing_raised { @p.opt "goodarg", "desc", :short => "-g" }
-    assert_raise(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
+    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
   end
 
   ## note: this behavior has changed in trollop 2.0!
@@ -347,13 +347,13 @@ class Trollop < ::Test::Unit::TestCase
     assert_equal false, opts[:no_default_true]
 
     ## disallow double negatives for reasons of sanity preservation
-    assert_raise(CommandlineError) { @p.parse %w(--no-no-default-true) }
+    assert_raises(CommandlineError) { @p.parse %w(--no-no-default-true) }
   end
 
   def test_special_flags_work
     @p.version "asdf fdas"
-    assert_raise(VersionNeeded) { @p.parse(%w(-v)) }
-    assert_raise(HelpNeeded) { @p.parse(%w(-h)) }
+    assert_raises(VersionNeeded) { @p.parse(%w(-v)) }
+    assert_raises(HelpNeeded) { @p.parse(%w(-h)) }
   end
 
   def test_short_options_combine
@@ -383,9 +383,9 @@ class Trollop < ::Test::Unit::TestCase
 
   def test_version_only_appears_if_set
     @p.opt "arg"
-    assert_raise(CommandlineError) { @p.parse %w(-v) }
+    assert_raises(CommandlineError) { @p.parse %w(-v) }
     @p.version "trollop 1.2.3.4"
-    assert_raise(VersionNeeded) { @p.parse %w(-v) }
+    assert_raises(VersionNeeded) { @p.parse %w(-v) }
   end
 
   def test_doubledash_ends_option_processing
@@ -1093,7 +1093,7 @@ Options:
   end
 
   def test_unknown_arg_class_type
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       @p.opt :arg, 'desc', :type => Hash
     end
   end
@@ -1296,7 +1296,7 @@ Options:
   end
 
   def test_with_standard_exception_handling
-    assert_raise(SystemExit) do
+    assert_raises(SystemExit) do
       ::Trollop.with_standard_exception_handling(@p) do
         raise ::Trollop::CommandlineError.new('cl error')
       end
