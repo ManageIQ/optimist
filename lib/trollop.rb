@@ -524,7 +524,7 @@ class Parser
       begin
         require 'io/console'
         IO.console.winsize.last
-      rescue LoadError
+      rescue LoadError, NoMethodError, Errno::ENOTTY, Errno::EBADF, Errno::EINVAL
         legacy_width
       end
     else
