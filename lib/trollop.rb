@@ -210,7 +210,7 @@ class Parser
     raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
-    opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
+    opts[:short] = opts[:short].to_s if opts[:short] && opts[:short] != :none
     opts[:short] = case opts[:short]
       when /^-(.)$/; $1
       when nil, :none, /^.$/; opts[:short]
@@ -300,7 +300,7 @@ class Parser
     vals = {}
     required = {}
 
-    opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
+    opt :version, "Print version and exit" if @version && ! ( @specs[:version] || @long["version"])
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |sym, opts|
@@ -329,10 +329,8 @@ class Parser
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
-      unless sym
-        next 0 if ignore_invalid_options
-        raise CommandlineError, "unknown argument '#{arg}'" unless sym
-      end
+      next 0 if ignore_invalid_options && !sym
+      raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
       if given_args.include?(sym) && !@specs[sym][:multi]
         raise CommandlineError, "option '#{arg}' specified multiple times"
@@ -408,10 +406,10 @@ class Parser
       end
 
       if SINGLE_ARG_TYPES.include?(opts[:type])
-        unless opts[:multi]       # single parameter
-          vals[sym] = vals[sym][0][0]
-        else                      # multiple options, each with a single parameter
+        if opts[:multi]       # multiple options, each with a single parameter
           vals[sym] = vals[sym].map { |p| p[0] }
+        else                  # single parameter
+          vals[sym] = vals[sym][0][0]
         end
       elsif MULTI_ARG_TYPES.include?(opts[:type]) && !opts[:multi]
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
@@ -573,52 +571,48 @@ private
 
     until i >= args.length
       if @stop_words.member? args[i]
-        remains += args[i .. -1]
-        return remains
+        return remains += args[i .. -1]
       end
       case args[i]
       when /^--$/ # arg terminator
-        remains += args[(i + 1) .. -1]
-        return remains
+        return remains += args[(i + 1) .. -1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
         yield "--#{$1}", [$2]
         i += 1
       when /^--(\S+)$/ # long argument
         params = collect_argument_parameters(args, i + 1)
-        unless params.empty?
+        if params.empty?
+          yield args[i], nil
+          i += 1
+        else
           num_params_taken = yield args[i], params
           unless num_params_taken
             if @stop_on_unknown
-              remains += args[i + 1 .. -1]
-              return remains
+              return remains += args[i + 1 .. -1]
             else
               remains += params
             end
           end
           i += 1 + num_params_taken
-        else # long argument no parameter
-          yield args[i], nil
-          i += 1
         end
       when /^-(\S+)$/ # one or more short arguments
         shortargs = $1.split(//)
         shortargs.each_with_index do |a, j|
           if j == (shortargs.length - 1)
             params = collect_argument_parameters(args, i + 1)
-            unless params.empty?
+            if params.empty?
+              yield "-#{a}", nil
+              i += 1
+            else
               num_params_taken = yield "-#{a}", params
               unless num_params_taken
                 if @stop_on_unknown
-                  remains += args[i + 1 .. -1]
-                  return remains
+                  return remains += args[i + 1 .. -1]
                 else
                   remains += params
                 end
               end
               i += 1 + num_params_taken
-            else # argument no parameter
-              yield "-#{a}", nil
-              i += 1
             end
           else
             yield "-#{a}", nil
@@ -626,8 +620,7 @@ private
         end
       else
         if @stop_on_unknown
-          remains += args[i .. -1]
-          return remains
+          return remains += args[i .. -1]
         else
           remains << args[i]
           i += 1
@@ -673,9 +666,8 @@ private
 
   def resolve_default_short_options!
     @order.each do |type, name|
-      next unless type == :opt
       opts = @specs[name]
-      next if opts[:short]
+      next if type != :opt || opts[:short]
 
       c = opts[:long].split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
