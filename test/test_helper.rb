@@ -1,14 +1,11 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
 unless ENV['MUTANT']
+  begin
   require "coveralls"
-  require "simplecov"
-
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-    Coveralls::SimpleCov::Formatter,
-    SimpleCov::Formatter::HTMLFormatter,
-  ]
-
+  Coveralls.wear!
+  rescue LoadError
+  end
 end
 
 begin
@@ -17,7 +14,5 @@ rescue LoadError
 end
 
 require 'minitest/autorun'
-
-SimpleCov.start unless ENV['MUTANT']
 
 require 'trollop'
