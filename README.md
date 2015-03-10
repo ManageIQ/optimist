@@ -54,4 +54,4 @@ Copyright &copy; 2008-2014 [William Morgan](http://masanjin.net/).
 
 Copyright &copy; 2014 Red Hat, Inc.
 
-Trollop is licensed under the same terms as Ruby.
+Trollop is released under the [MIT License][http://www.opensource.org/licenses/MIT].
