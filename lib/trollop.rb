@@ -438,7 +438,7 @@ class Parser
       begin
         require 'chronic'
         time = Chronic.parse(param)
-      rescue NameError
+      rescue LoadError
         # chronic is not available
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
