@@ -385,7 +385,7 @@ class Parser
       opts = @specs[sym]
       if params.empty? && opts[:type] != :flag
         raise CommandlineError, "option '#{arg}' needs a parameter" unless opts[:default]
-        params << [opts[:default]]
+        params << (opts[:default].kind_of?(Array) ? opts[:default].clone : [opts[:default]])
       end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
