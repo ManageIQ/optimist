@@ -849,13 +849,7 @@ Options:
     @p.opt "two"
     @p.conflicts :one, "two"
 
-    begin
-      @p.parse %w(--one --two)
-      flunk "no error thrown"
-    rescue CommandlineError => e
-      assert_match(/--one/, e.message)
-      assert_match(/--two/, e.message)
-    end
+    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--one --two) }
   end
 
   def test_depends
@@ -892,21 +886,8 @@ Options:
 
     @p.parse %w(--one --two)
 
-    begin
-      @p.parse %w(--one)
-      flunk "no error thrown"
-    rescue CommandlineError => e
-      assert_match(/--one/, e.message)
-      assert_match(/--two/, e.message)
-    end
-
-    begin
-      @p.parse %w(--two)
-      flunk "no error thrown"
-    rescue CommandlineError => e
-      assert_match(/--one/, e.message)
-      assert_match(/--two/, e.message)
-    end
+    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--one) }
+    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--two) }
   end
 
   ## courtesy neill zero
@@ -914,20 +895,8 @@ Options:
     @p.opt "arg1", "desc1", :required => true
     @p.opt "arg2", "desc2", :required => true
 
-    begin
-      @p.parse(%w(--arg1))
-      flunk "should have failed on a missing req"
-    rescue CommandlineError => e
-      assert e.message =~ /arg2/, "didn't mention arg2 in the error msg: #{e.message}"
-    end
-
-    begin
-      @p.parse(%w(--arg2))
-      flunk "should have failed on a missing req"
-    rescue CommandlineError => e
-      assert e.message =~ /arg1/, "didn't mention arg1 in the error msg: #{e.message}"
-    end
-
+    assert_raises(CommandlineError, /arg2/) { @p.parse(%w(--arg1)) }
+    assert_raises(CommandlineError, /arg1/) { @p.parse(%w(--arg2)) }
     @p.parse(%w(--arg1 --arg2))
   end
 
@@ -1217,7 +1186,6 @@ Options:
       ::Trollop::options do
         opt :potato
       end
-      raise "broken"
     end
   end
 
@@ -1229,7 +1197,6 @@ Options:
         version "1.2"
         opt :potato
       end
-      raise "broken"
     end
   end
 
