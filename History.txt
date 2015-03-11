@@ -1,3 +1,9 @@
+== 2.1.2 / 2015-03-10
+* loosen mime-types requirements (for better ruby 1.8.7 support)
+* use io/console gem instead of curses (for better jruby support)
+* fix parsing bug when chronic gem is not available
+* allow default array to be empty if a type is specified
+* better specified license and better spec coverage
 == 2.1.1 / 2015-01-03
 * Remove curses as a hard dependency. It is optional. This can leverage the gem if it is present.
 * Fix ruby -w warnings
