@@ -255,7 +255,7 @@ class Parser
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
   def banner s; @order << [:text, s] end
-  alias :text :banner
+  alias_method :text, :banner
 
   ## Marks two (or more!) options as requiring each other. Only handles
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
