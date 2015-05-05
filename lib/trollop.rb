@@ -10,15 +10,18 @@ VERSION = "2.1.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
-class CommandlineError < StandardError; end
+class CommandlineError < StandardError
+end
 
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by Trollop#options.
-class HelpNeeded < StandardError; end
+class HelpNeeded < StandardError
+end
 
 ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
 ## automatically by Trollop#options.
-class VersionNeeded < StandardError; end
+class VersionNeeded < StandardError
+end
 
 ## Regex for floating point numbers
 FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
@@ -243,20 +246,28 @@ class Parser
   ## Sets the version string. If set, the user can request the version
   ## on the commandline. Should probably be of the form "<program name>
   ## <version number>".
-  def version(s = nil); @version = s if s; @version end
+  def version(s = nil)
+    s ? @version = s : @version
+  end
 
   ## Sets the usage string. If set the message will be printed as the
   ## first line in the help (educate) output and ending in two new
   ## lines.
-  def usage(s = nil) ; @usage = s if s; @usage end
+  def usage(s = nil)
+    s ? @usage = s : @version
+  end
 
   ## Adds a synopsis (command summary description) right below the
   ## usage line, or as the first line if usage isn't specified.
-  def synopsis(s = nil) ; @synopsis = s if s; @synopsis end
+  def synopsis(s = nil)
+    s ? @synopsis = s : @synopsis
+  end
 
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
-  def banner s; @order << [:text, s] end
+  def banner(s)
+    @order << [:text, s]
+  end
   alias_method :text, :banner
 
   ## Marks two (or more!) options as requiring each other. Only handles
