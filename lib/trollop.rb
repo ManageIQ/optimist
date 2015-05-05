@@ -132,23 +132,24 @@ class Parser
     ## fill in :type
     opts[:type] = # normalize
       case opts[:type]
-      when :boolean, :bool; :flag
-      when :integer; :int
-      when :integers; :ints
-      when :double; :float
-      when :doubles; :floats
+      when :boolean, :bool then :flag
+      when :integer        then :int
+      when :integers       then :ints
+      when :double         then :float
+      when :doubles        then :floats
       when Class
         case opts[:type].name
-        when 'TrueClass', 'FalseClass'; :flag
-        when 'String'; :string
-        when 'Integer'; :int
-        when 'Float'; :float
-        when 'IO'; :io
-        when 'Date'; :date
+        when 'TrueClass',
+             'FalseClass'  then :flag
+        when 'String'      then :string
+        when 'Integer'     then :int
+        when 'Float'       then :float
+        when 'IO'          then :io
+        when 'Date'        then :date
         else
           raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
         end
-      when nil; nil
+      when nil             then nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
         opts[:type]
@@ -166,12 +167,13 @@ class Parser
 
     type_from_default =
       case disambiguated_default
-      when Integer; :int
-      when Numeric; :float
-      when TrueClass, FalseClass; :flag
-      when String; :string
-      when IO; :io
-      when Date; :date
+      when Integer     then :int
+      when Numeric     then :float
+      when TrueClass,
+           FalseClass  then :flag
+      when String      then :string
+      when IO          then :io
+      when Date        then :date
       when Array
         if opts[:default].empty?
           if opts[:type]
@@ -182,16 +184,16 @@ class Parser
           end
         else
           case opts[:default][0]    # the first element determines the types
-          when Integer; :ints
-          when Numeric; :floats
-          when String; :strings
-          when IO; :ios
-          when Date; :dates
+          when Integer then :ints
+          when Numeric then :floats
+          when String  then :strings
+          when IO      then :ios
+          when Date    then :dates
           else
             raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
           end
         end
-      when nil; nil
+      when nil         then nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
@@ -203,18 +205,18 @@ class Parser
     ## fill in :long
     opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
     opts[:long] = case opts[:long]
-      when /^--([^-].*)$/; $1
-      when /^[^-]/; opts[:long]
-      else; raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
+      when /^--([^-].*)$/ then $1
+      when /^[^-]/        then opts[:long]
+      else                     raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
     end
     raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] && opts[:short] != :none
     opts[:short] = case opts[:short]
-      when /^-(.)$/; $1
-      when nil, :none, /^.$/; opts[:short]
-      else raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
+      when /^-(.)$/          then $1
+      when nil, :none, /^.$/ then opts[:short]
+      else                   raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
     end
 
     if opts[:short]
@@ -322,9 +324,9 @@ class Parser
       end
 
       sym = case arg
-        when /^-([^-])$/; @short[$1]
-        when /^--([^-]\S*)$/; @long[$1] || @long["no-#{$1}"]
-        else; raise CommandlineError, "invalid argument syntax: '#{arg}'"
+        when /^-([^-])$/      then @short[$1]
+        when /^--([^-]\S*)$/  then @long[$1] || @long["no-#{$1}"]
+        else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
@@ -457,17 +459,17 @@ class Parser
         (spec[:short] && spec[:short] != :none ? "-#{spec[:short]}" : "") +
         (spec[:short] && spec[:short] != :none ? ", " : "") + "--#{spec[:long]}" +
         case spec[:type]
-        when :flag; ""
-        when :int; "=<i>"
-        when :ints; "=<i+>"
-        when :string; "=<s>"
-        when :strings; "=<s+>"
-        when :float; "=<f>"
-        when :floats; "=<f+>"
-        when :io; "=<filename/uri>"
-        when :ios; "=<filename/uri+>"
-        when :date; "=<date>"
-        when :dates; "=<date+>"
+        when :flag    then ""
+        when :int     then "=<i>"
+        when :ints    then "=<i+>"
+        when :string  then "=<s>"
+        when :strings then "=<s+>"
+        when :float   then "=<f>"
+        when :floats  then "=<f+>"
+        when :io      then "=<filename/uri>"
+        when :ios     then "=<filename/uri+>"
+        when :date    then "=<date>"
+        when :dates   then "=<date+>"
         end +
         (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
     end
@@ -494,9 +496,9 @@ class Parser
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
-        when $stdout; "<stdout>"
-        when $stdin; "<stdin>"
-        when $stderr; "<stderr>"
+        when $stdout   then "<stdout>"
+        when $stdin    then "<stdin>"
+        when $stderr   then "<stderr>"
         when Array
           spec[:default].join(", ")
         else
@@ -642,8 +644,8 @@ private
   end
 
   def parse_io_parameter(param, arg)
-    case param
-    when /^(stdin|-)$/i; $stdin
+    if param =~ /^(stdin|-)$/i
+      $stdin
     else
       require 'open-uri'
       begin
