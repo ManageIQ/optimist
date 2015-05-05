@@ -492,7 +492,7 @@ class Parser
       command_name = File.basename($0).gsub(/\.[^.]+$/, '')
       stream.puts "Usage: #{command_name} #@usage\n" if @usage
       stream.puts "#@synopsis\n" if @synopsis
-      stream.puts if @usage or @synopsis
+      stream.puts if @usage || @synopsis
       stream.puts "#@version\n" if @version
       stream.puts "Options:"
     end
@@ -583,9 +583,7 @@ private
     i = 0
 
     until i >= args.length
-      if @stop_words.member? args[i]
-        return remains += args[i .. -1]
-      end
+      return remains += args[i .. -1] if @stop_words.member? args[i]
       case args[i]
       when /^--$/ # arg terminator
         return remains += args[(i + 1) .. -1]
