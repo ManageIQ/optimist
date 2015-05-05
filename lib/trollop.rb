@@ -71,7 +71,7 @@ class Parser
   attr_accessor :ignore_invalid_options
 
   ## Initializes the parser, and instance-evaluates any block given.
-  def initialize *a, &b
+  def initialize(*a, &b)
     @version = nil
     @leftovers = []
     @specs = {}
@@ -126,7 +126,7 @@ class Parser
   ## If you want a multi-value, multi-occurrence argument with a default
   ## value, you must specify +:type+ as well.
 
-  def opt name, desc="", opts={}, &b
+  def opt(name, desc = "", opts = {}, &b)
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
@@ -260,13 +260,13 @@ class Parser
   ## Marks two (or more!) options as requiring each other. Only handles
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
   ## better modeled with Trollop::die.
-  def depends *syms
+  def depends(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
 
   ## Marks two (or more!) options as conflicting.
-  def conflicts *syms
+  def conflicts(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:conflicts, syms]
   end
@@ -280,7 +280,7 @@ class Parser
   ## would be set to the list of subcommands. A subsequent Trollop
   ## invocation would then be used to parse subcommand options, after
   ## shifting the subcommand off of ARGV.
-  def stop_on *words
+  def stop_on(*words)
     @stop_words = [*words].flatten
   end
 
@@ -296,7 +296,7 @@ class Parser
   ## but you can call it directly if you need more control.
   ##
   ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
-  def parse cmdline=ARGV
+  def parse(cmdline = ARGV)
     vals = {}
     required = {}
 
@@ -426,14 +426,14 @@ class Parser
 
     ## allow openstruct-style accessors
     class << vals
-      def method_missing(m, *args)
+      def method_missing(m, *_args)
         self[m] || self[m.to_s]
       end
     end
     vals
   end
 
-  def parse_date_parameter param, arg #:nodoc:
+  def parse_date_parameter(param, arg) #:nodoc:
     begin
       begin
         require 'chronic'
@@ -448,7 +448,7 @@ class Parser
   end
 
   ## Print the help message to +stream+.
-  def educate stream=$stdout
+  def educate(stream=$stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
     left = {}
@@ -538,7 +538,7 @@ class Parser
   end
   private :legacy_width
 
-  def wrap str, opts={} # :nodoc:
+  def wrap(str, opts = {}) # :nodoc:
     if str == ""
       [""]
     else
@@ -552,7 +552,7 @@ class Parser
   end
 
   ## The per-parser version of Trollop::die (see that for documentation).
-  def die arg, msg
+  def die(arg, msg)
     if msg
       $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
@@ -565,7 +565,7 @@ class Parser
 private
 
   ## yield successive arg, parameter pairs
-  def each_arg args
+  def each_arg(args)
     remains = []
     i = 0
 
@@ -631,17 +631,17 @@ private
     remains
   end
 
-  def parse_integer_parameter param, arg
+  def parse_integer_parameter(param, arg)
     raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
     param.to_i
   end
 
-  def parse_float_parameter param, arg
+  def parse_float_parameter(param, arg)
     raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
     param.to_f
   end
 
-  def parse_io_parameter param, arg
+  def parse_io_parameter(param, arg)
     case param
     when /^(stdin|-)$/i; $stdin
     else
@@ -654,7 +654,7 @@ private
     end
   end
 
-  def collect_argument_parameters args, start_at
+  def collect_argument_parameters(args, start_at)
     params = []
     pos = start_at
     while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
@@ -677,7 +677,7 @@ private
     end
   end
 
-  def wrap_line str, opts={}
+  def wrap_line(str, opts = {})
     prefix = opts[:prefix] || 0
     width = opts[:width] || (self.width - 1)
     start = 0
@@ -699,7 +699,7 @@ private
 
   ## instance_eval but with ability to handle block arguments
   ## thanks to _why: http://redhanded.hobix.com/inspect/aBlockCostume.html
-  def cloaker &b
+  def cloaker(&b)
     (class << self; self; end).class_eval do
       define_method :cloaker_, &b
       meth = instance_method :cloaker_
@@ -740,7 +740,7 @@ end
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
 ## See more examples at http://trollop.rubyforge.org.
-def options args=ARGV, *a, &b
+def options(args = ARGV, *a, &b)
   @last_parser = Parser.new(*a, &b)
   with_standard_exception_handling(@last_parser) { @last_parser.parse args }
 end
@@ -770,7 +770,7 @@ end
 ##
 ## Requires passing in the parser object.
 
-def with_standard_exception_handling parser
+def with_standard_exception_handling(parser)
   begin
     yield
   rescue CommandlineError => e
@@ -804,7 +804,7 @@ end
 ##   end
 ##
 ##   Trollop::die "need at least one filename" if ARGV.empty?
-def die arg, msg=nil
+def die(arg, msg = nil)
   if @last_parser
     @last_parser.die arg, msg
   else
