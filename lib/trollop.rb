@@ -39,7 +39,6 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
 class Parser
-
   ## The set of values that indicate a flag option when passed as the
   ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]
@@ -85,7 +84,7 @@ class Parser
     @stop_words = []
     @stop_on_unknown = false
 
-    #instance_eval(&b) if b # can't take arguments
+    # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
 
@@ -313,7 +312,7 @@ class Parser
     vals = {}
     required = {}
 
-    opt :version, "Print version and exit" if @version && ! ( @specs[:version] || @long["version"])
+    opt :version, "Print version and exit" if @version && ! (@specs[:version] || @long["version"])
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |sym, opts|
@@ -459,7 +458,7 @@ class Parser
   end
 
   ## Print the help message to +stream+.
-  def educate(stream=$stdout)
+  def educate(stream = $stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
     left = {}
@@ -581,10 +580,10 @@ private
     i = 0
 
     until i >= args.length
-      return remains += args[i .. -1] if @stop_words.member? args[i]
+      return remains += args[i..-1] if @stop_words.member? args[i]
       case args[i]
       when /^--$/ # arg terminator
-        return remains += args[(i + 1) .. -1]
+        return remains += args[(i + 1)..-1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
         yield "--#{$1}", [$2]
         i += 1
@@ -597,7 +596,7 @@ private
           num_params_taken = yield args[i], params
           unless num_params_taken
             if @stop_on_unknown
-              return remains += args[i + 1 .. -1]
+              return remains += args[i + 1..-1]
             else
               remains += params
             end
@@ -616,7 +615,7 @@ private
               num_params_taken = yield "-#{a}", params
               unless num_params_taken
                 if @stop_on_unknown
-                  return remains += args[i + 1 .. -1]
+                  return remains += args[i + 1..-1]
                 else
                   remains += params
                 end
@@ -629,7 +628,7 @@ private
         end
       else
         if @stop_on_unknown
-          return remains += args[i .. -1]
+          return remains += args[i..-1]
         else
           remains << args[i]
           i += 1
@@ -700,7 +699,7 @@ private
           x = str.index(/\s/, start) if x && x < start
           x || str.length
         end
-      ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start ... nextt]
+      ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start...nextt]
       start = nextt + 1
     end
     ret
@@ -841,5 +840,4 @@ def educate
 end
 
 module_function :options, :die, :educate, :with_standard_exception_handling
-
 end # module
