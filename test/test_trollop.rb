@@ -698,6 +698,15 @@ Options:
     help = sio.string.split "\n"
     assert help[0] =~ /my own banner/i
     assert_equal 2, help.length # banner, -h
+
+    @p = Parser.new
+    @p.text "my own text banner"
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[0] =~ /my own text banner/i
+    assert_equal 2, help.length # banner, -h
   end
 
   def test_help_has_optional_usage

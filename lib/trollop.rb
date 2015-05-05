@@ -10,15 +10,18 @@ VERSION = "2.1.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
-class CommandlineError < StandardError; end
+class CommandlineError < StandardError
+end
 
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by Trollop#options.
-class HelpNeeded < StandardError; end
+class HelpNeeded < StandardError
+end
 
 ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
 ## automatically by Trollop#options.
-class VersionNeeded < StandardError; end
+class VersionNeeded < StandardError
+end
 
 ## Regex for floating point numbers
 FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
@@ -36,7 +39,6 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
 class Parser
-
   ## The set of values that indicate a flag option when passed as the
   ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]
@@ -71,7 +73,7 @@ class Parser
   attr_accessor :ignore_invalid_options
 
   ## Initializes the parser, and instance-evaluates any block given.
-  def initialize *a, &b
+  def initialize(*a, &b)
     @version = nil
     @leftovers = []
     @specs = {}
@@ -82,7 +84,7 @@ class Parser
     @stop_words = []
     @stop_on_unknown = false
 
-    #instance_eval(&b) if b # can't take arguments
+    # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
 
@@ -126,29 +128,30 @@ class Parser
   ## If you want a multi-value, multi-occurrence argument with a default
   ## value, you must specify +:type+ as well.
 
-  def opt name, desc="", opts={}, &b
+  def opt(name, desc = "", opts = {}, &b)
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
     opts[:type] = # normalize
       case opts[:type]
-      when :boolean, :bool; :flag
-      when :integer; :int
-      when :integers; :ints
-      when :double; :float
-      when :doubles; :floats
+      when :boolean, :bool then :flag
+      when :integer        then :int
+      when :integers       then :ints
+      when :double         then :float
+      when :doubles        then :floats
       when Class
         case opts[:type].name
-        when 'TrueClass', 'FalseClass'; :flag
-        when 'String'; :string
-        when 'Integer'; :int
-        when 'Float'; :float
-        when 'IO'; :io
-        when 'Date'; :date
+        when 'TrueClass',
+             'FalseClass'  then :flag
+        when 'String'      then :string
+        when 'Integer'     then :int
+        when 'Float'       then :float
+        when 'IO'          then :io
+        when 'Date'        then :date
         else
           raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
         end
-      when nil; nil
+      when nil             then nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
         opts[:type]
@@ -158,7 +161,7 @@ class Parser
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
-    disambiguated_default = if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
+    disambiguated_default = if opts[:multi] && opts[:default].kind_of?(Array) && !opts[:type]
       opts[:default].first
     else
       opts[:default]
@@ -166,12 +169,13 @@ class Parser
 
     type_from_default =
       case disambiguated_default
-      when Integer; :int
-      when Numeric; :float
-      when TrueClass, FalseClass; :flag
-      when String; :string
-      when IO; :io
-      when Date; :date
+      when Integer     then :int
+      when Numeric     then :float
+      when TrueClass,
+           FalseClass  then :flag
+      when String      then :string
+      when IO          then :io
+      when Date        then :date
       when Array
         if opts[:default].empty?
           if opts[:type]
@@ -182,16 +186,16 @@ class Parser
           end
         else
           case opts[:default][0]    # the first element determines the types
-          when Integer; :ints
-          when Numeric; :floats
-          when String; :strings
-          when IO; :ios
-          when Date; :dates
+          when Integer then :ints
+          when Numeric then :floats
+          when String  then :strings
+          when IO      then :ios
+          when Date    then :dates
           else
             raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
           end
         end
-      when nil; nil
+      when nil         then nil
       else
         raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
@@ -203,18 +207,18 @@ class Parser
     ## fill in :long
     opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
     opts[:long] = case opts[:long]
-      when /^--([^-].*)$/; $1
-      when /^[^-]/; opts[:long]
-      else; raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
+      when /^--([^-].*)$/ then $1
+      when /^[^-]/        then opts[:long]
+      else                     raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
     end
     raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] && opts[:short] != :none
     opts[:short] = case opts[:short]
-      when /^-(.)$/; $1
-      when nil, :none, /^.$/; opts[:short]
-      else raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
+      when /^-(.)$/          then $1
+      when nil, :none, /^.$/ then opts[:short]
+      else                   raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
     end
 
     if opts[:short]
@@ -226,7 +230,7 @@ class Parser
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
 
     ## autobox :default for :multi (multi-occurrence) arguments
-    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].is_a?(Array)
+    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].kind_of?(Array)
 
     ## fill in :multi
     opts[:multi] ||= false
@@ -241,32 +245,40 @@ class Parser
   ## Sets the version string. If set, the user can request the version
   ## on the commandline. Should probably be of the form "<program name>
   ## <version number>".
-  def version(s = nil); @version = s if s; @version end
+  def version(s = nil)
+    s ? @version = s : @version
+  end
 
   ## Sets the usage string. If set the message will be printed as the
   ## first line in the help (educate) output and ending in two new
   ## lines.
-  def usage(s = nil) ; @usage = s if s; @usage end
+  def usage(s = nil)
+    s ? @usage = s : @version
+  end
 
   ## Adds a synopsis (command summary description) right below the
   ## usage line, or as the first line if usage isn't specified.
-  def synopsis(s = nil) ; @synopsis = s if s; @synopsis end
+  def synopsis(s = nil)
+    s ? @synopsis = s : @synopsis
+  end
 
   ## Adds text to the help display. Can be interspersed with calls to
   ## #opt to build a multi-section help page.
-  def banner s; @order << [:text, s] end
-  alias :text :banner
+  def banner(s)
+    @order << [:text, s]
+  end
+  alias_method :text, :banner
 
   ## Marks two (or more!) options as requiring each other. Only handles
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
   ## better modeled with Trollop::die.
-  def depends *syms
+  def depends(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
 
   ## Marks two (or more!) options as conflicting.
-  def conflicts *syms
+  def conflicts(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:conflicts, syms]
   end
@@ -280,7 +292,7 @@ class Parser
   ## would be set to the list of subcommands. A subsequent Trollop
   ## invocation would then be used to parse subcommand options, after
   ## shifting the subcommand off of ARGV.
-  def stop_on *words
+  def stop_on(*words)
     @stop_words = [*words].flatten
   end
 
@@ -296,11 +308,11 @@ class Parser
   ## but you can call it directly if you need more control.
   ##
   ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
-  def parse cmdline=ARGV
+  def parse(cmdline = ARGV)
     vals = {}
     required = {}
 
-    opt :version, "Print version and exit" if @version && ! ( @specs[:version] || @long["version"])
+    opt :version, "Print version and exit" if @version && ! (@specs[:version] || @long["version"])
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |sym, opts|
@@ -322,9 +334,9 @@ class Parser
       end
 
       sym = case arg
-        when /^-([^-])$/; @short[$1]
-        when /^--([^-]\S*)$/; @long[$1] || @long["no-#{$1}"]
-        else; raise CommandlineError, "invalid argument syntax: '#{arg}'"
+        when /^-([^-])$/      then @short[$1]
+        when /^--([^-]\S*)$/  then @long[$1] || @long["no-#{$1}"]
+        else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
@@ -398,7 +410,7 @@ class Parser
       when :float, :floats
         vals[sym] = params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
       when :string, :strings
-        vals[sym] = params.map { |pg| pg.map { |p| p.to_s } }
+        vals[sym] = params.map { |pg| pg.map(&:to_s) }
       when :io, :ios
         vals[sym] = params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
       when :date, :dates
@@ -416,7 +428,7 @@ class Parser
       end
       # else: multiple options, with multiple parameters
 
-      opts[:callback].call(vals[sym]) if opts.has_key?(:callback)
+      opts[:callback].call(vals[sym]) if opts.key?(:callback)
     end
 
     ## modify input in place with only those
@@ -426,29 +438,27 @@ class Parser
 
     ## allow openstruct-style accessors
     class << vals
-      def method_missing(m, *args)
+      def method_missing(m, *_args)
         self[m] || self[m.to_s]
       end
     end
     vals
   end
 
-  def parse_date_parameter param, arg #:nodoc:
+  def parse_date_parameter(param, arg) #:nodoc:
     begin
-      begin
-        require 'chronic'
-        time = Chronic.parse(param)
-      rescue LoadError
-        # chronic is not available
-      end
-      time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-    rescue ArgumentError
-      raise CommandlineError, "option '#{arg}' needs a date"
+      require 'chronic'
+      time = Chronic.parse(param)
+    rescue LoadError
+      # chronic is not available
     end
+    time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+  rescue ArgumentError
+    raise CommandlineError, "option '#{arg}' needs a date"
   end
 
   ## Print the help message to +stream+.
-  def educate stream=$stdout
+  def educate(stream = $stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
     left = {}
@@ -457,30 +467,30 @@ class Parser
         (spec[:short] && spec[:short] != :none ? "-#{spec[:short]}" : "") +
         (spec[:short] && spec[:short] != :none ? ", " : "") + "--#{spec[:long]}" +
         case spec[:type]
-        when :flag; ""
-        when :int; "=<i>"
-        when :ints; "=<i+>"
-        when :string; "=<s>"
-        when :strings; "=<s+>"
-        when :float; "=<f>"
-        when :floats; "=<f+>"
-        when :io; "=<filename/uri>"
-        when :ios; "=<filename/uri+>"
-        when :date; "=<date>"
-        when :dates; "=<date+>"
+        when :flag    then ""
+        when :int     then "=<i>"
+        when :ints    then "=<i+>"
+        when :string  then "=<s>"
+        when :strings then "=<s+>"
+        when :float   then "=<f>"
+        when :floats  then "=<f+>"
+        when :io      then "=<filename/uri>"
+        when :ios     then "=<filename/uri+>"
+        when :date    then "=<date>"
+        when :dates   then "=<date+>"
         end +
         (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
     end
 
-    leftcol_width = left.values.map { |s| s.length }.max || 0
+    leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
       command_name = File.basename($0).gsub(/\.[^.]+$/, '')
-      stream.puts "Usage: #{command_name} #@usage\n" if @usage
-      stream.puts "#@synopsis\n" if @synopsis
-      stream.puts if @usage or @synopsis
-      stream.puts "#@version\n" if @version
+      stream.puts "Usage: #{command_name} #{@usage}\n" if @usage
+      stream.puts "#{@synopsis}\n" if @synopsis
+      stream.puts if @usage || @synopsis
+      stream.puts "#{@version}\n" if @version
       stream.puts "Options:"
     end
 
@@ -494,9 +504,9 @@ class Parser
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
-        when $stdout; "<stdout>"
-        when $stdin; "<stdin>"
-        when $stderr; "<stderr>"
+        when $stdout   then "<stdout>"
+        when $stdin    then "<stdin>"
+        when $stderr   then "<stderr>"
         when Array
           spec[:default].join(", ")
         else
@@ -538,7 +548,7 @@ class Parser
   end
   private :legacy_width
 
-  def wrap str, opts={} # :nodoc:
+  def wrap(str, opts = {}) # :nodoc:
     if str == ""
       [""]
     else
@@ -552,7 +562,7 @@ class Parser
   end
 
   ## The per-parser version of Trollop::die (see that for documentation).
-  def die arg, msg
+  def die(arg, msg)
     if msg
       $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
@@ -565,17 +575,15 @@ class Parser
 private
 
   ## yield successive arg, parameter pairs
-  def each_arg args
+  def each_arg(args)
     remains = []
     i = 0
 
     until i >= args.length
-      if @stop_words.member? args[i]
-        return remains += args[i .. -1]
-      end
+      return remains += args[i..-1] if @stop_words.member? args[i]
       case args[i]
       when /^--$/ # arg terminator
-        return remains += args[(i + 1) .. -1]
+        return remains += args[(i + 1)..-1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
         yield "--#{$1}", [$2]
         i += 1
@@ -588,7 +596,7 @@ private
           num_params_taken = yield args[i], params
           unless num_params_taken
             if @stop_on_unknown
-              return remains += args[i + 1 .. -1]
+              return remains += args[i + 1..-1]
             else
               remains += params
             end
@@ -607,7 +615,7 @@ private
               num_params_taken = yield "-#{a}", params
               unless num_params_taken
                 if @stop_on_unknown
-                  return remains += args[i + 1 .. -1]
+                  return remains += args[i + 1..-1]
                 else
                   remains += params
                 end
@@ -620,7 +628,7 @@ private
         end
       else
         if @stop_on_unknown
-          return remains += args[i .. -1]
+          return remains += args[i..-1]
         else
           remains << args[i]
           i += 1
@@ -631,19 +639,19 @@ private
     remains
   end
 
-  def parse_integer_parameter param, arg
+  def parse_integer_parameter(param, arg)
     raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
     param.to_i
   end
 
-  def parse_float_parameter param, arg
+  def parse_float_parameter(param, arg)
     raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
     param.to_f
   end
 
-  def parse_io_parameter param, arg
-    case param
-    when /^(stdin|-)$/i; $stdin
+  def parse_io_parameter(param, arg)
+    if param =~ /^(stdin|-)$/i
+      $stdin
     else
       require 'open-uri'
       begin
@@ -654,7 +662,7 @@ private
     end
   end
 
-  def collect_argument_parameters args, start_at
+  def collect_argument_parameters(args, start_at)
     params = []
     pos = start_at
     while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
@@ -677,7 +685,7 @@ private
     end
   end
 
-  def wrap_line str, opts={}
+  def wrap_line(str, opts = {})
     prefix = opts[:prefix] || 0
     width = opts[:width] || (self.width - 1)
     start = 0
@@ -691,7 +699,7 @@ private
           x = str.index(/\s/, start) if x && x < start
           x || str.length
         end
-      ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start ... nextt]
+      ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start...nextt]
       start = nextt + 1
     end
     ret
@@ -699,7 +707,7 @@ private
 
   ## instance_eval but with ability to handle block arguments
   ## thanks to _why: http://redhanded.hobix.com/inspect/aBlockCostume.html
-  def cloaker &b
+  def cloaker(&b)
     (class << self; self; end).class_eval do
       define_method :cloaker_, &b
       meth = instance_method :cloaker_
@@ -740,7 +748,7 @@ end
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
 ## See more examples at http://trollop.rubyforge.org.
-def options args=ARGV, *a, &b
+def options(args = ARGV, *a, &b)
   @last_parser = Parser.new(*a, &b)
   with_standard_exception_handling(@last_parser) { @last_parser.parse args }
 end
@@ -770,20 +778,18 @@ end
 ##
 ## Requires passing in the parser object.
 
-def with_standard_exception_handling parser
-  begin
-    yield
-  rescue CommandlineError => e
-    $stderr.puts "Error: #{e.message}."
-    $stderr.puts "Try --help for help."
-    exit(-1)
-  rescue HelpNeeded
-    parser.educate
-    exit
-  rescue VersionNeeded
-    puts parser.version
-    exit
-  end
+def with_standard_exception_handling(parser)
+  yield
+rescue CommandlineError => e
+  $stderr.puts "Error: #{e.message}."
+  $stderr.puts "Try --help for help."
+  exit(-1)
+rescue HelpNeeded
+  parser.educate
+  exit
+rescue VersionNeeded
+  puts parser.version
+  exit
 end
 
 ## Informs the user that their usage of 'arg' was wrong, as detailed by
@@ -804,7 +810,7 @@ end
 ##   end
 ##
 ##   Trollop::die "need at least one filename" if ARGV.empty?
-def die arg, msg=nil
+def die(arg, msg = nil)
   if @last_parser
     @last_parser.die arg, msg
   else
@@ -834,5 +840,4 @@ def educate
 end
 
 module_function :options, :die, :educate, :with_standard_exception_handling
-
 end # module
