@@ -158,7 +158,7 @@ class Parser
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
-    disambiguated_default = if opts[:multi] && opts[:default].is_a?(Array) && !opts[:type]
+    disambiguated_default = if opts[:multi] && opts[:default].kind_of?(Array) && !opts[:type]
       opts[:default].first
     else
       opts[:default]
@@ -226,7 +226,7 @@ class Parser
     opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
 
     ## autobox :default for :multi (multi-occurrence) arguments
-    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].is_a?(Array)
+    opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].kind_of?(Array)
 
     ## fill in :multi
     opts[:multi] ||= false
@@ -416,7 +416,7 @@ class Parser
       end
       # else: multiple options, with multiple parameters
 
-      opts[:callback].call(vals[sym]) if opts.has_key?(:callback)
+      opts[:callback].call(vals[sym]) if opts.key?(:callback)
     end
 
     ## modify input in place with only those
