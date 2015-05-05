@@ -448,16 +448,14 @@ class Parser
 
   def parse_date_parameter(param, arg) #:nodoc:
     begin
-      begin
-        require 'chronic'
-        time = Chronic.parse(param)
-      rescue LoadError
-        # chronic is not available
-      end
-      time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-    rescue ArgumentError
-      raise CommandlineError, "option '#{arg}' needs a date"
+      require 'chronic'
+      time = Chronic.parse(param)
+    rescue LoadError
+      # chronic is not available
     end
+    time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+  rescue ArgumentError
+    raise CommandlineError, "option '#{arg}' needs a date"
   end
 
   ## Print the help message to +stream+.
@@ -782,19 +780,17 @@ end
 ## Requires passing in the parser object.
 
 def with_standard_exception_handling(parser)
-  begin
-    yield
-  rescue CommandlineError => e
-    $stderr.puts "Error: #{e.message}."
-    $stderr.puts "Try --help for help."
-    exit(-1)
-  rescue HelpNeeded
-    parser.educate
-    exit
-  rescue VersionNeeded
-    puts parser.version
-    exit
-  end
+  yield
+rescue CommandlineError => e
+  $stderr.puts "Error: #{e.message}."
+  $stderr.puts "Try --help for help."
+  exit(-1)
+rescue HelpNeeded
+  parser.educate
+  exit
+rescue VersionNeeded
+  puts parser.version
+  exit
 end
 
 ## Informs the user that their usage of 'arg' was wrong, as detailed by
