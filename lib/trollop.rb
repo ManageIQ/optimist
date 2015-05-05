@@ -374,9 +374,11 @@ class Parser
       end
     end
 
+    required_error = []
     required.each do |sym, val|
-      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
+      required_error << "option --#{@specs[sym][:long]}" unless given_args.include? sym
     end
+    raise CommandlineError, "the following option#{'s' if required_error.length > 1} must be specified\n#{required_error.join("\n")}" if required_error.length > 0
 
     ## parse parameters
     given_args.each do |sym, given_data|
@@ -556,7 +558,7 @@ class Parser
     if msg
       $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
-      $stderr.puts "Error: #{arg}."
+      $stderr.puts "Error: #{arg}"
     end
     $stderr.puts "Try --help for help."
     exit(-1)
