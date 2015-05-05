@@ -398,7 +398,7 @@ class Parser
       when :float, :floats
         vals[sym] = params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
       when :string, :strings
-        vals[sym] = params.map { |pg| pg.map { |p| p.to_s } }
+        vals[sym] = params.map { |pg| pg.map(&:to_s) }
       when :io, :ios
         vals[sym] = params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
       when :date, :dates
@@ -472,7 +472,7 @@ class Parser
         (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
     end
 
-    leftcol_width = left.values.map { |s| s.length }.max || 0
+    leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
     unless @order.size > 0 && @order.first.first == :text
