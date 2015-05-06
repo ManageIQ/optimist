@@ -39,25 +39,6 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
 class Parser
-  ## The set of values that indicate a flag option when passed as the
-  ## +:type+ parameter of #opt.
-  FLAG_TYPES = [:flag, :bool, :boolean]
-
-  ## The set of values that indicate a single-parameter (normal) option when
-  ## passed as the +:type+ parameter of #opt.
-  ##
-  ## A value of +io+ corresponds to a readable IO resource, including
-  ## a filename, URI, or the strings 'stdin' or '-'.
-  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date]
-
-  ## The set of values that indicate a multiple-parameter option (i.e., that
-  ## takes multiple space-separated values on the commandline) when passed as
-  ## the +:type+ parameter of #opt.
-  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates]
-
-  ## The complete set of legal values for the +:type+ parameter of #opt.
-  TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
-
   INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
 
   ## The values from the commandline that were not interpreted by #parse.
@@ -138,7 +119,7 @@ class Parser
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
     raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
     @long[o.long] = o.name
-    @short[o.short] = o.name if o.short && o.short != :none
+    @short[o.short] = o.name if o.short?
     @specs[o.name] = o
     @order << [:opt, o.name]
   end
@@ -258,10 +239,10 @@ class Parser
       num_params_taken = 0
 
       unless params.nil?
-        if SINGLE_ARG_TYPES.include?(@specs[sym][:type])
+        if @specs[sym].single_arg?
           given_args[sym][:params] << params[0, 1]  # take the first parameter
           num_params_taken = 1
-        elsif MULTI_ARG_TYPES.include?(@specs[sym][:type])
+        elsif @specs[sym].multi_arg?
           given_args[sym][:params] << params        # take all the parameters
           num_params_taken = params.size
         end
@@ -318,13 +299,13 @@ class Parser
         vals[sym] = params.map { |pg| pg.map { |p| parse_date_parameter p, arg } }
       end
 
-      if SINGLE_ARG_TYPES.include?(opts[:type])
+      if opts.single_arg?
         if opts[:multi]       # multiple options, each with a single parameter
           vals[sym] = vals[sym].map { |p| p[0] }
         else                  # single parameter
           vals[sym] = vals[sym][0][0]
         end
-      elsif MULTI_ARG_TYPES.include?(opts[:type]) && !opts[:multi]
+      elsif opts.multi_arg? && !opts[:multi]
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
@@ -620,6 +601,25 @@ end
 
 ## The option for each flag
 class Option
+  ## The set of values that indicate a flag option when passed as the
+  ## +:type+ parameter of #opt.
+  FLAG_TYPES = [:flag, :bool, :boolean]
+
+  ## The set of values that indicate a single-parameter (normal) option when
+  ## passed as the +:type+ parameter of #opt.
+  ##
+  ## A value of +io+ corresponds to a readable IO resource, including
+  ## a filename, URI, or the strings 'stdin' or '-'.
+  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date]
+
+  ## The set of values that indicate a multiple-parameter option (i.e., that
+  ## takes multiple space-separated values on the commandline) when passed as
+  ## the +:type+ parameter of #opt.
+  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates]
+
+  ## The complete set of legal values for the +:type+ parameter of #opt.
+  TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
+
   attr_accessor :name, :opts
 
   def initialize(name, desc="", opts={}, &b)
@@ -645,7 +645,7 @@ class Option
         end
       when nil             then nil
       else
-        raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless ::Trollop::Parser::TYPES.include?(opts[:type])
+        raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
         opts[:type]
       end
 
@@ -671,7 +671,7 @@ class Option
       when Array
         if opts[:default].empty?
           if opts[:type]
-            raise ArgumentError, "multiple argument type must be plural" unless ::Trollop::Parser::MULTI_ARG_TYPES.include?(opts[:type])
+            raise ArgumentError, "multiple argument type must be plural" unless MULTI_ARG_TYPES.include?(opts[:type])
             nil
           else
             raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
@@ -730,7 +730,7 @@ class Option
   end
 
   def key?(name)
-    opts.has_key?(name)
+    opts.key?(name)
   end
 
   # mimic type
@@ -743,12 +743,26 @@ class Option
   end
 
   def type ;opts[:type] ; end
+  def single_arg?
+    SINGLE_ARG_TYPES.include?(type)
+  end
+
   def multi ; opts[:multi] ; end
+
+  def multi_arg?
+    MULTI_ARG_TYPES.include?(type)
+  end
+
   def default ; opts[:default] ; end
   def short ; opts[:short] ; end
   def long ; opts[:long] ; end
   def callback ; opts[:callback] ; end
   def desc ; opts[:desc] ; end
+
+  # has short option
+  def short?
+    short && short != :none
+  end
 
   def self.create(name, desc="", opts={})
     new(name, desc, opts)
