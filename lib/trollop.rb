@@ -215,9 +215,9 @@ class Parser
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
     @specs.each do |sym, opts|
-      required[sym] = true if opts[:required]
-      vals[sym] = opts[:default]
-      vals[sym] = [] if opts[:multi] && !opts[:default] # multi arguments default to [], not nil
+      required[sym] = true if opts.required?
+      vals[sym] = opts.default
+      vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
     resolve_default_short_options!
@@ -243,7 +243,7 @@ class Parser
       next 0 if ignore_invalid_options && !sym
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
-      if given_args.include?(sym) && !@specs[sym][:multi]
+      if given_args.include?(sym) && !@specs[sym].multi?
         raise CommandlineError, "option '#{arg}' specified multiple times"
       end
 
@@ -279,14 +279,14 @@ class Parser
 
       case type
       when :depends
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless given_args.include? sym }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} requires --#{@specs[sym].long}" unless given_args.include? sym }
       when :conflicts
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if given_args.include?(sym) && (sym != constraint_sym) }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
       end
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
+      raise CommandlineError, "option --#{@specs[sym].long} must be specified" unless given_args.include? sym
     end
 
     ## parse parameters
@@ -294,14 +294,14 @@ class Parser
       arg, params, negative_given = given_data.values_at :arg, :params, :negative_given
 
       opts = @specs[sym]
-      if params.empty? && opts[:type] != :flag
-        raise CommandlineError, "option '#{arg}' needs a parameter" unless opts[:default]
-        params << (opts[:default].kind_of?(Array) ? opts[:default].clone : [opts[:default]])
+      if params.empty? && !opts.flag?
+        raise CommandlineError, "option '#{arg}' needs a parameter" unless opts.default
+        params << (opts.array_default? ? opts.default.clone : [opts.default])
       end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
-      case opts[:type]
+      case opts.type
       when :flag
         vals[sym] = (sym.to_s =~ /^no_/ ? negative_given : !negative_given)
       when :int, :ints
@@ -317,17 +317,17 @@ class Parser
       end
 
       if opts.single_arg?
-        if opts[:multi]       # multiple options, each with a single parameter
+        if opts.multi?        # multiple options, each with a single parameter
           vals[sym] = vals[sym].map { |p| p[0] }
         else                  # single parameter
           vals[sym] = vals[sym][0][0]
         end
-      elsif opts.multi_arg? && !opts[:multi]
+      elsif opts.multi_arg? && !opts.multi?
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
 
-      opts[:callback].call(vals[sym]) if opts.key?(:callback)
+      opts.callback.call(vals[sym]) if opts.callback
     end
 
     ## modify input in place with only those
@@ -363,9 +363,8 @@ class Parser
     left = {}
     @specs.each do |name, spec|
       left[name] =
-        (spec[:short] && spec[:short] != :none ? "-#{spec[:short]}" : "") +
-        (spec[:short] && spec[:short] != :none ? ", " : "") + "--#{spec[:long]}" +
-        case spec[:type]
+        (spec.short? ? "-#{spec.short}, " : "") + "--#{spec.long}" +
+        case spec.type
         when :flag    then ""
         when :int     then "=<i>"
         when :ints    then "=<i+>"
@@ -378,7 +377,7 @@ class Parser
         when :date    then "=<date>"
         when :dates   then "=<date+>"
         end +
-        (spec[:type] == :flag && spec[:default] ? ", --no-#{spec[:long]}" : "")
+        (spec.flag? && spec.default ? ", --no-#{spec.long}" : "")
     end
 
     leftcol_width = left.values.map(&:length).max || 0
@@ -401,19 +400,19 @@ class Parser
 
       spec = @specs[opt]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
-      desc = spec[:desc] + begin
-        default_s = case spec[:default]
+      desc = spec.desc + begin
+        default_s = case spec.default
         when $stdout   then "<stdout>"
         when $stdin    then "<stdin>"
         when $stderr   then "<stderr>"
         when Array
-          spec[:default].join(", ")
+          spec.default.join(", ")
         else
-          spec[:default].to_s
+          spec.default.to_s
         end
 
-        if spec[:default]
-          if spec[:desc] =~ /\.$/
+        if spec.default
+          if spec.desc =~ /\.$/
             " (Default: #{default_s})"
           else
             " (default: #{default_s})"
@@ -464,7 +463,7 @@ class Parser
   ## The per-parser version of Trollop::die (see that for documentation).
   def die(arg, msg = nil, error_code = nil)
     if msg
-      $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
+      $stderr.puts "Error: argument --#{@specs[arg].long} #{msg}."
     else
       $stderr.puts "Error: #{arg}."
     end
@@ -580,11 +579,11 @@ private
   def resolve_default_short_options!
     @order.each do |type, name|
       opts = @specs[name]
-      next if type != :opt || opts[:short]
+      next if type != :opt || opts.short
 
-      c = opts[:long].split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
-        opts[:short] = c
+        opts.short = c
         @short[c] = name
       end
     end
@@ -756,32 +755,32 @@ class Option
     opts.key?(name)
   end
 
-  # mimic type
-  def [](name)
-    opts[name]
-  end
-
-  def []=(name, value)
-    opts[name] = value
-  end
-
-  def type ;opts[:type] ; end
+  def type ; opts[:type] ; end
+  def flag? ; type == :flag ; end
   def single_arg?
     SINGLE_ARG_TYPES.include?(type)
   end
 
   def multi ; opts[:multi] ; end
+  alias multi? multi
 
   def multi_arg?
     MULTI_ARG_TYPES.include?(type)
   end
 
   def default ; opts[:default] ; end
+  #? def multi_default ; opts.default || opts.multi && [] ; end
+  def array_default? ; opts[:default].kind_of?(Array) ; end
+
   def short ; opts[:short] ; end
   def short? ; short && short != :none ; end
+  # not thrilled about this
+  def short=(val) ; opts[:short] = val ; end
   def long ; opts[:long] ; end
   def callback ; opts[:callback] ; end
   def desc ; opts[:desc] ; end
+
+  def required? ; opts[:required] ; end
 
   def self.create(name, desc="", opts={})
     new(name, desc, opts)
