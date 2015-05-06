@@ -483,7 +483,7 @@ Options:
     assert_raises(ArgumentError) { @p.opt :arg, "desc", :short => "-1" }
     @p.opt :a1b, "desc"
     @p.opt :a2b, "desc"
-    assert @p.specs[:a2b][:short].to_i == 0
+    assert @p.specs[:a2b].short.to_i == 0
   end
 
   def test_short_options_can_be_weird
@@ -660,7 +660,7 @@ Options:
 
   def test_auto_generated_long_names_convert_underscores_to_hyphens
     @p.opt :hello_there
-    assert_equal "hello-there", @p.specs[:hello_there][:long]
+    assert_equal "hello-there", @p.specs[:hello_there].long
   end
 
   def test_arguments_passed_through_block
