@@ -1195,6 +1195,18 @@ Options:
         end
       end
     end
+
+    # ensure regular status is returned
+
+    assert_stdout do
+      begin
+        ::Trollop::options(%w(-h)) do
+          opt :potato
+        end
+      rescue SystemExit => e
+        assert_equal 0, e.status
+      end
+    end
   end
 
   def test_simple_interface_handles_version
@@ -1233,12 +1245,38 @@ Options:
     end
   end
 
+  def test_invalid_option_with_simple_interface
+    assert_stderr do
+      assert_raises(SystemExit) do
+        ::Trollop.options(%w(--potato))
+      end
+    end
+
+    assert_stderr do
+      begin
+        ::Trollop.options(%w(--potato))
+      rescue SystemExit => e
+        assert_equal -1, e.status
+      end
+    end
+  end
+
   def test_error_with_standard_exception_handling
     assert_stderr /Error: cl error/ do
       assert_raises(SystemExit) do
         ::Trollop.with_standard_exception_handling(@p) do
           raise ::Trollop::CommandlineError.new('cl error')
         end
+      end
+    end
+
+    assert_stderr do
+      begin
+        ::Trollop.with_standard_exception_handling(@p) do
+          raise ::Trollop::CommandlineError.new('cl error')
+        end
+      rescue SystemExit => e
+        assert_equal -1, e.status
       end
     end
   end
