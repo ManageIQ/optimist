@@ -6,6 +6,8 @@
 require 'date'
 
 module Trollop
+  # note: this is duplicated in gemspec
+  # please change over there too
 VERSION = "2.1.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
