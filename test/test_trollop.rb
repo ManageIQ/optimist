@@ -1189,20 +1189,16 @@ Options:
   end
 
   def test_simple_interface_handles_help
-    ARGV.clear
-    ARGV.unshift "-h"
     assert_raises(SystemExit) do
-      ::Trollop::options do
+      ::Trollop::options(%w(-h)) do
         opt :potato
       end
     end
   end
 
   def test_simple_interface_handles_version
-    ARGV.clear
-    ARGV.unshift "-v"
     assert_raises(SystemExit) do
-      ::Trollop::options do
+      ::Trollop::options(%w(-v)) do
         version "1.2"
         opt :potato
       end
@@ -1210,9 +1206,7 @@ Options:
   end
 
   def test_simple_interface_handles_regular_usage
-    ARGV.clear
-    ARGV.unshift "--potato"
-    opts = ::Trollop::options do
+    opts = ::Trollop::options(%w(--potato)) do
       opt :potato
     end
     assert opts[:potato]
@@ -1220,9 +1214,7 @@ Options:
 
   def test_simple_interface_handles_die
     old_stderr, $stderr = $stderr, StringIO.new('w')
-    ARGV.clear
-    ARGV.unshift "--potato"
-    ::Trollop::options do
+    ::Trollop::options(%w(--potato)) do
       opt :potato
     end
     assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
@@ -1232,9 +1224,7 @@ Options:
 
   def test_simple_interface_handles_die_without_message
     old_stderr, $stderr = $stderr, StringIO.new('w')
-    ARGV.clear
-    ARGV.unshift "--potato"
-    opts = ::Trollop::options do
+    opts = ::Trollop::options(%w(--potato)) do
       opt :potato
     end
     assert_raises(SystemExit) { ::Trollop::die :potato }
