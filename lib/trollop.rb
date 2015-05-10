@@ -85,6 +85,7 @@ class Parser
     @constraints = []
     @stop_words = []
     @stop_on_unknown = false
+    @educate_on_error = false
 
     # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
@@ -304,6 +305,12 @@ class Parser
   ## i.e., without first parsing the global options.
   def stop_on_unknown
     @stop_on_unknown = true
+  end
+
+  ## Instead of displaying "Try --help for help." on an error
+  ## display the usage (via educate)
+  def educate_on_error
+    @educate_on_error = true
   end
 
   ## Parses the commandline. Typically called by Trollop::options,
@@ -570,7 +577,12 @@ class Parser
     else
       $stderr.puts "Error: #{arg}."
     end
-    $stderr.puts "Try --help for help."
+    if @educate_on_error
+      $stderr.puts
+      educate $stderr
+    else
+      $stderr.puts "Try --help for help."
+    end
     exit(-1)
   end
 
@@ -783,9 +795,7 @@ end
 def with_standard_exception_handling(parser)
   yield
 rescue CommandlineError => e
-  $stderr.puts "Error: #{e.message}."
-  $stderr.puts "Try --help for help."
-  exit(-1)
+  parser.die(e.message)
 rescue HelpNeeded
   parser.educate
   exit

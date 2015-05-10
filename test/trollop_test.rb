@@ -16,7 +16,27 @@ class TrollopTest < MiniTest::Test
     
     assert_equal true, opts[:f]
   end
-  # TODO: options
+
+  def test_options_die_default
+    assert_stderr(/Error: unknown argument.*Try --help/m) do
+      assert_system_exit(-1) do
+        opts = Trollop.options %w(-f) do
+          opt :x
+        end
+      end
+    end
+  end
+
+  def test_options_die_educate
+    assert_stderr(/Error: unknown argument.*Options/m) do
+      assert_system_exit(-1) do
+        opts = Trollop.options %w(-f) do
+          opt :x
+          educate_on_error
+        end
+      end
+    end
+  end
 
   def test_die_without_options_ever_run
     assert_raises(ArgumentError) { Trollop.die 'hello' }
