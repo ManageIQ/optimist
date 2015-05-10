@@ -564,7 +564,7 @@ class Parser
   end
 
   ## The per-parser version of Trollop::die (see that for documentation).
-  def die(arg, msg)
+  def die(arg, msg = nil)
     if msg
       $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
