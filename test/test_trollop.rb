@@ -338,7 +338,6 @@ class Trollop < ::MiniTest::Unit::TestCase
 
     ## specifying turns them all on, regardless of default
     opts = @p.parse %w(--no-default-false --no-default-true --no-default-none)
-    p opts
     assert_equal true, opts[:no_default_none]
     assert_equal true, opts[:no_default_false]
     assert_equal true, opts[:no_default_true]
@@ -1189,64 +1188,95 @@ Options:
   end
 
   def test_simple_interface_handles_help
-    ARGV.clear
-    ARGV.unshift "-h"
-    assert_raises(SystemExit) do
-      ::Trollop::options do
-        opt :potato
+    assert_stdout /Options:/ do
+      assert_raises(SystemExit) do
+        ::Trollop::options(%w(-h)) do
+          opt :potato
+        end
+      end
+    end
+
+    # ensure regular status is returned
+
+    assert_stdout do
+      begin
+        ::Trollop::options(%w(-h)) do
+          opt :potato
+        end
+      rescue SystemExit => e
+        assert_equal 0, e.status
       end
     end
   end
 
   def test_simple_interface_handles_version
-    ARGV.clear
-    ARGV.unshift "-v"
-    assert_raises(SystemExit) do
-      ::Trollop::options do
-        version "1.2"
-        opt :potato
+    assert_stdout /1.2/ do
+      assert_raises(SystemExit) do
+        ::Trollop::options(%w(-v)) do
+          version "1.2"
+          opt :potato
+        end
       end
     end
   end
 
   def test_simple_interface_handles_regular_usage
-    ARGV.clear
-    ARGV.unshift "--potato"
-    opts = ::Trollop::options do
+    opts = ::Trollop::options(%w(--potato)) do
       opt :potato
     end
     assert opts[:potato]
   end
 
   def test_simple_interface_handles_die
-    old_stderr, $stderr = $stderr, StringIO.new('w')
-    ARGV.clear
-    ARGV.unshift "--potato"
-    ::Trollop::options do
-      opt :potato
+    assert_stderr do
+      ::Trollop::options(%w(--potato)) do
+        opt :potato
+      end
+      assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
     end
-    assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
-  ensure
-    $stderr = old_stderr
   end
 
   def test_simple_interface_handles_die_without_message
-    old_stderr, $stderr = $stderr, StringIO.new('w')
-    ARGV.clear
-    ARGV.unshift "--potato"
-    opts = ::Trollop::options do
-      opt :potato
+    assert_stderr /Error:/ do
+      opts = ::Trollop::options(%w(--potato)) do
+        opt :potato
+      end
+      assert_raises(SystemExit) { ::Trollop::die :potato }
     end
-    assert_raises(SystemExit) { ::Trollop::die :potato }
-    assert $stderr.string =~ /Error:/
-  ensure
-    $stderr = old_stderr
   end
 
-  def test_with_standard_exception_handling
-    assert_raises(SystemExit) do
-      ::Trollop.with_standard_exception_handling(@p) do
-        raise ::Trollop::CommandlineError.new('cl error')
+  def test_invalid_option_with_simple_interface
+    assert_stderr do
+      assert_raises(SystemExit) do
+        ::Trollop.options(%w(--potato))
+      end
+    end
+
+    assert_stderr do
+      begin
+        ::Trollop.options(%w(--potato))
+      rescue SystemExit => e
+        assert_equal -1, e.status
+      end
+    end
+  end
+
+  def test_error_with_standard_exception_handling
+    assert_stderr /Error: cl error/ do
+      assert_raises(SystemExit) do
+        ::Trollop.with_standard_exception_handling(@p) do
+          raise ::Trollop::CommandlineError.new('cl error')
+        end
+      end
+    end
+
+    assert_stderr do
+      begin
+        ::Trollop.with_standard_exception_handling(@p) do
+          raise ::Trollop::CommandlineError.new('cl error')
+        end
+      rescue SystemExit => e
+        assert_equal -1, e.status
       end
     end
   end
@@ -1265,6 +1295,24 @@ Options:
       @p.opt :cb1, "with callback", :callback => lambda { |vals| raise "good" }
       @p.parse(%w(--cb1))
     end
+  end
+
+  private
+
+  def assert_stderr(msg = nil)
+    old_stderr, $stderr = $stderr, StringIO.new('')
+    yield
+    assert_match msg, $stderr.string if msg
+  ensure
+    $stderr = old_stderr
+  end
+
+  def assert_stdout(msg = nil)
+    old_stdout, $stdout = $stdout, StringIO.new('')
+    yield
+    assert_match msg, $stdout.string if msg
+  ensure
+    $stdout = old_stdout
   end
 end
 
