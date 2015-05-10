@@ -3,7 +3,9 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 unless ENV['MUTANT']
   begin
   require "coveralls"
-  Coveralls.wear!
+  Coveralls.wear! do
+    add_filter '/test/'
+  end
   rescue LoadError
   end
 end
