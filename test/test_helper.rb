@@ -16,6 +16,6 @@ end
 require 'minitest/autorun'
 
 Dir[File.expand_path('../support/**/*.rb', __FILE__)].each { |f| require f }
-::MiniTest::Unit::TestCase.send(:include, AssertHelpers)
+::MiniTest::Test.send(:include, AssertHelpers)
 
 require 'trollop'
