@@ -2,9 +2,8 @@ require 'stringio'
 require 'test_helper'
 
 module Trollop
-module Test
 
-class Trollop < ::MiniTest::Unit::TestCase
+class ParserTest < ::MiniTest::Unit::TestCase
   def setup
     @p = Parser.new
   end
@@ -1291,5 +1290,4 @@ Options:
   end
 end
 
-end
 end
