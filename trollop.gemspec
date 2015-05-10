@@ -1,11 +1,10 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'trollop'
 
 Gem::Specification.new do |spec|
   spec.name          = "trollop"
-  spec.version       = Trollop::VERSION
+  spec.version       = "2.1.2"
   spec.authors       = ["William Morgan", "Keenan Brock"]
   spec.email         = "keenan@thebrocks.net"
   spec.summary       = "Trollop is a commandline option parser for Ruby that just gets out of your way."
