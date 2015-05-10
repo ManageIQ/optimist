@@ -3,7 +3,9 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 unless ENV['MUTANT']
   begin
   require "coveralls"
-  Coveralls.wear!
+  Coveralls.wear! do
+    add_filter '/test/'
+  end
   rescue LoadError
   end
 end
@@ -16,6 +18,5 @@ end
 require 'minitest/autorun'
 
 Dir[File.expand_path('../support/**/*.rb', __FILE__)].each { |f| require f }
-::MiniTest::Test.send(:include, AssertHelpers)
 
 require 'trollop'

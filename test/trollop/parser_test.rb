@@ -8,11 +8,6 @@ class ParserTest < ::MiniTest::Test
     @p = Parser.new
   end
 
-  def test_die_without_options_ever_run
-    ::Trollop.send(:instance_variable_set, "@last_parser", nil)
-    assert_raises(ArgumentError) { ::Trollop.die 'hello' }
-  end
-
   def test_unknown_arguments
     assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
     @p.opt "arg"
@@ -1247,26 +1242,6 @@ Options:
     assert_stderr do
       begin
         ::Trollop.options(%w(--potato))
-      rescue SystemExit => e
-        assert_equal -1, e.status
-      end
-    end
-  end
-
-  def test_error_with_standard_exception_handling
-    assert_stderr /Error: cl error/ do
-      assert_raises(SystemExit) do
-        ::Trollop.with_standard_exception_handling(@p) do
-          raise ::Trollop::CommandlineError.new('cl error')
-        end
-      end
-    end
-
-    assert_stderr do
-      begin
-        ::Trollop.with_standard_exception_handling(@p) do
-          raise ::Trollop::CommandlineError.new('cl error')
-        end
       rescue SystemExit => e
         assert_equal -1, e.status
       end
