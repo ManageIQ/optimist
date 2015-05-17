@@ -13,6 +13,12 @@ VERSION = "2.1.2"
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
 class CommandlineError < StandardError
+  attr_reader :error_code
+
+  def initialize(msg, error_code = nil)
+    super(msg)
+    @error_code = error_code
+  end
 end
 
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
@@ -571,7 +577,7 @@ class Parser
   end
 
   ## The per-parser version of Trollop::die (see that for documentation).
-  def die(arg, msg = nil)
+  def die(arg, msg = nil, error_code = nil)
     if msg
       $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
@@ -583,7 +589,7 @@ class Parser
     else
       $stderr.puts "Try --help for help."
     end
-    exit(-1)
+    exit(error_code || -1)
   end
 
 private
@@ -795,7 +801,7 @@ end
 def with_standard_exception_handling(parser)
   yield
 rescue CommandlineError => e
-  parser.die(e.message)
+  parser.die(e.message, nil, e.error_code)
 rescue HelpNeeded
   parser.educate
   exit
@@ -822,9 +828,9 @@ end
 ##   end
 ##
 ##   Trollop::die "need at least one filename" if ARGV.empty?
-def die(arg, msg = nil)
+def die(arg, msg = nil, error_code = nil)
   if @last_parser
-    @last_parser.die arg, msg
+    @last_parser.die arg, msg, error_code
   else
     raise ArgumentError, "Trollop::die can only be called after Trollop::options"
   end
