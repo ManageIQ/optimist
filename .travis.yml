@@ -6,3 +6,7 @@ rvm:
   - ruby-head
   - jruby-head
 gemfile: Gemfile.travis
+matrix:
+  allow_failures:
+    - rvm: ruby-head
+  fast_finish: true
