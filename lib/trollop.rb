@@ -262,7 +262,7 @@ class Parser
   ## first line in the help (educate) output and ending in two new
   ## lines.
   def usage(s = nil)
-    s ? @usage = s : @version
+    s ? @usage = s : @usage
   end
 
   ## Adds a synopsis (command summary description) right below the
