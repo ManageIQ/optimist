@@ -8,6 +8,29 @@ class ParserTest < ::MiniTest::Test
     @p = Parser.new
   end
 
+  def parser
+    @p ||= Parser.new
+  end
+
+  def test_version
+    assert_nil parser.version
+    assert_equal "trollop 5.2.3", parser.version("trollop 5.2.3")
+    assert_equal "trollop 5.2.3", parser.version
+  end
+
+  def test_usage
+    assert_nil parser.usage
+
+    assert_equal "usage string", parser.usage("usage string")
+    assert_equal "usage string", parser.usage
+  end
+
+  def test_synopsis
+    assert_nil parser.synopsis
+
+    assert_equal "synopsis string", parser.synopsis("synopsis string")
+    assert_equal "synopsis string", parser.synopsis
+  end
   def test_unknown_arguments
     assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
     @p.opt "arg"

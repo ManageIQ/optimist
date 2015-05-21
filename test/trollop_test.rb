@@ -20,7 +20,7 @@ class TrollopTest < MiniTest::Test
   def test_options_die_default
     assert_stderr(/Error: unknown argument.*Try --help/m) do
       assert_system_exit(-1) do
-        opts = Trollop.options %w(-f) do
+        Trollop.options %w(-f) do
           opt :x
         end
       end
