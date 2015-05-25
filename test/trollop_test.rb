@@ -27,10 +27,10 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_options_die_educate
+  def test_options_die_educate_on_error
     assert_stderr(/Error: unknown argument.*Options/m) do
       assert_system_exit(-1) do
-        opts = Trollop.options %w(-f) do
+        Trollop.options %w(-f) do
           opt :x
           educate_on_error
         end
@@ -157,7 +157,7 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_with_standard_exception_educate_exception
+  def test_with_standard_exception_help_needed
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
@@ -168,7 +168,7 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_with_standard_exception_educate_flag
+  def test_with_standard_exception_help_needed_flag
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
@@ -176,19 +176,6 @@ class TrollopTest < MiniTest::Test
           p.parse(%w(-h))
         end
       end
-    end
-  end
-
-  # Looks like Parser#educate does not throw an exception
-  # Suggestion to just use p.die "message" and have it display the output
-  def test_with_standard_exception_educate
-    assert_stdout(/Options/) do
-      # assert_system_exit(0) do
-        p = parser
-        Trollop.with_standard_exception_handling(p) do
-          p.educate
-        end
-      # end
     end
   end
 end

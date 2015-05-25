@@ -12,6 +12,9 @@ class ParserTest < ::MiniTest::Test
     @p ||= Parser.new
   end
 
+  # initialize
+  # cloaker
+
   def test_version
     assert_nil parser.version
     assert_equal "trollop 5.2.3", parser.version("trollop 5.2.3")
@@ -31,6 +34,16 @@ class ParserTest < ::MiniTest::Test
     assert_equal "synopsis string", parser.synopsis("synopsis string")
     assert_equal "synopsis string", parser.synopsis
   end
+
+  # def test_depends
+  # def test_conflicts
+  # def test_stop_on
+  # def test_stop_on_unknown
+
+  # die
+  # def test_die_educate_on_error
+
+
   def test_unknown_arguments
     assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
     @p.opt "arg"
@@ -369,12 +382,6 @@ class ParserTest < ::MiniTest::Test
     assert_raises(CommandlineError) { @p.parse %w(--no-no-default-true) }
   end
 
-  def test_special_flags_work
-    @p.version "asdf fdas"
-    assert_raises(VersionNeeded) { @p.parse(%w(-v)) }
-    assert_raises(HelpNeeded) { @p.parse(%w(-h)) }
-  end
-
   def test_short_options_combine
     @p.opt :arg1, "desc", :short => "a"
     @p.opt :arg2, "desc", :short => "b"
@@ -397,13 +404,6 @@ class ParserTest < ::MiniTest::Test
 
     assert_raises(CommandlineError) { @p.parse %w(-cab 4) }
     assert_raises(CommandlineError) { @p.parse %w(-cba 4) }
-  end
-
-  def test_version_only_appears_if_set
-    @p.opt "arg"
-    assert_raises(CommandlineError) { @p.parse %w(-v) }
-    @p.version "trollop 1.2.3.4"
-    assert_raises(VersionNeeded) { @p.parse %w(-v) }
   end
 
   def test_doubledash_ends_option_processing
@@ -686,148 +686,6 @@ Options:
       boat = goat
     end
     assert_equal @goat, boat
-  end
-
-  def test_help_has_default_banner
-    @p = Parser.new
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /options/i
-    assert_equal 2, help.length # options, then -h
-
-    @p = Parser.new
-    @p.version "my version"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /my version/i
-    assert_equal 4, help.length # version, options, -h, -v
-
-    @p = Parser.new
-    @p.banner "my own banner"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /my own banner/i
-    assert_equal 2, help.length # banner, -h
-
-    @p = Parser.new
-    @p.text "my own text banner"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /my own text banner/i
-    assert_equal 2, help.length # banner, -h
-  end
-
-  def test_help_has_optional_usage
-    @p = Parser.new
-    @p.usage "OPTIONS FILES"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /OPTIONS FILES/i
-    assert_equal 4, help.length # line break, options, then -h
-  end
-
-  def test_help_has_optional_synopsis
-    @p = Parser.new
-    @p.synopsis "About this program"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /About this program/i
-    assert_equal 4, help.length # line break, options, then -h
-  end
-
-  def test_help_has_specific_order_for_usage_and_synopsis
-    @p = Parser.new
-    @p.usage "OPTIONS FILES"
-    @p.synopsis "About this program"
-    sio = StringIO.new "w"
-    @p.parse []
-    @p.educate sio
-    help = sio.string.split "\n"
-    assert help[0] =~ /OPTIONS FILES/i
-    assert help[1] =~ /About this program/i
-    assert_equal 5, help.length # line break, options, then -h
-  end
-
-  def test_help_preserves_positions
-    @p.opt :zzz, "zzz"
-    @p.opt :aaa, "aaa"
-    sio = StringIO.new "w"
-    @p.educate sio
-
-    help = sio.string.split "\n"
-    assert help[1] =~ /zzz/
-    assert help[2] =~ /aaa/
-  end
-
-  def test_help_includes_option_types
-    @p.opt :arg1, 'arg', :type => :int
-    @p.opt :arg2, 'arg', :type => :ints
-    @p.opt :arg3, 'arg', :type => :string
-    @p.opt :arg4, 'arg', :type => :strings
-    @p.opt :arg5, 'arg', :type => :float
-    @p.opt :arg6, 'arg', :type => :floats
-    @p.opt :arg7, 'arg', :type => :io
-    @p.opt :arg8, 'arg', :type => :ios
-    @p.opt :arg9, 'arg', :type => :date
-    @p.opt :arg10, 'arg', :type => :dates
-    sio = StringIO.new "w"
-    @p.educate sio
-
-    help = sio.string.split "\n"
-    assert help[1] =~ /<i>/
-    assert help[2] =~ /<i\+>/
-    assert help[3] =~ /<s>/
-    assert help[4] =~ /<s\+>/
-    assert help[5] =~ /<f>/
-    assert help[6] =~ /<f\+>/
-    assert help[7] =~ /<filename\/uri>/
-    assert help[8] =~ /<filename\/uri\+>/
-    assert help[9] =~ /<date>/
-    assert help[10] =~ /<date\+>/
-  end
-
-  def test_help_has_grammatical_default_text
-    @p.opt :arg1, 'description with period.', :default => 'hello'
-    @p.opt :arg2, 'description without period', :default => 'world'
-    sio = StringIO.new 'w'
-    @p.educate sio
-
-    help = sio.string.split "\n"
-    assert help[1] =~ /Default/
-    assert help[2] =~ /default/
-  end
-
-  def test_version_and_help_short_args_can_be_overridden
-    @p.opt :verbose, "desc", :short => "-v"
-    @p.opt :hello, "desc", :short => "-h"
-    @p.version "version"
-
-    @p.parse(%w(-v))
-    assert_raises(VersionNeeded) { @p.parse(%w(--version)) }
-    @p.parse(%w(-h))
-    assert_raises(HelpNeeded) { @p.parse(%w(--help)) }
-  end
-
-  def test_version_and_help_long_args_can_be_overridden
-    @p.opt :asdf, "desc", :long => "help"
-    @p.opt :asdf2, "desc2", :long => "version"
-    @p.parse %w()
-    @p.parse %w(--help)
-    @p.parse %w(--version)
-    @p.parse %w(-h)
-    @p.parse %w(-v)
   end
 
   def test_version_and_help_override_errors
