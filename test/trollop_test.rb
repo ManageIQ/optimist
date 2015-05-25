@@ -27,7 +27,7 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_options_die_educate
+  def test_options_die_educate_on_error
     assert_stderr(/Error: unknown argument.*Options/m) do
       assert_system_exit(-1) do
         Trollop.options %w(-f) do
@@ -157,7 +157,7 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_with_standard_exception_educate_exception
+  def test_with_standard_exception_help_needed
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
@@ -168,7 +168,7 @@ class TrollopTest < MiniTest::Test
     end
   end
 
-  def test_with_standard_exception_educate_flag
+  def test_with_standard_exception_help_needed_flag
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
