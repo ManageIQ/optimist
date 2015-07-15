@@ -1,7 +1,7 @@
 # lib/trollop.rb -- trollop command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
 # Copyright (c) 2014 Red Hat, Inc.
-# trollop is licensed under the same terms as Ruby.
+# trollop is licensed under the MIT license.
 
 require 'date'
 
