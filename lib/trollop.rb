@@ -516,6 +516,7 @@ class Parser
       end
 
       spec = @specs[opt]
+      next if spec[:hidden]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
