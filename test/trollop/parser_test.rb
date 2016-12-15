@@ -118,7 +118,7 @@ class ParserTest < ::MiniTest::Test
     opts = @p.parse(%w(--argsi=4))
     assert_equal 4, opts["argsi"]
     opts = @p.parse(%w(--argsi=-4))
-    assert_equal -4, opts["argsi"]
+    assert_equal( -4, opts["argsi"])
 
     assert_raises(CommandlineError) { @p.parse(%w(--argsi 4.2)) }
     assert_raises(CommandlineError) { @p.parse(%w(--argsi hello)) }
@@ -1056,7 +1056,7 @@ Options:
   end
 
   def test_simple_interface_handles_help
-    assert_stdout /Options:/ do
+    assert_stdout(/Options:/) do
       assert_raises(SystemExit) do
         ::Trollop::options(%w(-h)) do
           opt :potato
@@ -1078,7 +1078,7 @@ Options:
   end
 
   def test_simple_interface_handles_version
-    assert_stdout /1.2/ do
+    assert_stdout(/1.2/) do
       assert_raises(SystemExit) do
         ::Trollop::options(%w(-v)) do
           version "1.2"
@@ -1105,8 +1105,8 @@ Options:
   end
 
   def test_simple_interface_handles_die_without_message
-    assert_stderr /Error:/ do
-      opts = ::Trollop::options(%w(--potato)) do
+    assert_stderr(/Error:/) do
+      ::Trollop::options(%w(--potato)) do
         opt :potato
       end
       assert_raises(SystemExit) { ::Trollop::die :potato }
@@ -1124,7 +1124,7 @@ Options:
       begin
         ::Trollop.options(%w(--potato))
       rescue SystemExit => e
-        assert_equal -1, e.status
+        assert_equal(-1, e.status)
       end
     end
   end

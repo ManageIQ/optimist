@@ -92,7 +92,9 @@ class Parser
     @stop_words = []
     @stop_on_unknown = false
     @educate_on_error = false
-
+    @synopsis = nil
+    @usage = nil
+    
     # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
