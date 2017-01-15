@@ -784,11 +784,6 @@ class Option
   def required? ; opts[:required] ; end
   def multi? ; opts[:multi] ; end
 
-  # has short option
-  def short?
-    short && short != :none
-  end
-
   def self.create(name, desc="", opts={})
     new(name, desc, opts)
   end
