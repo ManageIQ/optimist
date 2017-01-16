@@ -46,7 +46,105 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## argument-parsing logic), call #parse to actually produce the output hash,
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
-class Parser
+class OptBase
+  def flag? ; false ; end
+end
+
+  class BooleanOptType < OptBase
+    def default ; false ; end
+    def type_symbol ; :flag ; end
+    def educate ; "" ; end
+    def flag? ; true ; end
+  end
+  class FloatOptType < OptBase
+    def type_symbol; :float ; end
+    def educate ; "=<f>" ; end
+  end
+  class IntegerOptType < OptBase
+    def type_symbol; :int ; end
+    def educate ; "=<i>" ; end
+  end
+  class IOOptType < OptBase
+    def type_symbol; :io ; end
+    def educate ; "=<filename/uri>" ; end
+  end
+  class StringOptType < OptBase
+    def type_symbol; :string ; end
+        def educate ; "=<s>" ; end
+  end
+  class DateOptType < OptBase
+    def type_symbol; :date ; end
+    def educate ; "=<date>" ; end
+  end
+  class IntegerArrayOptType < OptBase
+    def type_symbol; :ints ; end
+    def educate ; "=<i+>" ; end
+  end
+  class FloatArrayOptType < OptBase
+    def type_symbol; :floats ; end
+    def educate ; "=<f+>" ; end
+  end
+  class StringArrayOptType < OptBase
+    def type_symbol; :strings ; end
+    def educate ; "=<s+>" ; end
+  end
+  class DateArrayOptType < OptBase
+    def type_symbol; :dates ; end
+    def educate ; "=<date+>" ; end
+  end
+  class IOArrayOptType < OptBase
+    def type_symbol; :ios ; end
+    def educate ; "=<filename/uri+>" ; end
+  end
+  
+  class Parser
+
+    @@registry = {
+      # single-opt
+      :fixnum => IntegerOptType,
+      :int => IntegerOptType,
+      :integer => IntegerOptType,
+      :float => FloatOptType,
+      :double => FloatOptType,
+      :string => StringOptType,
+      :bool => BooleanOptType,
+      :boolean => BooleanOptType,
+      :flag => BooleanOptType,
+      :io => IOOptType,
+      :date => DateOptType,
+      :trueclass => BooleanOptType,
+      :falseclass => BooleanOptType,
+      ## multi-opt
+      :fixnums => IntegerArrayOptType,
+      :ints => IntegerArrayOptType,
+      :integers => IntegerArrayOptType,
+      :doubles => FloatArrayOptType,
+      :floats => FloatArrayOptType,
+      :strings => StringArrayOptType,
+      :dates => DateArrayOptType,
+      :ios => IOArrayOptType,
+    }
+
+  def self.register klass, type
+    @@registry[type] = klass
+  end
+  def self.registry_include?(type)
+    @@registry.has_key?(type)
+  end
+  
+  def self.registry_getklass(type)
+    return nil if type.nil?
+
+    if type.respond_to?(:name)
+      type = type.name
+      lookup = type.downcase.to_sym
+    else
+      lookup = type.to_sym
+    end
+    raise ArgumentError, "xx unsupported argument type '#{type}', registry lookup '#{lookup}'" unless @@registry.has_key?(lookup)
+    return @@registry[lookup]
+  end
+  
   INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
 
   ## The values from the commandline that were not interpreted by #parse.
@@ -362,22 +460,8 @@ class Parser
           # call this unless the cursor's at the beginning of a line.
     left = {}
     @specs.each do |name, spec|
-      left[name] =
-        (spec.short? ? "-#{spec.short}, " : "") + "--#{spec.long}" +
-        case spec.type
-        when :flag    then ""
-        when :int     then "=<i>"
-        when :ints    then "=<i+>"
-        when :string  then "=<s>"
-        when :strings then "=<s+>"
-        when :float   then "=<f>"
-        when :floats  then "=<f+>"
-        when :io      then "=<filename/uri>"
-        when :ios     then "=<filename/uri+>"
-        when :date    then "=<date>"
-        when :dates   then "=<date+>"
-        end +
-        (spec.flag? && spec.default ? ", --no-#{spec.long}" : "")
+      type_edu = spec.optinst.educate
+      left[name] = (spec.short? ? "-#{spec.short}, " : "") + "--#{spec.long}" + type_edu + (spec.flag? && spec.default ? ", --no-#{spec.long}" : "")
     end
 
     leftcol_width = left.values.map(&:length).max || 0
@@ -622,6 +706,8 @@ private
 end
 
 ## The option for each flag
+
+
 class Option
   ## The set of values that indicate a flag option when passed as the
   ## +:type+ parameter of #opt.
@@ -644,127 +730,110 @@ class Option
 
   attr_accessor :name, :opts
 
-  def initialize(name, desc="", opts={}, &b)
-    ## fill in :type
-    opts[:type] = # normalize
-      case opts[:type]
-      when :boolean, :bool then :flag
-      when :integer        then :int
-      when :integers       then :ints
-      when :double         then :float
-      when :doubles        then :floats
-      when Class
-        case opts[:type].name
-        when 'TrueClass',
-             'FalseClass'  then :flag
-        when 'String'      then :string
-        when 'Integer'     then :int
-        when 'Float'       then :float
-        when 'IO'          then :io
-        when 'Date'        then :date
-        else
-          raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
-        end
-      when nil             then nil
+  def get_type_from_dd (opts, disambiguated_default)
+    if disambiguated_default.is_a? Array
+      return(opts[:default].first.class.name.downcase + "s") if !opts[:default].empty?
+      if opts[:type]
+        raise ArgumentError, "multiple argument type must be plural" unless MULTI_ARG_TYPES.include?(opts[:type])
+        return nil
       else
-        raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
-        opts[:type]
+        raise ArgumentError, "multiple argument type cannot be deduced from an empty array"
       end
-
+    end
+    return disambiguated_default.class.name.downcase
+  end
+  
+  def get_klass_from_default(opts, opt_klass, temp_name)
     ## for options with :multi => true, an array default doesn't imply
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
     ## see the docs for Parser#opt for details.)
-    disambiguated_default = if opts[:multi] && opts[:default].kind_of?(Array) && !opts[:type]
-      opts[:default].first
-    else
-      opts[:default]
-    end
 
-    type_from_default =
-      case disambiguated_default
-      when Integer     then :int
-      when Numeric     then :float
-      when TrueClass,
-           FalseClass  then :flag
-      when String      then :string
-      when IO          then :io
-      when Date        then :date
-      when Array
-        if opts[:default].empty?
-          if opts[:type]
-            raise ArgumentError, "multiple argument type must be plural" unless MULTI_ARG_TYPES.include?(opts[:type])
-            nil
-          else
-            raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
-          end
-        else
-          case opts[:default][0]    # the first element determines the types
-          when Integer then :ints
-          when Numeric then :floats
-          when String  then :strings
-          when IO      then :ios
-          when Date    then :dates
-          else
-            raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
-          end
-        end
-      when nil         then nil
-      else
-        raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
-      end
+    disambiguated_default = if opts[:multi] && opts[:default].is_a?(Array) && opt_klass.nil?
+                              opts[:default].first
+                            else
+                              opts[:default]
+                            end
 
-    raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})" if opts[:type] && type_from_default && opts[:type] != type_from_default
+    return nil if disambiguated_default.nil?
 
-    opts[:type] = opts[:type] || type_from_default || :flag
+    type_from_default = get_type_from_dd(opts, disambiguated_default) 
+    
+    return nil if type_from_default.nil?
+    default_klass = Trollop::Parser.registry_getklass(type_from_default.to_s)
+    return default_klass
+  end
+
+  attr_accessor :optinst
+
+  def initialize(name, desc="", opts={}, &b)
+
+    
+    opt_klass = Trollop::Parser.registry_getklass(opts[:type])
+    klass_from_default = get_klass_from_default(opts, opt_klass, name)
+
+    raise ArgumentError, ":type specification and default type don't match (default type is #{klass_from_default})" if opt_klass && klass_from_default && (opt_klass != klass_from_default)
+
+    klass = (opt_klass || klass_from_default || Trollop::BooleanOptType)
+    @optinst = klass.new	
+
+    ## get old-format symbol, e.g: :string, :int, :io, :flag
+    opts[:type] = @optinst.type_symbol
 
     ## fill in :long
-    opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
-    opts[:long] = case opts[:long]
-      when /^--([^-].*)$/ then $1
-      when /^[^-]/        then opts[:long]
-      else                     raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
-    end
-
+    @long = handle_long_opt opts[:long], name
     ## fill in :short
-    opts[:short] = opts[:short].to_s if opts[:short] && opts[:short] != :none
-    opts[:short] = case opts[:short]
-      when /^-(.)$/          then $1
-      when nil, :none, /^.$/ then opts[:short]
-      else                   raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
-    end
-
-    if opts[:short]
-      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ ::Trollop::Parser::INVALID_SHORT_ARG_REGEX
-    end
+    @short = handle_short_opt opts[:short]
 
     ## fill in :default for flags
-    opts[:default] = false if opts[:type] == :flag && opts[:default].nil?
+    opts[:default] = false if @optinst.flag? && opts[:default].nil?
 
     ## autobox :default for :multi (multi-occurrence) arguments
     opts[:default] = [opts[:default]] if opts[:default] && opts[:multi] && !opts[:default].kind_of?(Array)
 
     ## fill in :multi
-    opts[:multi] ||= false
+    @multi = opts[:multi] ||= false
 
     ## fill in :hidden
-    opts[:hidden] ||= false
-    
+    @hidden = opts[:hidden] || false
     self.name = name
     self.opts = opts
   end
 
+  def handle_long_opt(lopt, name)
+    lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
+    lopt = case lopt
+      when /^--([^-].*)$/ then $1
+      when /^[^-]/        then lopt
+      else                     raise ArgumentError, "invalid long option name #{lopt.inspect}"
+    end
+  end
+  
+  def handle_short_opt(sopt)
+    sopt = sopt.to_s if sopt && sopt != :none
+    sopt = case sopt
+      when /^-(.)$/          then $1
+      when nil, :none, /^.$/ then sopt
+      else                   raise ArgumentError, "invalid short option name '#{sopt.inspect}'"
+    end
+
+    if sopt
+      raise ArgumentError, "a short option name can't be a number or a dash" if sopt =~ ::Trollop::Parser::INVALID_SHORT_ARG_REGEX
+    end
+    return sopt
+  end
+        
   def key?(name)
     opts.key?(name)
   end
-  def hidden ; opts[:hidden] ; end
+  def hidden ; @hidden ; end
   def type ; opts[:type] ; end
   def flag? ; type == :flag ; end
   def single_arg?
     SINGLE_ARG_TYPES.include?(type)
   end
 
-  def multi ; opts[:multi] ; end
+  def multi ; @multi ; end
 
   def multi_arg?
     MULTI_ARG_TYPES.include?(type)
@@ -774,11 +843,11 @@ class Option
   #? def multi_default ; opts.default || opts.multi && [] ; end
   def array_default? ; opts[:default].kind_of?(Array) ; end
 
-  def short ; opts[:short] ; end
+  def short ; @short ; end
   def short? ; short && short != :none ; end
   # not thrilled about this
-  def short=(val) ; opts[:short]= val ; end
-  def long ; opts[:long] ; end
+  def short=(val) ; @short = val ; end
+  def long ; @long ; end
   def callback ; opts[:callback] ; end
   def desc ; opts[:desc] ; end
   def required? ; opts[:required] ; end
