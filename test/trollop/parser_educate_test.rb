@@ -2,7 +2,7 @@ require 'stringio'
 require 'test_helper'
 
 module Trollop
-  class ParserEduateTest < ::MiniTest::Test
+  class ParserEducateTest < ::MiniTest::Test
     def setup
     end
 
