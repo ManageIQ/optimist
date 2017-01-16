@@ -136,16 +136,16 @@ module Trollop
     parser.educate sio
 
     help = sio.string.split "\n"
-    assert help[1] =~ /<i>/
-    assert help[2] =~ /<i\+>/
-    assert help[3] =~ /<s>/
-    assert help[4] =~ /<s\+>/
-    assert help[5] =~ /<f>/
-    assert help[6] =~ /<f\+>/
-    assert help[7] =~ /<filename\/uri>/
-    assert help[8] =~ /<filename\/uri\+>/
-    assert help[9] =~ /<date>/
-    assert help[10] =~ /<date\+>/
+    assert help[1] =~ /<i>/, 'expect :int type'
+    assert help[2] =~ /<i\+>/, 'expect :ints type'
+    assert help[3] =~ /<s>/, 'expect :string type'
+    assert help[4] =~ /<s\+>/, 'expect :strings type'
+    assert help[5] =~ /<f>/, 'expect :float type'
+    assert help[6] =~ /<f\+>/, 'expect :floats type'
+    assert help[7] =~ /<filename\/uri>/, 'expect :io type'
+    assert help[8] =~ /<filename\/uri\+>/, 'expect :ios type'
+    assert help[9] =~ /<date>/, 'expect :date type'
+    assert help[10] =~ /<date\+>/, 'expect :dates type'
   end
 
   def test_help_has_grammatical_default_text
