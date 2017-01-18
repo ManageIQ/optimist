@@ -158,6 +158,17 @@ module Trollop
     assert help[1] =~ /Default/
     assert help[2] =~ /default/
   end
+  def test_help_can_hide_options
+    parser.opt :unhidden, 'standard option', :default => 'foo'
+    parser.opt :hideopt, 'secret option', :default => 'bar', :hidden => true
+    parser.opt :afteropt, 'post hidden option', :default => 'baz'
+    sio = StringIO.new 'w'
+    parser.educate sio
+    help = sio.string.split "\n"
+    assert help[1] =~ /\-\-unhidden/
+    # secret/hidden option should not be written out
+    assert help[2] =~ /\-\-afteropt/
+  end
 ############
 
     private
