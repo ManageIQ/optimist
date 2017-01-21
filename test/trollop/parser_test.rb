@@ -1046,24 +1046,21 @@ Options:
     assert opts[:ccd]
   end
 
-  def test_shorts_raise_with_no_short_opts_setting
-    newp = Parser.new(:no_short_opts => true)
-    assert_raises(SettingError) do
-      newp.opt :user1, "user1", :short => 'a'
-    end
-  end
   def test_default_shorts_prevented_with_setting
-    newp = Parser.new(:no_short_opts => true)
+    newp = Parser.new(:no_default_short_opts => true)
     newp.opt :user1, "user1"
+    newp.opt :bag, "bag", :short => 'b'
     assert_raises(CommandlineError) do
       newp.parse %w(-u)
     end
     opts = newp.parse %w(--user1)
     assert opts[:user1]
+    opts = newp.parse %w(-b)
+    assert opts[:bag]
   end
 
   def test_inexact_match
-    newp = Parser.new(:no_short_opts => true, :inexact_match => true)
+    newp = Parser.new(:inexact_match => true)
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
     opts = newp.parse %w(--lib 5 --ev bar)
@@ -1073,7 +1070,7 @@ Options:
   end
 
   def test_inexact_collision
-    newp = Parser.new(:no_short_opts => true, :inexact_match => true)
+    newp = Parser.new(:inexact_match => true)
     newp.opt :bookname, "name of a book", :type => :string
     newp.opt :bookcost, "cost of the book", :type => :string
     opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)

@@ -170,14 +170,15 @@ module Trollop
     assert help[2] =~ /\-\-afteropt/
   end
   def test_help_has_no_shortopts_when_set
-    @p = Parser.new(:no_short_opts => true)
+    @p = Parser.new(:no_default_short_opts => true)
     parser.opt :fooey, 'fooey option'
     sio = StringIO.new "w"
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
     assert help[1].match(/\-\-fooey/), 'long option appears in help'
-    assert !help[1].match(/[^-]\-f/), 'short option does not appear in help'
+    assert !help[1].match(/[^-]\-f/), 'short -f option does not appear in help'
+    assert !help[2].match(/[^-]\-h/), 'short -h option does not appear in help'
   end
     
 ############

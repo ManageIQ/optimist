@@ -370,7 +370,7 @@ module Trollop
       raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
       raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
       @long[o.long] = o.name
-      @short[o.short] = o.name if (o.short? and !@settings[:no_short_opts])
+      @short[o.short] = o.name if o.short?
       @specs[o.name] = o
       @order << [:opt, o.name]
     end
@@ -460,7 +460,7 @@ module Trollop
         vals[sym] = [] if opts.multi_given? && !opts.default # multi arguments default to [], not nil
       end
 
-      resolve_default_short_options! unless @settings[:no_short_opts]
+      resolve_default_short_options! unless @settings[:no_default_short_opts]
 
       ## resolve symbols
       given_args = {}
@@ -830,11 +830,7 @@ module Trollop
       @optinst.long = handle_long_opt opts[:long], name
 
       ## fill in :short
-      if settings[:no_short_opts]
-        raise SettingError, "short options prevented by :no_short_opts setting" if opts[:short]
-      else
-        @optinst.short = handle_short_opt opts[:short]
-      end
+      @optinst.short = handle_short_opt opts[:short]
       
       ## fill in :multi, :hidden
       @optinst.multi_given = opts[:multi] || false
@@ -945,14 +941,14 @@ module Trollop
   ##   Trollop::options and Trollop::Parser.new accept settings to control how
   ##   options are interpreted.  This is given as hash arguments, e.g:
   ##
-  ##   opts = Trollop::options( :inexact_match => true, :no_short_opts => true ) do
+  ##   opts = Trollop::options( :inexact_match => true, :no_default_short_opts => true ) do
   ##     opt :foobar, 'messed up'
   ##     opt :forget, 'forget it'
   ##   end
   ##
   ##  settings include:
   ##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
-  ##  * :no_short_opts  : Prevent creation of short options
+  ##  * :no_default_short_opts  : Prevent default creation of short options
   
   ## See more examples at http://trollop.rubyforge.org.
   def options(args = ARGV, *a, &b)
