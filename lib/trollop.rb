@@ -10,6 +10,7 @@ module Trollop
   # please change over there too
   VERSION = "2.2.0"
 
+  
   ## Thrown by Parser in the event of a commandline error. Not needed if
   ## you're using the Trollop::options entry.
   class CommandlineError < StandardError
@@ -57,7 +58,7 @@ module Trollop
 
 
 
-  class OptBase < Object
+  class Option < Object
     def default ; nil ; end
     ## Indicates a flag option, which is an option without an argument
     def flag? ; false ; end
@@ -71,7 +72,9 @@ module Trollop
     
   end
 
-  class BooleanOptType < OptBase
+  class OptBase < Option ; end
+  
+  class BooleanOption < Option
     def default ; false ; end
     def type_symbol ; :flag ; end
     def educate ; "" ; end
@@ -80,7 +83,7 @@ module Trollop
       return(optsym.to_s =~ /^no_/ ? neg_given : !neg_given)
     end
   end
-  class FloatOptType < OptBase
+  class FloatOption < Option
     def type_symbol; :float ; end
     def educate ; "=<f>" ; end
     def parse(optsym, paramlist, _neg_given)
@@ -92,7 +95,7 @@ module Trollop
       end
     end
   end
-  class IntegerOptType < OptBase
+  class IntegerOption < Option
     def type_symbol; :int ; end
     def educate ; "=<i>" ; end
     def parse(optsym, paramlist, _neg_given)
@@ -104,7 +107,7 @@ module Trollop
       end
     end
   end
-  class IOOptType < OptBase
+  class IOOption < Option
     def type_symbol; :io ; end
     def educate ; "=<filename/uri>" ; end
     def parse(optsym, paramlist, _neg_given)
@@ -124,14 +127,14 @@ module Trollop
       end
     end
   end
-  class StringOptType < OptBase
+  class StringOption < Option
     def type_symbol; :string ; end
     def educate ; "=<s>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map { |pg| pg.map(&:to_s) }
     end
   end
-  class DateOptType < OptBase
+  class DateOption < Option
     def type_symbol; :date ; end
     def educate ; "=<date>" ; end
     def parse(optsym, paramlist, _neg_given)
@@ -156,27 +159,27 @@ module Trollop
   ## The set of values that indicate a multiple-parameter option (i.e., that
   ## takes multiple space-separated values on the commandline) when passed as
   ## the +:type+ parameter of #opt.
-  class IntegerArrayOptType < IntegerOptType
+  class IntegerArrayOption < IntegerOption
     def type_symbol; :ints ; end
     def educate ; "=<i+>" ; end
     def multi? ; true ; end
   end
-  class FloatArrayOptType < FloatOptType
+  class FloatArrayOption < FloatOption
     def type_symbol; :floats ; end
     def educate ; "=<f+>" ; end
     def multi? ; true ; end
   end
-  class StringArrayOptType < StringOptType
+  class StringArrayOption < StringOption
     def type_symbol; :strings ; end
     def educate ; "=<s+>" ; end
     def multi? ; true ; end
   end
-  class DateArrayOptType < DateOptType
+  class DateArrayOption < DateOption
     def type_symbol; :dates ; end
     def educate ; "=<date+>" ; end
     def multi? ; true ; end
   end
-  class IOArrayOptType < IOOptType
+  class IOArrayOption < IOOption
     def type_symbol; :ios ; end
     def educate ; "=<filename/uri+>" ; end
     def multi? ; true ; end
@@ -191,34 +194,34 @@ module Trollop
     
     @@registry = {
       # single-opt
-      :fixnum => IntegerOptType,
-      :int => IntegerOptType,
-      :integer => IntegerOptType,
-      :float => FloatOptType,
-      :double => FloatOptType,
-      :string => StringOptType,
-      :bool => BooleanOptType,
-      :boolean => BooleanOptType,
-      :flag => BooleanOptType,
-      :io => IOOptType,
-      :date => DateOptType,
-      :trueclass => BooleanOptType,
-      :falseclass => BooleanOptType,
+      :fixnum => IntegerOption,
+      :int => IntegerOption,
+      :integer => IntegerOption,
+      :float => FloatOption,
+      :double => FloatOption,
+      :string => StringOption,
+      :bool => BooleanOption,
+      :boolean => BooleanOption,
+      :flag => BooleanOption,
+      :io => IOOption,
+      :date => DateOption,
+      :trueclass => BooleanOption,
+      :falseclass => BooleanOption,
       ## multi-opt
-      :fixnums => IntegerArrayOptType,
-      :ints => IntegerArrayOptType,
-      :integers => IntegerArrayOptType,
-      :doubles => FloatArrayOptType,
-      :floats => FloatArrayOptType,
-      :strings => StringArrayOptType,
-      :dates => DateArrayOptType,
-      :ios => IOArrayOptType,
+      :fixnums => IntegerArrayOption,
+      :ints => IntegerArrayOption,
+      :integers => IntegerArrayOption,
+      :doubles => FloatArrayOption,
+      :floats => FloatArrayOption,
+      :strings => StringArrayOption,
+      :dates => DateArrayOption,
+      :ios => IOArrayOption,
     }
 
     ## Register an additional type to an particular class.
-    ## The optType class should inherit from OptBase
+    ## The optType class should inherit from Option
     def self.register type, klass
-      raise "Registered class #{klass.name} should inherit from OptBase, ancestors were #{klass.ancestors}" unless klass.ancestors.include? OptBase
+      raise "Registered class #{klass.name} should inherit from Option, ancestors were #{klass.ancestors}" unless klass.ancestors.include? Option
       @@registry[type] = klass
     end
     def self.registry_include?(type)
@@ -327,7 +330,7 @@ module Trollop
       opts[:callback] ||= b if block_given?
       opts[:desc] ||= desc
 
-      o = Option.create(name, desc, opts)
+      o = OptionDispatch.create(name, desc, opts)
 
       raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
       raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
@@ -763,7 +766,7 @@ module Trollop
   ## The option for each flag
 
 
-  class Option
+  class OptionDispatch
 
     def get_type_from_dd(optdef, opttype, disambiguated_default)
       if disambiguated_default.is_a? Array
@@ -806,7 +809,7 @@ module Trollop
 
       raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
 
-      @optinst = (opttype || opttype_from_default || Trollop::BooleanOptType.new)
+      @optinst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
 
       ## fill in :long
       @long = handle_long_opt opts[:long], name

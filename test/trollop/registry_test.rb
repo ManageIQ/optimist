@@ -8,10 +8,10 @@ module Trollop
   class Foobaz
   end
   ## can register this, but it's missing a #parse method
-  class Foobar < OptBase
+  class Foobar < Option
   end
 
-  class Foobird < OptBase
+  class Foobird < Option
     def parse (optsym, paramlist, _neg)
       paramlist.map do |pg|
         pg.map do |param|
@@ -22,7 +22,7 @@ module Trollop
     end
   end
   
-  class EngineeringNotation < OptBase
+  class EngineeringNotation < Option
     UNITS = { 'z' => 1e-18, # zepto
               'a' => 1e-15, # atto
               'p' => 1e-12, # pico
@@ -57,7 +57,7 @@ module Trollop
     end
   end
 
-  class PosRange < OptBase
+  class PosRange < Option
     
     def rangeparse (optsym,name)
       matched = name.match( /^([-]?\d+):([-]?\d+)$/ )
