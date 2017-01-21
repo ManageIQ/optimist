@@ -155,8 +155,8 @@ module Trollop
     parser.educate sio
 
     help = sio.string.split "\n"
-    assert help[1] =~ /Default/
-    assert help[2] =~ /default/
+    assert help[1] =~ /Default/, "expected 'Default' for arg1"
+    assert help[2] =~ /default/, "expected 'default' for arg2"
   end
   def test_help_can_hide_options
     parser.opt :unhidden, 'standard option', :default => 'foo'
@@ -169,6 +169,17 @@ module Trollop
     # secret/hidden option should not be written out
     assert help[2] =~ /\-\-afteropt/
   end
+  def test_help_has_no_shortopts_when_set
+    @p = Parser.new(:no_short_opts => true)
+    parser.opt :fooey, 'fooey option'
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[1].match(/\-\-fooey/), 'long option appears in help'
+    assert !help[1].match(/[^-]\-f/), 'short option does not appear in help'
+  end
+    
 ############
 
     private

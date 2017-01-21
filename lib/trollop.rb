@@ -8,7 +8,7 @@ require 'date'
 module Trollop
   # note: this is duplicated in gemspec
   # please change over there too
-  VERSION = "2.2.0"
+  VERSION = "2.3.0"
 
   
   ## Thrown by Parser in the event of a commandline error. Not needed if
@@ -30,6 +30,10 @@ module Trollop
   ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
   ## automatically by Trollop#options.
   class VersionNeeded < StandardError
+  end
+
+  ## Thrown when settings conflict with options
+  class SettingError < StandardError
   end
 
   ## Regex for floating point numbers
@@ -59,32 +63,61 @@ module Trollop
 
 
   class Option < Object
-    def default ; nil ; end
+
+    attr_accessor :long, :short, :name, :multi_given, :hidden, :default
+    
+    def initialize
+      @long = nil
+      @short = nil
+      @name = nil
+      @multi_given = false
+      @hidden = false
+      @default = nil
+      @optshash = Hash.new()
+    end
+    def opts (key)
+      @optshash[key]
+    end
+
+    def opts= (o)
+      @optshash = o
+    end
+    
     ## Indicates a flag option, which is an option without an argument
     def flag? ; false ; end
     ## Indicates that this is a multivalued (Array type) argument
     def multi? ; false ; end
-    ## Option-Types with both multi? and flag? false are single-parameter (normal) options.
+    ## note: Option-Types with both multi? and flag? false are single-parameter (normal) options.
 
     def parse (_optsym, _paramlist, _neg_given)
       raise NotImplementedError, "parse must be overridden for newly registered type"
     end
+
+    # provide education string.  default to empty, but user should probably override it
+    def educate ; "" ; end
     
+    def short? ; short && short != :none ; end
+    def desc ; opts(:desc) ; end
+    def required? ; opts(:required) ; end
+    def callback ; opts(:callback) ; end
+    def multi_given? ; self.multi_given ; end
+    def single_arg? ; !self.multi? and !self.flag? ; end
+    def multi_arg? ; self.multi? ; end
+    def array_default? ; self.default.kind_of?(Array) ; end
   end
 
-  class OptBase < Option ; end
-  
   class BooleanOption < Option
-    def default ; false ; end
-    def type_symbol ; :flag ; end
-    def educate ; "" ; end
+    def initialize
+      super()
+      @default = false
+    end
+
     def flag? ; true ; end
     def parse(optsym, paramlist, neg_given)
       return(optsym.to_s =~ /^no_/ ? neg_given : !neg_given)
     end
   end
   class FloatOption < Option
-    def type_symbol; :float ; end
     def educate ; "=<f>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map do |pg|
@@ -96,7 +129,6 @@ module Trollop
     end
   end
   class IntegerOption < Option
-    def type_symbol; :int ; end
     def educate ; "=<i>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map do |pg|
@@ -108,7 +140,6 @@ module Trollop
     end
   end
   class IOOption < Option
-    def type_symbol; :io ; end
     def educate ; "=<filename/uri>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map do |pg|
@@ -128,14 +159,12 @@ module Trollop
     end
   end
   class StringOption < Option
-    def type_symbol; :string ; end
     def educate ; "=<s>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map { |pg| pg.map(&:to_s) }
     end
   end
   class DateOption < Option
-    def type_symbol; :date ; end
     def educate ; "=<date>" ; end
     def parse(optsym, paramlist, _neg_given)
       paramlist.map do |pg|
@@ -160,27 +189,22 @@ module Trollop
   ## takes multiple space-separated values on the commandline) when passed as
   ## the +:type+ parameter of #opt.
   class IntegerArrayOption < IntegerOption
-    def type_symbol; :ints ; end
     def educate ; "=<i+>" ; end
     def multi? ; true ; end
   end
   class FloatArrayOption < FloatOption
-    def type_symbol; :floats ; end
     def educate ; "=<f+>" ; end
     def multi? ; true ; end
   end
   class StringArrayOption < StringOption
-    def type_symbol; :strings ; end
     def educate ; "=<s+>" ; end
     def multi? ; true ; end
   end
   class DateArrayOption < DateOption
-    def type_symbol; :dates ; end
     def educate ; "=<date+>" ; end
     def multi? ; true ; end
   end
   class IOArrayOption < IOOption
-    def type_symbol; :ios ; end
     def educate ; "=<filename/uri+>" ; end
     def multi? ; true ; end
   end
@@ -251,7 +275,6 @@ module Trollop
       return nil unless klass_or_nil
       return klass_or_nil.new
     end
-
     
     INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
 
@@ -266,8 +289,10 @@ module Trollop
     ##  options that were not registered ahead of time.  If 'true', then the parser will simply
     ##  ignore options that it does not recognize.
     attr_accessor :ignore_invalid_options
-
+    attr_reader :settings
+    
     ## Initializes the parser, and instance-evaluates any block given.
+
     def initialize(*a, &b)
       @version = nil
       @leftovers = []
@@ -281,6 +306,15 @@ module Trollop
       @educate_on_error = false
       @synopsis = nil
       @usage = nil
+
+      ## allow passing settings through Parser.new as an optional hash.
+      ## but keep compatibility with non-hashy args, though.
+      begin
+        @settings = Hash[*a]
+      rescue ArgumentError
+        @settings = nil
+      end
+
       
       # instance_eval(&b) if b # can't take arguments
       cloaker(&b).bind(self).call(*a) if b
@@ -330,13 +364,13 @@ module Trollop
       opts[:callback] ||= b if block_given?
       opts[:desc] ||= desc
 
-      o = OptionDispatch.create(name, desc, opts)
+      o = OptionDispatch.create(name, desc, opts, @settings)
 
       raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
       raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
       raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
       @long[o.long] = o.name
-      @short[o.short] = o.name if o.short?
+      @short[o.short] = o.name if (o.short? and !@settings[:no_short_opts])
       @specs[o.name] = o
       @order << [:opt, o.name]
     end
@@ -423,10 +457,10 @@ module Trollop
       @specs.each do |sym, opts|
         required[sym] = true if opts.required?
         vals[sym] = opts.default
-        vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
+        vals[sym] = [] if opts.multi_given? && !opts.default # multi arguments default to [], not nil
       end
 
-      resolve_default_short_options!
+      resolve_default_short_options! unless @settings[:no_short_opts]
 
       ## resolve symbols
       given_args = {}
@@ -446,10 +480,21 @@ module Trollop
 
         sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
+        ## Support inexact matching of long-arguments like perl's Getopt::Long
+        if @settings[:inexact_match] and arg.match(/^--(\S*)$/)
+          partial_match  = $1
+          matched_keys = @long.keys.grep(/^#{partial_match}/)
+          sym = case matched_keys.size
+                when 0 ; nil
+                when 1 ; @long[matched_keys.first]
+                else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{matched_keys.join(',')})"
+                end
+        end
+
         next 0 if ignore_invalid_options && !sym
         raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
-        if given_args.include?(sym) && !@specs[sym].multi?
+        if given_args.include?(sym) && !@specs[sym].multi_given?
           raise CommandlineError, "option '#{arg}' specified multiple times"
         end
 
@@ -507,15 +552,15 @@ module Trollop
 
         vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
-        vals[sym] = opts.optinst.parse(sym, params, negative_given)
+        vals[sym] = opts.parse(sym, params, negative_given)
 
         if opts.single_arg?
-          if opts.multi?        # multiple options, each with a single parameter
+          if opts.multi_given?        # multiple options, each with a single parameter
             vals[sym] = vals[sym].map { |p| p[0] }
           else                  # single parameter
             vals[sym] = vals[sym][0][0]
           end
-        elsif opts.multi_arg? && !opts.multi?
+        elsif opts.multi_arg? && !opts.multi_given?
           vals[sym] = vals[sym][0]  # single option, with multiple parameters
         end
         # else: multiple options, with multiple parameters
@@ -543,7 +588,7 @@ module Trollop
       # call this unless the cursor's at the beginning of a line.
       left = {}
       @specs.each do |name, spec|
-        type_edu = spec.optinst.educate
+        type_edu = spec.educate
         left[name] = (spec.short? ? "-#{spec.short}, " : "") + "--#{spec.long}" + type_edu + (spec.flag? && spec.default ? ", --no-#{spec.long}" : "")
       end
 
@@ -763,12 +808,49 @@ module Trollop
     end
   end
 
-  ## The option for each flag
-
+  ## Determines which type of object to create based on arguments passed
+  ## to +Trollop::opt+.  This is trickier in Trollop, than other cmdline
+  ## parsers (e.g. Slop) because we allow the +default:+ to be able to
+  ## set the option's type.
 
   class OptionDispatch
 
-    def get_type_from_dd(optdef, opttype, disambiguated_default)
+    attr_reader :optinst
+
+    def initialize(name, desc="", opts={}, settings={} &b)
+
+      opttype = Trollop::Parser.registry_getopttype(opts[:type])
+      opttype_from_default = get_klass_from_default(opts, opttype, name)
+
+      raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
+
+      @optinst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
+
+      ## fill in :long
+      @optinst.long = handle_long_opt opts[:long], name
+
+      ## fill in :short
+      if settings[:no_short_opts]
+        raise SettingError, "short options prevented by :no_short_opts setting" if opts[:short]
+      else
+        @optinst.short = handle_short_opt opts[:short]
+      end
+      
+      ## fill in :multi, :hidden
+      @optinst.multi_given = opts[:multi] || false
+      @optinst.hidden = opts[:hidden] || false
+
+      ## fill in :default for flags
+      defvalue = opts[:default] || @optinst.default 
+
+      ## autobox :default for :multi (multi-occurrence) arguments
+      defvalue = [defvalue] if defvalue && @optinst.multi_given && !defvalue.kind_of?(Array)
+      @optinst.default = defvalue
+      @optinst.name = name
+      @optinst.opts = opts
+    end
+
+    def get_type_from_disdef(optdef, opttype, disambiguated_default)
       if disambiguated_default.is_a? Array
         return(optdef.first.class.name.downcase + "s") if !optdef.empty?
         if opttype
@@ -794,41 +876,11 @@ module Trollop
                               end
 
       return nil if disambiguated_default.nil?
-      type_from_default = get_type_from_dd(opts[:default], opttype, disambiguated_default) 
+      type_from_default = get_type_from_disdef(opts[:default], opttype, disambiguated_default) 
       return Trollop::Parser.registry_getopttype(type_from_default)
     end
 
 
-    attr_accessor :name, :optinst
-
-
-    def initialize(name, desc="", opts={}, &b)
-
-      opttype = Trollop::Parser.registry_getopttype(opts[:type])
-      opttype_from_default = get_klass_from_default(opts, opttype, name)
-
-      raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
-
-      @optinst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
-
-      ## fill in :long
-      @long = handle_long_opt opts[:long], name
-      ## fill in :short
-      @short = handle_short_opt opts[:short]
-      
-      ## fill in :multi, :hidden
-      @multi_given = opts[:multi] || false
-      @hidden = opts[:hidden] || false
-
-      ## fill in :default for flags
-      opts[:default] = opts[:default] || @optinst.default 
-
-      ## autobox :default for :multi (multi-occurrence) arguments
-      opts[:default] = [opts[:default]] if opts[:default] && @multi_given && !opts[:default].kind_of?(Array)
-
-      @name = name
-      @opts = opts
-    end
 
     def handle_long_opt(lopt, name)
       lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
@@ -853,31 +905,9 @@ module Trollop
       return sopt
     end
     
-    def key?(name)
-      @opts.key?(name)
-    end
-    def hidden ; @hidden ; end
-    def flag? ; @optinst.flag? ; end
-    def single_arg? ; !@optinst.multi? and !@optinst.flag? ; end
-    def multi_arg? ; @optinst.multi? ; end
-
-    def multi ; @multi_given ; end
-    def multi? ; @multi_given ; end
-
-    def default ; @opts[:default] ; end
-    def array_default? ; @opts[:default].kind_of?(Array) ; end
-
-    def short ; @short ; end
-    def short? ; short && short != :none ; end
-    # not thrilled about this
-    def short=(val) ; @short = val ; end
-    def long ; @long ; end
-    def callback ; @opts[:callback] ; end
-    def desc ; @opts[:desc] ; end
-    def required? ; @opts[:required] ; end
-
-    def self.create(name, desc="", opts={})
-      new(name, desc, opts)
+    def self.create(name, desc="", opts={}, settings={})
+      optdispatch = new(name, desc, opts, settings)
+      return optdispatch.optinst
     end
   end
 
@@ -911,6 +941,19 @@ module Trollop
   ##   ## if called with --monkey
   ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
   ##
+  ## Settings:
+  ##   Trollop::options and Trollop::Parser.new accept settings to control how
+  ##   options are interpreted.  This is given as hash arguments, e.g:
+  ##
+  ##   opts = Trollop::options( :inexact_match => true, :no_short_opts => true ) do
+  ##     opt :foobar, 'messed up'
+  ##     opt :forget, 'forget it'
+  ##   end
+  ##
+  ##  settings include:
+  ##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
+  ##  * :no_short_opts  : Prevent creation of short options
+  
   ## See more examples at http://trollop.rubyforge.org.
   def options(args = ARGV, *a, &b)
     @last_parser = Parser.new(*a, &b)
