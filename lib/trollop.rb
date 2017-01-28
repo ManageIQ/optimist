@@ -89,7 +89,7 @@ module Trollop
     def multi? ; false ; end
     ## note: Option-Types with both multi? and flag? false are single-parameter (normal) options.
 
-    def parse (_optsym, _paramlist, _neg_given)
+    def parse (_paramlist, _neg_given)
       raise NotImplementedError, "parse must be overridden for newly registered type"
     end
 
@@ -104,8 +104,33 @@ module Trollop
     def single_arg? ; !self.multi? and !self.flag? ; end
     def multi_arg? ; self.multi? ; end
     def array_default? ; self.default.kind_of?(Array) ; end
+
+    ## Format the educate-line description including the default-value(s)
+    def format_description
+      return desc unless default
+      defstring = begin
+                    default_s = case default
+                                when $stdout   then "<stdout>"
+                                when $stdin    then "<stdin>"
+                                when $stderr   then "<stderr>"
+                                when Array
+                                  default.join(", ")
+                                else
+                                  default.to_s
+                                end
+                    
+                    if desc =~ /\.$/
+                      " (Default: #{default_s})"
+                    else
+                      " (default: #{default_s})"
+                    end
+                  end
+      return desc + defstring
+            
+    end
   end
 
+  # Flag option.  Has no arguments. Can be negated with "no-".
   class BooleanOption < Option
     def initialize
       super()
@@ -113,35 +138,43 @@ module Trollop
     end
 
     def flag? ; true ; end
-    def parse(optsym, paramlist, neg_given)
-      return(optsym.to_s =~ /^no_/ ? neg_given : !neg_given)
+    def parse(_paramlist, neg_given)
+      return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
     end
   end
+
+  # Floating point number option class.
   class FloatOption < Option
     def educate ; "=<f>" ; end
-    def parse(optsym, paramlist, _neg_given)
+    def parse(paramlist, _neg_given)
       paramlist.map do |pg|
         pg.map do |param|
-          raise CommandlineError, "option '#{optsym}' needs a floating-point number" unless param =~ FLOAT_RE
+          raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param =~ FLOAT_RE
           param.to_f
         end
       end
     end
   end
+
+  # Integer number option class.
   class IntegerOption < Option
     def educate ; "=<i>" ; end
-    def parse(optsym, paramlist, _neg_given)
+    def parse(paramlist, _neg_given)
       paramlist.map do |pg|
         pg.map do |param|
-          raise CommandlineError, "option '#{optsym}' needs an integer" unless param =~ /^-?[\d_]+$/
+          raise CommandlineError, "option '#{self.name}' needs an integer" unless param =~ /^-?[\d_]+$/
           param.to_i
         end
       end
     end
   end
+
+  # Option class for handling IO objects and URLs.
+  # Note that this will return the file-handle, not the file-name
+  # in the case of file-paths given to it.
   class IOOption < Option
     def educate ; "=<filename/uri>" ; end
-    def parse(optsym, paramlist, _neg_given)
+    def parse(paramlist, _neg_given)
       paramlist.map do |pg|
         pg.map do |param|
           if param =~ /^(stdin|-)$/i
@@ -151,22 +184,26 @@ module Trollop
             begin
               open param
             rescue SystemCallError => e
-              raise CommandlineError, "file or url for option '#{optsym}' cannot be opened: #{e.message}"
+              raise CommandlineError, "file or url for option '#{self.name}' cannot be opened: #{e.message}"
             end
           end
         end
       end
     end
   end
+
+  # Option class for handling Strings.
   class StringOption < Option
     def educate ; "=<s>" ; end
-    def parse(optsym, paramlist, _neg_given)
+    def parse(paramlist, _neg_given)
       paramlist.map { |pg| pg.map(&:to_s) }
     end
   end
+
+  # Option for dates.  Uses Chronic if it exists.
   class DateOption < Option
     def educate ; "=<date>" ; end
-    def parse(optsym, paramlist, _neg_given)
+    def parse(paramlist, _neg_given)
       paramlist.map do |pg|
         pg.map do |param|
           begin
@@ -178,7 +215,7 @@ module Trollop
             end
             time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
           rescue ArgumentError
-            raise CommandlineError, "option '#{optsym}' needs a date"
+            raise CommandlineError, "option '#{self.name}' needs a date"
           end
         end
       end
@@ -188,22 +225,32 @@ module Trollop
   ## The set of values that indicate a multiple-parameter option (i.e., that
   ## takes multiple space-separated values on the commandline) when passed as
   ## the +:type+ parameter of #opt.
+
+  # Option class for handling multiple Integers
   class IntegerArrayOption < IntegerOption
     def educate ; "=<i+>" ; end
     def multi? ; true ; end
   end
+
+  # Option class for handling multiple Floats
   class FloatArrayOption < FloatOption
     def educate ; "=<f+>" ; end
     def multi? ; true ; end
   end
+
+  # Option class for handling multiple Strings
   class StringArrayOption < StringOption
     def educate ; "=<s+>" ; end
     def multi? ; true ; end
   end
+
+  # Option class for handling multiple dates
   class DateArrayOption < DateOption
     def educate ; "=<date+>" ; end
     def multi? ; true ; end
   end
+  
+  # Option class for handling Files/URLs via 'open'
   class IOArrayOption < IOOption
     def educate ; "=<filename/uri+>" ; end
     def multi? ; true ; end
@@ -259,7 +306,7 @@ module Trollop
     ## Gets the class from the registry.
     ## Can be given either a class-name, e.g. Integer, a string, e.g "integer", or a symbol, e.g :integer
     def self.registry_getklass(type)
-      return nil if type.nil?
+      return nil unless type
       if type.respond_to?(:name)
         type = type.name
         lookup = type.downcase.to_sym
@@ -293,7 +340,7 @@ module Trollop
     
     ## Initializes the parser, and instance-evaluates any block given.
 
-    def initialize(*a, &b)
+    def initialize(*args, &block)
       @version = nil
       @leftovers = []
       @specs = {}
@@ -310,14 +357,14 @@ module Trollop
       ## allow passing settings through Parser.new as an optional hash.
       ## but keep compatibility with non-hashy args, though.
       begin
-        @settings = Hash[*a]
+        @settings = Hash[*args]
       rescue ArgumentError
         @settings = nil
       end
 
       
-      # instance_eval(&b) if b # can't take arguments
-      cloaker(&b).bind(self).call(*a) if b
+      # instance_eval(&block) if block # can't take arguments
+      cloaker(&block).bind(self).call(*args) if block
     end
 
     ## Define an option. +name+ is the option name, a unique identifier
@@ -360,8 +407,8 @@ module Trollop
     ## If you want a multi-value, multi-occurrence argument with a default
     ## value, you must specify +:type+ as well.
 
-    def opt(name, desc = "", opts = {}, &b)
-      opts[:callback] ||= b if block_given?
+    def opt(name, desc = "", opts = {}, &block)
+      opts[:callback] ||= block if block_given?
       opts[:desc] ||= desc
 
       o = OptionDispatch.create(name, desc, opts, @settings)
@@ -378,27 +425,30 @@ module Trollop
     ## Sets the version string. If set, the user can request the version
     ## on the commandline. Should probably be of the form "<program name>
     ## <version number>".
-    def version(s = nil)
-      s ? @version = s : @version
+    def version(version_string = nil)
+      @version = version_string if version_string
+      @version
     end
 
     ## Sets the usage string. If set the message will be printed as the
     ## first line in the help (educate) output and ending in two new
     ## lines.
-    def usage(s = nil)
-      s ? @usage = s : @usage
+    def usage(usage_string = nil)
+      @usage = usage_string if usage_string
+      @usage
     end
 
     ## Adds a synopsis (command summary description) right below the
     ## usage line, or as the first line if usage isn't specified.
-    def synopsis(s = nil)
-      s ? @synopsis = s : @synopsis
+    def synopsis(synopsis_string = nil)
+      @synopsis = synopsis_string if synopsis_string
+      @synopsis
     end
 
     ## Adds text to the help display. Can be interspersed with calls to
     ## #opt to build a multi-section help page.
-    def banner(s)
-      @order << [:text, s]
+    def banner(banner_string)
+      @order << [:text, banner_string]
     end
     alias_method :text, :banner
 
@@ -552,7 +602,7 @@ module Trollop
 
         vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
-        vals[sym] = opts.parse(sym, params, negative_given)
+        vals[sym] = opts.parse(params, negative_given)
 
         if opts.single_arg?
           if opts.multi_given?        # multiple options, each with a single parameter
@@ -571,7 +621,7 @@ module Trollop
       ## modify input in place with only those
       ## arguments we didn't process
       cmdline.clear
-      @leftovers.each { |l| cmdline << l }
+      @leftovers.each { |leftover| cmdline << leftover }
 
       ## allow openstruct-style accessors
       class << vals
@@ -612,28 +662,9 @@ module Trollop
 
         spec = @specs[opt]
         next if spec.hidden
+        desc = spec.format_description
+        ## print to stream
         stream.printf "  %-#{leftcol_width}s    ", left[opt]
-        desc = spec.desc + begin
-                             default_s = case spec.default
-                                         when $stdout   then "<stdout>"
-                                         when $stdin    then "<stdin>"
-                                         when $stderr   then "<stderr>"
-                                         when Array
-                                           spec.default.join(", ")
-                                         else
-                                           spec.default.to_s
-                                         end
-
-                             if spec.default
-                               if spec.desc =~ /\.$/
-                                 " (Default: #{default_s})"
-                               else
-                                 " (default: #{default_s})"
-                               end
-                             else
-                               ""
-                             end
-                           end
         stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
       end
     end
@@ -662,11 +693,11 @@ module Trollop
     def wrap(str, opts = {}) # :nodoc:
       return [""] if str == ""
       inner = false
-      str.split("\n").map do |s|
-        line = wrap_line s, opts.merge(:inner => inner)
+      str.split("\n").map { |string|
+        line = wrap_line string, opts.merge(:inner => inner)
         inner = true
         line
-      end.flatten
+      }.flatten
     end
 
     ## The per-parser version of Trollop::die (see that for documentation).
@@ -718,8 +749,8 @@ module Trollop
           end
         when /^-(\S+)$/ # one or more short arguments
           shortargs = $1.split(//)
-          shortargs.each_with_index do |a, j|
-            if j == (shortargs.length - 1)
+          shortargs.each_with_index do |a, shortidx|
+            if shortidx == (shortargs.length - 1)
               params = collect_argument_parameters(args, i + 1)
               if params.empty?
                 yield "-#{a}", nil
@@ -768,10 +799,10 @@ module Trollop
         opts = @specs[name]
         next if type != :opt || opts.short
 
-        c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
-        if c # found a character to use
-          opts.short = c
-          @short[c] = name
+        char = opts.long.split(//).find { |csearch| csearch !~ INVALID_SHORT_ARG_REGEX && !@short.member?(csearch) }
+        if char # found a character to use
+          opts.short = char
+          @short[char] = name
         end
       end
     end
@@ -786,9 +817,9 @@ module Trollop
           if start + width >= str.length
             str.length
           else
-            x = str.rindex(/\s/, start + width)
-            x = str.index(/\s/, start) if x && x < start
-            x || str.length
+            index = str.rindex(/\s/, start + width)
+            index = str.index(/\s/, start) if index && index < start
+            index || str.length
           end
         ret << ((ret.empty? && !opts[:inner]) ? "" : " " * prefix) + str[start...nextt]
         start = nextt + 1
@@ -820,7 +851,7 @@ module Trollop
     def initialize(name, desc="", opts={}, settings={} &b)
 
       opttype = Trollop::Parser.registry_getopttype(opts[:type])
-      opttype_from_default = get_klass_from_default(opts, opttype, name)
+      opttype_from_default = get_klass_from_default(opts, opttype)
 
       raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
 
@@ -859,7 +890,7 @@ module Trollop
       return disambiguated_default.class.name.downcase
     end
     
-    def get_klass_from_default(opts, opttype, temp_name)
+    def get_klass_from_default(opts, opttype)
       ## for options with :multi => true, an array default doesn't imply
       ## a multi-valued argument. for that you have to specify a :type
       ## as well. (this is how we disambiguate an ambiguous situation;
@@ -951,8 +982,8 @@ module Trollop
   ##  * :no_default_short_opts  : Prevent default creation of short options
   
   ## See more examples at http://trollop.rubyforge.org.
-  def options(args = ARGV, *a, &b)
-    @last_parser = Parser.new(*a, &b)
+  def options(args = ARGV, *a, &block)
+    @last_parser = Parser.new(*a, &block)
     with_standard_exception_handling(@last_parser) { @last_parser.parse args }
   end
 

@@ -7,15 +7,16 @@ module Trollop
   ## cant register this, b/c it doesnt inherit OptBase
   class Foobaz
   end
+  
   ## can register this, but it's missing a #parse method
   class Foobar < Option
   end
 
   class Foobird < Option
-    def parse (optsym, paramlist, _neg)
+    def parse (paramlist, _neg)
       paramlist.map do |pg|
         pg.map do |param|
-          raise CommandlineError, "option '#{optsym}' needs to have foo in the name" unless param =~ /foo/
+          raise CommandlineError, "option '#{self.name}' needs to have foo in the name" unless param =~ /foo/
           param.sub(/foo/, "FOOBIRD")
         end
       end
@@ -36,22 +37,22 @@ module Trollop
               "" => 1,  # unitless
             }
     
-    def unitparse (optsym,name)
-      matched = name.match( /^
+    def unitparse (unitvalue)
+      matched = unitvalue.match( /^
       (?<num> -? ( (\d+(\.\d+)?) | (\.\d+) ) )     # numeric part
       (?<suffix> [a-zA-Z]?)                        # float part
       $/x )
-      raise CommandlineError, "option '#{optsym}' must begin with a number and end with an engineering unit (#{UNITS.keys.join(',')})" unless matched
+      raise CommandlineError, "option '#{self.name}' must begin with a number and end with an engineering unit (#{UNITS.keys.join(',')})" unless matched
       num, unit_letter = matched[:num], matched[:suffix]
       unit_value = UNITS[unit_letter]
-      raise CommandlineError, "option '#{optsym}' has malformatted engineering suffix '#{$2}'" unless unit_value
+      raise CommandlineError, "option '#{self.name}' has malformatted engineering suffix '#{$2}'" unless unit_value
       return num.to_f * unit_value
     end
     
-    def parse (optsym, paramlist, _neg)
+    def parse (paramlist, _neg)
       paramlist.map do |pg|
-        pg.map do |param|
-          unitparse(optsym,param)
+        pg.map do |value|
+          unitparse(value)
         end
       end
     end
@@ -59,18 +60,18 @@ module Trollop
 
   class PosRange < Option
     
-    def rangeparse (optsym,name)
-      matched = name.match( /^([-]?\d+):([-]?\d+)$/ )
-      raise CommandlineError, "option '#{optsym}' must be formatted as #:#" unless matched
+    def rangeparse (rangevalue)
+      matched = rangevalue.match( /^([-]?\d+):([-]?\d+)$/ )
+      raise CommandlineError, "option '#{self.name}' must be formatted as #:#" unless matched
       start, finish = $1, $2
-      raise CommandlineError, "option '#{optsym}' expecting start value #{start} to be less than finish value #{finish}'" unless start.to_i < finish.to_i
+      raise CommandlineError, "option '#{self.name}' expecting start value #{start} to be less than finish value #{finish}'" unless start.to_i < finish.to_i
       return [start.to_i, finish.to_i]
     end
     
-    def parse (optsym, paramlist, _neg)
+    def parse (paramlist, _neg)
       paramlist.map do |pg|
-        pg.map do |param|
-          rangeparse(optsym, param)
+        pg.map do |value|
+          rangeparse(value)
         end
       end
     end
