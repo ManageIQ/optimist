@@ -689,7 +689,7 @@ Options:
   end
 
   def test_two_arguments_passed_through_block
-    newp = Parser.new(abcd: 123, efgh: 456 ) do |i|
+    newp = Parser.new(:abcd => 123, :efgh => 456 ) do |i|
     end
     assert_equal newp.settings[:abcd], 123
     assert_equal newp.settings[:efgh], 456
