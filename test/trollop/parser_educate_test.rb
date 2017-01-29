@@ -44,7 +44,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /options/i
+    assert_match(/options/i, help[0])
     assert_equal 2, help.length # options, then -h
 
     @p = Parser.new
@@ -53,7 +53,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my version/i
+    assert_match(/my version/i, help[0])
     assert_equal 4, help.length # version, options, -h, -v
 
     @p = Parser.new
@@ -62,7 +62,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my own banner/i
+    assert_match(/my own banner/i, help[0])
     assert_equal 2, help.length # banner, -h
 
     @p = Parser.new
@@ -71,7 +71,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my own text banner/i
+    assert_match(/my own text banner/i, help[0])
     assert_equal 2, help.length # banner, -h
   end
 
@@ -165,9 +165,9 @@ module Trollop
     sio = StringIO.new 'w'
     parser.educate sio
     help = sio.string.split "\n"
-    assert help[1] =~ /\-\-unhidden/
+    assert help[1] =~ /\-\-unhidden/, 'expect first printed option to be unhidden'
     # secret/hidden option should not be written out
-    assert help[2] =~ /\-\-afteropt/
+    assert help[2] =~ /\-\-afteropt/, 'expect second printed option to be the one after the hideopt option'
   end
   def test_help_has_no_shortopts_when_set
     @p = Parser.new(:no_default_short_opts => true)
