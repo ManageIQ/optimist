@@ -518,7 +518,6 @@ class Parser
       end
 
       spec = @specs[opt]
-      next if spec[:hidden]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
@@ -531,7 +530,7 @@ class Parser
           spec[:default].to_s
         end
 
-        if spec[:default] && spec[:default] != ""
+        if spec[:default]
           if spec[:desc] =~ /\.$/
             " (Default: #{default_s})"
           else
