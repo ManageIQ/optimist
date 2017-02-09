@@ -546,7 +546,8 @@ class Parser
     @width ||= if $stdout.tty?
       begin
         require 'io/console'
-        IO.console.winsize.last
+        w = IO.console.winsize.last
+        w.to_i > 0 ? w : 80
       rescue LoadError, NoMethodError, Errno::ENOTTY, Errno::EBADF, Errno::EINVAL
         legacy_width
       end
