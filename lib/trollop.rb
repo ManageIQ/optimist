@@ -528,7 +528,7 @@ class Parser
           spec[:default].to_s
         end
 
-        if spec[:default]
+        if spec[:default] && spec[:default] != ""
           if spec[:desc] =~ /\.$/
             " (Default: #{default_s})"
           else
