@@ -92,7 +92,9 @@ class Parser
     @stop_words = []
     @stop_on_unknown = false
     @educate_on_error = false
-
+    @synopsis = nil
+    @usage = nil
+    
     # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
@@ -528,7 +530,7 @@ class Parser
           spec[:default].to_s
         end
 
-        if spec[:default] && spec[:default] != ""
+        if spec[:default]
           if spec[:desc] =~ /\.$/
             " (Default: #{default_s})"
           else
