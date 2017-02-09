@@ -2,7 +2,7 @@ require 'stringio'
 require 'test_helper'
 
 module Trollop
-  class ParserEduateTest < ::MiniTest::Test
+  class ParserEducateTest < ::MiniTest::Test
     def setup
     end
 
@@ -44,7 +44,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /options/i
+    assert_match(/options/i, help[0])
     assert_equal 2, help.length # options, then -h
 
     @p = Parser.new
@@ -53,7 +53,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my version/i
+    assert_match(/my version/i, help[0])
     assert_equal 4, help.length # version, options, -h, -v
 
     @p = Parser.new
@@ -62,7 +62,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my own banner/i
+    assert_match(/my own banner/i, help[0])
     assert_equal 2, help.length # banner, -h
 
     @p = Parser.new
@@ -71,7 +71,7 @@ module Trollop
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
-    assert help[0] =~ /my own text banner/i
+    assert_match(/my own text banner/i, help[0])
     assert_equal 2, help.length # banner, -h
   end
 
@@ -136,16 +136,16 @@ module Trollop
     parser.educate sio
 
     help = sio.string.split "\n"
-    assert help[1] =~ /<i>/
-    assert help[2] =~ /<i\+>/
-    assert help[3] =~ /<s>/
-    assert help[4] =~ /<s\+>/
-    assert help[5] =~ /<f>/
-    assert help[6] =~ /<f\+>/
-    assert help[7] =~ /<filename\/uri>/
-    assert help[8] =~ /<filename\/uri\+>/
-    assert help[9] =~ /<date>/
-    assert help[10] =~ /<date\+>/
+    assert help[1] =~ /<i>/, 'expect :int type'
+    assert help[2] =~ /<i\+>/, 'expect :ints type'
+    assert help[3] =~ /<s>/, 'expect :string type'
+    assert help[4] =~ /<s\+>/, 'expect :strings type'
+    assert help[5] =~ /<f>/, 'expect :float type'
+    assert help[6] =~ /<f\+>/, 'expect :floats type'
+    assert help[7] =~ /<filename\/uri>/, 'expect :io type'
+    assert help[8] =~ /<filename\/uri\+>/, 'expect :ios type'
+    assert help[9] =~ /<date>/, 'expect :date type'
+    assert help[10] =~ /<date\+>/, 'expect :dates type'
   end
 
   def test_help_has_grammatical_default_text
@@ -155,9 +155,32 @@ module Trollop
     parser.educate sio
 
     help = sio.string.split "\n"
-    assert help[1] =~ /Default/
-    assert help[2] =~ /default/
+    assert help[1] =~ /Default/, "expected 'Default' for arg1"
+    assert help[2] =~ /default/, "expected 'default' for arg2"
   end
+  def test_help_can_hide_options
+    parser.opt :unhidden, 'standard option', :default => 'foo'
+    parser.opt :hideopt, 'secret option', :default => 'bar', :hidden => true
+    parser.opt :afteropt, 'post hidden option', :default => 'baz'
+    sio = StringIO.new 'w'
+    parser.educate sio
+    help = sio.string.split "\n"
+    assert help[1] =~ /\-\-unhidden/, 'expect first printed option to be unhidden'
+    # secret/hidden option should not be written out
+    assert help[2] =~ /\-\-afteropt/, 'expect second printed option to be the one after the hideopt option'
+  end
+  def test_help_has_no_shortopts_when_set
+    @p = Parser.new(:no_default_short_opts => true)
+    parser.opt :fooey, 'fooey option'
+    sio = StringIO.new "w"
+    @p.parse []
+    @p.educate sio
+    help = sio.string.split "\n"
+    assert help[1].match(/\-\-fooey/), 'long option appears in help'
+    assert !help[1].match(/[^-]\-f/), 'short -f option does not appear in help'
+    assert !help[2].match(/[^-]\-h/), 'short -h option does not appear in help'
+  end
+    
 ############
 
     private
