@@ -8,7 +8,7 @@ require 'date'
 module Trollop
   # note: this is duplicated in gemspec
   # please change over there too
-VERSION = "2.1.2"
+VERSION = "2.1.3"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
@@ -61,7 +61,11 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
+  ## Settings for the entire option parser that apply to all given options.
+  attr_reader :settings
+
   ## Initializes the parser, and instance-evaluates any block given.
+  ## Arguments attempt to be interpreted as a Hash
   def initialize(*a, &b)
     @version = nil
     @leftovers = []
@@ -76,6 +80,14 @@ class Parser
     @synopsis = nil
     @usage = nil
     
+    ## allow passing settings through Parser.new as an optional hash.
+    ## but keep compatibility with non-hashy args, though.
+    begin
+      @settings = Hash[*a]
+    rescue ArgumentError
+      @settings = nil
+    end
+
     # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
@@ -220,7 +232,7 @@ class Parser
       vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options!
+    resolve_default_short_options! unless @settings[:no_default_short_opts]
 
     ## resolve symbols
     given_args = {}
@@ -240,6 +252,17 @@ class Parser
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
+      ## Support inexact matching of long-arguments like perl's Getopt::Long
+      if @settings[:inexact_match] and arg.match(/^--(\S*)$/)
+        partial_match  = $1
+        matched_keys = @long.keys.grep(/^#{partial_match}/)
+        sym = case matched_keys.size
+              when 0 ; nil
+              when 1 ; @long[matched_keys.first]
+              else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{matched_keys.join(',')})"
+              end
+      end
+      
       next 0 if ignore_invalid_options && !sym
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
@@ -399,6 +422,7 @@ class Parser
       end
 
       spec = @specs[opt]
+      next if spec.hidden
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
       desc = spec.desc + begin
         default_s = case spec.default
@@ -747,6 +771,9 @@ class Option
     ## fill in :multi
     opts[:multi] ||= false
 
+    ## fill in :hidden
+    opts[:hidden] ||= false
+    
     self.name = name
     self.opts = opts
   end
@@ -761,9 +788,12 @@ class Option
     SINGLE_ARG_TYPES.include?(type)
   end
 
+
   def multi ; opts[:multi] ; end
   alias multi? multi
 
+  def hidden ; opts[:hidden] ; end
+  
   def multi_arg?
     MULTI_ARG_TYPES.include?(type)
   end
@@ -817,6 +847,20 @@ end
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
+## Settings:
+##   Trollop::options and Trollop::Parser.new accept settings to control how
+##   options are interpreted.  This is given as hash arguments, e.g:
+##
+##   opts = Trollop::options( :inexact_match => true, :no_default_short_opts => true ) do
+##     opt :foobar, 'messed up'
+##     opt :forget, 'forget it'
+##   end
+##
+##  settings include:
+##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
+##  * :no_default_short_opts  : Prevent default creation of short options
+
+
 ## See more examples at http://trollop.rubyforge.org.
 def options(args = ARGV, *a, &b)
   @last_parser = Parser.new(*a, &b)

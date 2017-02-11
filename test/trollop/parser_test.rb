@@ -688,6 +688,13 @@ Options:
     assert_equal @goat, boat
   end
 
+  def test_two_arguments_passed_through_block
+    newp = Parser.new(:abcd => 123, :efgh => 456 ) do |i|
+    end
+    assert_equal newp.settings[:abcd], 123
+    assert_equal newp.settings[:efgh], 456
+  end
+
   def test_version_and_help_override_errors
     @p.opt :asdf, "desc", :type => String
     @p.version "version"
@@ -1039,6 +1046,41 @@ Options:
     assert opts[:ccd]
   end
 
+  def test_default_shorts_prevented_with_setting
+    newp = Parser.new(:no_default_short_opts => true)
+    newp.opt :user1, "user1"
+    newp.opt :bag, "bag", :short => 'b'
+    assert_raises(CommandlineError) do
+      newp.parse %w(-u)
+    end
+    opts = newp.parse %w(--user1)
+    assert opts[:user1]
+    opts = newp.parse %w(-b)
+    assert opts[:bag]
+  end
+
+  def test_inexact_match
+    newp = Parser.new(:inexact_match => true)
+    newp.opt :liberation, "liberate something", :type => :int
+    newp.opt :evaluate, "evaluate something", :type => :string
+    opts = newp.parse %w(--lib 5 --ev bar)
+    assert_equal 5, opts[:liberation]
+    assert_equal 'bar', opts[:evaluate]
+    assert_equal nil, opts[:eval]
+  end
+
+  def test_inexact_collision
+    newp = Parser.new(:inexact_match => true)
+    newp.opt :bookname, "name of a book", :type => :string
+    newp.opt :bookcost, "cost of the book", :type => :string
+    opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)
+    assert_equal 'hairy_potsworth', opts[:bookname]
+    assert_equal '10', opts[:bookcost]
+    assert_raises(CommandlineError) do
+      newp.parse %w(--book 5) # ambiguous
+    end
+  end
+  
   def test_accepts_arguments_with_spaces
     @p.opt :arg1, "arg", :type => String
     @p.opt :arg2, "arg2", :type => String
