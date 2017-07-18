@@ -1144,6 +1144,56 @@ Options:
       @p.parse(%w(--cb1))
     end
   end
+
+  def test_ignore_invalid_options
+    @p.opt :arg1, "desc", :type => String
+    @p.opt :b, "desc", :type => String
+    @p.opt :c, "desc", :type => :flag
+    @p.opt :d, "desc", :type => :flag
+    @p.ignore_invalid_options = true
+    opts = @p.parse %w{unknown -S param --arg1 potato -fb daisy --foo -ecg --bar baz -z}
+    assert_equal "potato", opts[:arg1]
+    assert_equal "daisy", opts[:b]
+    assert opts[:c]
+    refute opts[:d]
+    assert_equal %w{unknown -S param -f --foo -eg --bar baz -z}, @p.leftovers
+  end
+
+  def test_ignore_invalid_options_stop_on_unknown_long
+    @p.opt :arg1, "desc", :type => String
+    @p.ignore_invalid_options = true
+    @p.stop_on_unknown
+    opts = @p.parse %w{--unk --arg1 potato}
+    refute opts[:arg1]
+    assert_equal %w{--unk --arg1 potato}, @p.leftovers
+  end
+
+  def test_ignore_invalid_options_stop_on_unknown_short
+    @p.opt :arg1, "desc", :type => String
+    @p.ignore_invalid_options = true
+    @p.stop_on_unknown
+    opts = @p.parse %w{-ua potato}
+    refute opts[:arg1]
+    assert_equal %w{-ua potato}, @p.leftovers
+  end
+
+  def test_ignore_invalid_options_stop_on_unknown_partial_end_short
+    @p.opt :arg1, "desc", :type => :flag
+    @p.ignore_invalid_options = true
+    @p.stop_on_unknown
+    opts = @p.parse %w{-au potato}
+    assert opts[:arg1]
+    assert_equal %w{-u potato}, @p.leftovers
+  end
+
+  def test_ignore_invalid_options_stop_on_unknown_partial_mid_short
+    @p.opt :arg1, "desc", :type => :flag
+    @p.ignore_invalid_options = true
+    @p.stop_on_unknown
+    opts = @p.parse %w{-abu potato}
+    assert opts[:arg1]
+    assert_equal %w{-bu potato}, @p.leftovers
+  end
 end
 
 end

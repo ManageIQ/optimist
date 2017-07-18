@@ -75,7 +75,7 @@ class Parser
     @educate_on_error = false
     @synopsis = nil
     @usage = nil
-    
+
     # instance_eval(&b) if b # can't take arguments
     cloaker(&b).bind(self).call(*a) if b
   end
@@ -240,7 +240,7 @@ class Parser
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
-      next 0 if ignore_invalid_options && !sym
+      next nil if ignore_invalid_options && !sym
       raise CommandlineError, "unknown argument '#{arg}'" unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
@@ -255,7 +255,7 @@ class Parser
       # The block returns the number of parameters taken.
       num_params_taken = 0
 
-      unless params.nil?
+      unless params.empty?
         if @specs[sym].single_arg?
           given_args[sym][:params] << params[0, 1]  # take the first parameter
           num_params_taken = 1
@@ -489,47 +489,60 @@ private
       when /^--$/ # arg terminator
         return remains += args[(i + 1)..-1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
-        yield "--#{$1}", [$2]
+        num_params_taken = yield "--#{$1}", [$2]
+        if num_params_taken.nil?
+          remains << args[i]
+          if @stop_on_unknown
+            return remains += args[i + 1..-1]
+          end
+        end
         i += 1
       when /^--(\S+)$/ # long argument
         params = collect_argument_parameters(args, i + 1)
-        if params.empty?
-          yield args[i], nil
-          i += 1
-        else
-          num_params_taken = yield args[i], params
-          unless num_params_taken
-            if @stop_on_unknown
-              return remains += args[i + 1..-1]
-            else
-              remains += params
-            end
+        num_params_taken = yield args[i], params
+
+        if num_params_taken.nil?
+          remains << args[i]
+          if @stop_on_unknown
+            return remains += args[i + 1..-1]
           end
-          i += 1 + num_params_taken
+        else
+          i += num_params_taken
         end
+        i += 1
       when /^-(\S+)$/ # one or more short arguments
+        short_remaining = ""
         shortargs = $1.split(//)
         shortargs.each_with_index do |a, j|
           if j == (shortargs.length - 1)
             params = collect_argument_parameters(args, i + 1)
-            if params.empty?
-              yield "-#{a}", nil
-              i += 1
-            else
-              num_params_taken = yield "-#{a}", params
-              unless num_params_taken
-                if @stop_on_unknown
-                  return remains += args[i + 1..-1]
-                else
-                  remains += params
-                end
+
+            num_params_taken = yield "-#{a}", params
+            unless num_params_taken
+              short_remaining << a
+              if @stop_on_unknown
+                remains << "-#{short_remaining}"
+                return remains += args[i + 1..-1]
               end
-              i += 1 + num_params_taken
+            else
+              i += num_params_taken
             end
           else
-            yield "-#{a}", nil
+            unless yield "-#{a}", []
+              short_remaining << a
+              if @stop_on_unknown
+                short_remaining += shortargs[j + 1..-1].join
+                remains << "-#{short_remaining}"
+                return remains += args[i + 1..-1]
+              end
+            end
           end
         end
+
+        unless short_remaining.empty?
+          remains << "-#{short_remaining}"
+        end
+        i += 1
       else
         if @stop_on_unknown
           return remains += args[i..-1]
