@@ -688,11 +688,17 @@ Options:
     assert_equal @goat, boat
   end
 
+  ## test-only access reader method so that we dont have to
+  ## expose settings in the public API.
+  class Trollop::Parser
+    def get_settings_for_testing ; return @settings ;end
+  end
+  
   def test_two_arguments_passed_through_block
     newp = Parser.new(:abcd => 123, :efgh => 456 ) do |i|
     end
-    assert_equal newp.settings[:abcd], 123
-    assert_equal newp.settings[:efgh], 456
+    assert_equal newp.get_settings_for_testing[:abcd], 123
+    assert_equal newp.get_settings_for_testing[:efgh], 456
   end
 
   def test_version_and_help_override_errors

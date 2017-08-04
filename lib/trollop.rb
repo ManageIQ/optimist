@@ -61,9 +61,6 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
-  ## Settings for the entire option parser that apply to all given options.
-  attr_reader :settings
-
   ## Initializes the parser, and instance-evaluates any block given.
   ## Arguments attempt to be interpreted as a Hash
   def initialize(*a, &b)
