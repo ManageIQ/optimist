@@ -255,12 +255,18 @@ class Parser
       ## Support inexact matching of long-arguments like perl's Getopt::Long
       if @settings[:inexact_match] and arg.match(/^--(\S*)$/)
         partial_match  = $1
+        fully_matched_keys = @long.keys.grep(/^#{partial_match}$/)
         matched_keys = @long.keys.grep(/^#{partial_match}/)
-        sym = case matched_keys.size
-              when 0 ; nil
-              when 1 ; @long[matched_keys.first]
-              else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{matched_keys.join(',')})"
+        sym = if !fully_matched_keys.empty?
+                @long[fully_matched_keys.first]
+              else
+                case matched_keys.size
+                when 0 ; nil
+                when 1 ; @long[matched_keys.first]
+                else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{matched_keys.join(',')})"
+                end
               end
+
       end
       
       next 0 if ignore_invalid_options && !sym

@@ -1080,6 +1080,16 @@ Options:
       newp.parse %w(--book 5) # ambiguous
     end
   end
+
+  def test_inexact_collision_with_exact
+    newp = Parser.new(:inexact_match => true)
+    newp.opt :book, "name of a book", :type => :string
+    newp.opt :bookcost, "cost of the book", :type => :string
+    opts = newp.parse %w(--book warthog --bookc 22)
+    assert_equal 'warthog', opts[:book]
+    assert_equal '22', opts[:bookcost]
+  end
+
   
   def test_accepts_arguments_with_spaces
     @p.opt :arg1, "arg", :type => String
