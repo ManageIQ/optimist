@@ -212,6 +212,21 @@ class Parser
     @educate_on_error = true
   end
 
+  ## Match long variables with inexact match.
+  ## If we hit a complete match, then use that, otherwise see how many long-options partially match.
+  ## If only one partially matches, then we can safely use that.
+  ## Otherwise, we raise an error that the partially given option was ambiguous.
+  def perform_inexact_match (arg, partial_match)  # :nodoc:
+    return @long[partial_match] if @long.has_key?(partial_match)
+    partially_matched_keys = @long.keys.grep(/^#{partial_match}/)
+    return case partially_matched_keys.size
+           when 0 ; nil
+           when 1 ; @long[partially_matched_keys.first]
+           else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{partially_matched_keys.join(',')})"
+           end
+  end
+  private :perform_inexact_match
+  
   ## Parses the commandline. Typically called by Trollop::options,
   ## but you can call it directly if you need more control.
   ##
@@ -251,19 +266,7 @@ class Parser
 
       ## Support inexact matching of long-arguments like perl's Getopt::Long
       if @settings[:inexact_match] and arg.match(/^--(\S*)$/)
-        partial_match  = $1
-        fully_matched_keys = @long.keys.grep(/^#{partial_match}$/)
-        matched_keys = @long.keys.grep(/^#{partial_match}/)
-        sym = if !fully_matched_keys.empty?
-                @long[fully_matched_keys.first]
-              else
-                case matched_keys.size
-                when 0 ; nil
-                when 1 ; @long[matched_keys.first]
-                else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{matched_keys.join(',')})"
-                end
-              end
-
+        sym = perform_inexact_match(arg, $1)
       end
       
       next 0 if ignore_invalid_options && !sym
