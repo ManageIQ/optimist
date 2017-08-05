@@ -1085,15 +1085,20 @@ Options:
     assert_raises(CommandlineError) do
       newp.parse %w(--book 5) # ambiguous
     end
+    ## partial match causes 'specified multiple times' error
+    assert_raises(CommandlineError, /specified multiple times/) do
+      newp.parse %w(--bookc 17 --bookcost 22)
+    end
   end
 
   def test_inexact_collision_with_exact
     newp = Parser.new(:inexact_match => true)
-    newp.opt :book, "name of a book", :type => :string
-    newp.opt :bookcost, "cost of the book", :type => :string
-    opts = newp.parse %w(--book warthog --bookc 22)
+    newp.opt :book, "name of a book", :type => :string, :default => "ABC"
+    newp.opt :bookcost, "cost of the book", :type => :int, :default => 5
+    opts = newp.parse %w(--book warthog --bookc 3)
     assert_equal 'warthog', opts[:book]
-    assert_equal '22', opts[:bookcost]
+    assert_equal 3, opts[:bookcost]
+
   end
 
   
