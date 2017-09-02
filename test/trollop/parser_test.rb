@@ -45,12 +45,56 @@ class ParserTest < ::MiniTest::Test
 
 
   def test_unknown_arguments
-    assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
+    err = assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
+    assert_match(/unknown argument '--arg'$/, err.message)
     @p.opt "arg"
     @p.parse(%w(--arg))
-    assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
+    err = assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
+    assert_match(/unknown argument '--arg2'$/, err.message)
   end
 
+  def test_unknown_arguments_with_suggestions
+    sugp = Parser.new(:suggestions => true)
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
+    assert_match(/unknown argument '--bone'$/, err.message)
+
+    sugp.opt "cone"
+    sugp.parse(%w(--cone))
+
+    # single letter mismatch
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
+    assert_match(/unknown argument '--bone'.  Did you mean: \[--cone\] \?$/, err.message)
+
+    # transposition
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--ocne)) }
+    assert_match(/unknown argument '--ocne'.  Did you mean: \[--cone\] \?$/, err.message)
+
+    # extra letter at end
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--cones)) }
+    assert_match(/unknown argument '--cones'.  Did you mean: \[--cone\] \?$/, err.message)
+
+    # too big of a mismatch to suggest (extra letters in front)
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--snowcone)) }
+    assert_match(/unknown argument '--snowcone'$/, err.message)
+
+    # too big of a mismatch to suggest (nothing close)
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--clown-nose)) }
+    assert_match(/unknown argument '--clown-nose'$/, err.message)
+
+    sugp.opt "zippy"
+    sugp.opt "zapzy"
+    # single letter mismatch, matches two
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--zipzy)) }
+    assert_match(/unknown argument '--zipzy'.  Did you mean: \[--zippy, --zapzy\] \?$/, err.message)
+
+    sugp.opt "big_bug"
+    # suggest common case of dash versus underscore in argnames
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--big_bug)) }
+    assert_match(/unknown argument '--big_bug'.  Did you mean: \[--big-bug\] \?$/, err.message)
+    
+  end
+
+  
   def test_syntax_check
     @p.opt "arg"
 
@@ -1053,7 +1097,7 @@ Options:
   end
 
   def test_default_shorts_prevented_with_setting
-    newp = Parser.new(:no_default_short_opts => true)
+    newp = Parser.new(:disable_auto_short_opts => true)
     newp.opt :user1, "user1"
     newp.opt :bag, "bag", :short => 'b'
     assert_raises(CommandlineError) do

@@ -226,7 +226,39 @@ class Parser
            end
   end
   private :perform_inexact_match
-  
+
+  def handle_unknown_argument(arg, candidates, suggestions)
+    errstring = "unknown argument '#{arg}'"
+    if suggestions and Module::const_get("DidYouMean")
+      input = arg.sub(/^[-]*/,'')
+      #require 'did_you_mean'
+      # Code borrowed from did_you_mean gem
+      jw_threshold = 0.75
+      seed = candidates.select {|candidate| DidYouMean::JaroWinkler.distance(candidate, input) >= jw_threshold }
+               .sort_by! {|candidate| DidYouMean::JaroWinkler.distance(candidate.to_s, input) }
+               .reverse!
+      # Correct mistypes
+      threshold   = (input.length * 0.25).ceil
+      has_mistype = seed.rindex {|c| DidYouMean::Levenshtein.distance(c, input) <= threshold }
+      corrections = if has_mistype
+                      seed.take(has_mistype + 1)
+                    else
+                      # Correct misspells
+                      seed.select do |candidate|
+                        length    = input.length < candidate.length ? input.length : candidate.length
+
+                        DidYouMean::Levenshtein.distance(candidate, input) < length
+                      end.first(1)
+                    end
+      unless corrections.empty?
+        dashdash_corrections = corrections.map{|s| "--#{s}" }
+        errstring << ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
+      end
+    end
+    raise CommandlineError, errstring 
+  end
+  private :handle_unknown_argument
+        
   ## Parses the commandline. Typically called by Trollop::options,
   ## but you can call it directly if you need more control.
   ##
@@ -244,7 +276,7 @@ class Parser
       vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options! unless @settings[:no_default_short_opts]
+    resolve_default_short_options! unless @settings[:disable_auto_short_opts]
 
     ## resolve symbols
     given_args = {}
@@ -270,7 +302,7 @@ class Parser
       end
       
       next 0 if ignore_invalid_options && !sym
-      raise CommandlineError, "unknown argument '#{arg}'" unless sym
+      handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
         raise CommandlineError, "option '#{arg}' specified multiple times"
@@ -854,17 +886,18 @@ end
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
 ## Settings:
-##   Trollop::options and Trollop::Parser.new accept settings to control how
+##   Trollop::options and Trollop::Parser.new accept +settings+ to control how
 ##   options are interpreted.  This is given as hash arguments, e.g:
 ##
-##   opts = Trollop::options( :inexact_match => true, :no_default_short_opts => true ) do
+##   opts = Trollop::options( :inexact_match => true, :disable_auto_short_opts => true ) do
 ##     opt :foobar, 'messed up'
 ##     opt :forget, 'forget it'
 ##   end
 ##
-##  settings include:
+##  +settings+ include:
 ##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
-##  * :no_default_short_opts  : Prevent default creation of short options
+##  * :disable_auto_short_opts  : Prevent automatic creation of short options
+##  * :suggestions  : Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
 
 
 ## See more examples at http://trollop.rubyforge.org.

@@ -172,7 +172,7 @@ module Trollop
   end
 
   def test_help_has_no_shortopts_when_set
-    @p = Parser.new(:no_default_short_opts => true)
+    @p = Parser.new(:disable_auto_short_opts => true)
     parser.opt :fooey, 'fooey option'
     sio = StringIO.new "w"
     @p.parse []
