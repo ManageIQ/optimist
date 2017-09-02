@@ -58,46 +58,47 @@ class ParserTest < ::MiniTest::Test
     err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
     assert_match(/unknown argument '--bone'$/, err.message)
 
-    sugp.opt "cone"
-    sugp.parse(%w(--cone))
+    if Module::const_defined?("DidYouMean::JaroWinkler") and Module::const_defined?("DidYouMean::Levenshtein")
+      sugp.opt "cone"
+      sugp.parse(%w(--cone))
 
-    # single letter mismatch
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
-    assert_match(/unknown argument '--bone'.  Did you mean: \[--cone\] \?$/, err.message)
+      # single letter mismatch
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
+      assert_match(/unknown argument '--bone'.  Did you mean: \[--cone\] \?$/, err.message)
 
-    # transposition
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--ocne)) }
-    assert_match(/unknown argument '--ocne'.  Did you mean: \[--cone\] \?$/, err.message)
+      # transposition
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--ocne)) }
+      assert_match(/unknown argument '--ocne'.  Did you mean: \[--cone\] \?$/, err.message)
 
-    # extra letter at end
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--cones)) }
-    assert_match(/unknown argument '--cones'.  Did you mean: \[--cone\] \?$/, err.message)
+      # extra letter at end
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--cones)) }
+      assert_match(/unknown argument '--cones'.  Did you mean: \[--cone\] \?$/, err.message)
 
-    # too big of a mismatch to suggest (extra letters in front)
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--snowcone)) }
-    assert_match(/unknown argument '--snowcone'$/, err.message)
+      # too big of a mismatch to suggest (extra letters in front)
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--snowcone)) }
+      assert_match(/unknown argument '--snowcone'$/, err.message)
 
-    # too big of a mismatch to suggest (nothing close)
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--clown-nose)) }
-    assert_match(/unknown argument '--clown-nose'$/, err.message)
+      # too big of a mismatch to suggest (nothing close)
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--clown-nose)) }
+      assert_match(/unknown argument '--clown-nose'$/, err.message)
 
-    sugp.opt "zippy"
-    sugp.opt "zapzy"
-    # single letter mismatch, matches two
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--zipzy)) }
-    assert_match(/unknown argument '--zipzy'.  Did you mean: \[--zippy, --zapzy\] \?$/, err.message)
+      sugp.opt "zippy"
+      sugp.opt "zapzy"
+      # single letter mismatch, matches two
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--zipzy)) }
+      assert_match(/unknown argument '--zipzy'.  Did you mean: \[--zippy, --zapzy\] \?$/, err.message)
 
-    sugp.opt "big_bug"
-    # suggest common case of dash versus underscore in argnames
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--big_bug)) }
-    assert_match(/unknown argument '--big_bug'.  Did you mean: \[--big-bug\] \?$/, err.message)
+      sugp.opt "big_bug"
+      # suggest common case of dash versus underscore in argnames
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--big_bug)) }
+      assert_match(/unknown argument '--big_bug'.  Did you mean: \[--big-bug\] \?$/, err.message)
+    end
     
   end
 
   
   def test_syntax_check
     @p.opt "arg"
-
     @p.parse(%w(--arg))
     @p.parse(%w(arg))
     assert_raises(CommandlineError) { @p.parse(%w(---arg)) }

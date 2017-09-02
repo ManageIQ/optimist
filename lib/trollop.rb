@@ -229,7 +229,7 @@ class Parser
 
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
-    if suggestions and Module::const_get("DidYouMean")
+    if suggestions and  Module::const_defined?("DidYouMean::JaroWinkler") and Module::const_defined?("DidYouMean::Levenshtein")
       input = arg.sub(/^[-]*/,'')
       #require 'did_you_mean'
       # Code borrowed from did_you_mean gem
