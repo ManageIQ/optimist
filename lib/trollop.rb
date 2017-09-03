@@ -81,12 +81,14 @@ class Parser
     ## but keep compatibility with non-hashy args, though.
     begin
       @settings = Hash[*a]
+      a=[] ## clear out args if using as settings-hash
     rescue ArgumentError
       @settings = nil
     end
 
     # instance_eval(&b) if b # can't take arguments
-    cloaker(&b).bind(self).call(*a) if b
+    #cloaker(&b).bind(self).call(*a) if b
+    self.instance_exec(*a,&b) if block_given?
   end
 
   ## Define an option. +name+ is the option name, a unique identifier
