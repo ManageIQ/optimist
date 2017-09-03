@@ -1252,6 +1252,37 @@ Options:
       @p.parse(%w(--cb1))
     end
   end
+
+  # Due to strangeness in how the cloaker works, there were
+  # cases where Trollop.parse would work, but Trollop.options
+  # did not, depending on arguments given to the function.
+  # These serve to validate different args given to Trollop.options
+  def test_options_takes_hashy_settings
+    passargs_copy = []
+    settings_copy = []
+    ::Trollop.options(%w(--wig --pig), :fizz=>:buzz, :bear=>:cat) do |*passargs|
+      opt :wig
+      opt :pig
+      passargs_copy = passargs.dup
+      settings_copy = @settings
+    end
+    assert_equal [], passargs_copy
+    assert_equal({:fizz=>:buzz, :bear=>:cat}, settings_copy)
+  end
+  
+  def test_options_takes_some_other_data
+    passargs_copy = []
+    settings_copy = []
+    ::Trollop.options(%w(--nose --close), 1, 2, 3) do |*passargs|
+      opt :nose
+      opt :close
+      passargs_copy = passargs.dup
+      settings_copy = @settings
+    end
+    assert_equal [1,2,3], passargs_copy
+    assert_equal({}, settings_copy)
+  end
+  
 end
 
 end

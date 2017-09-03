@@ -83,7 +83,7 @@ class Parser
       @settings = Hash[*a]
       a=[] ## clear out args if using as settings-hash
     rescue ArgumentError
-      @settings = nil
+      @settings = Hash.new()
     end
 
     # instance_eval(&b) if b # can't take arguments
@@ -889,9 +889,9 @@ end
 ##
 ## Settings:
 ##   Trollop::options and Trollop::Parser.new accept +settings+ to control how
-##   options are interpreted.  This is given as hash arguments, e.g:
+##   options are interpreted.  These settings are given as hash arguments, e.g:
 ##
-##   opts = Trollop::options( :inexact_match => true, :disable_auto_short_opts => true ) do
+##   opts = Trollop::options(ARGV, :inexact_match => true, :disable_auto_short_opts => true ) do
 ##     opt :foobar, 'messed up'
 ##     opt :forget, 'forget it'
 ##   end
@@ -900,7 +900,7 @@ end
 ##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
 ##  * :disable_auto_short_opts  : Prevent automatic creation of short options
 ##  * :suggestions  : Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
-
+##  Because Trollop::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 
 ## See more examples at http://trollop.rubyforge.org.
 def options(args = ARGV, *a, &b)
