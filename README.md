@@ -8,8 +8,11 @@ http://manageiq.github.io/trollop/
 [![Coverage Status](http://img.shields.io/coveralls/ManageIQ/trollop.svg)](https://coveralls.io/r/ManageIQ/trollop)
 [![Dependency Status](https://gemnasium.com/ManageIQ/trollop.svg)](https://gemnasium.com/ManageIQ/trollop)
 
-Documentation quickstart: See Trollop.options and then Trollop::Parser#opt.
-Also see the examples at http://manageiq.github.io/trollop/.
+## Documentation
+
+- Quickstart: See `Trollop.options` and then `Trollop::Parser#opt`.
+- Examples: http://manageiq.github.io/trollop/.
+- Wiki: http://github.com/ManageIQ/trollop/wiki
 
 ## Description
 
