@@ -345,6 +345,7 @@ class Parser
   end
 
   def parse_date_parameter(param, arg) #:nodoc:
+    return param if param.is_a?(Date)
     begin
       require 'chronic'
       time = Chronic.parse(param)
@@ -557,11 +558,13 @@ private
   end
 
   def parse_integer_parameter(param, arg)
+    return param.to_i if param.is_a?(Numeric)
     raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
     param.to_i
   end
 
   def parse_float_parameter(param, arg)
+    return param.to_f if param.is_a?(Numeric)
     raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
     param.to_f
   end
