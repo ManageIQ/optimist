@@ -768,7 +768,7 @@ class FloatOption < Option
   def parse(paramlist, _neg_given)
     paramlist.map do |pg|
       pg.map do |param|
-        raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param =~ FLOAT_RE
+        raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param.is_a?(Numeric) || param =~ FLOAT_RE
         param.to_f
       end
     end
@@ -782,7 +782,7 @@ class IntegerOption < Option
   def parse(paramlist, _neg_given)
     paramlist.map do |pg|
       pg.map do |param|
-        raise CommandlineError, "option '#{self.name}' needs an integer" unless param =~ /^-?[\d_]+$/
+        raise CommandlineError, "option '#{self.name}' needs an integer" unless param.is_a?(Numeric) || param =~ /^-?[\d_]+$/
         param.to_i
       end
     end
@@ -829,6 +829,7 @@ class DateOption < Option
   def parse(paramlist, _neg_given)
     paramlist.map do |pg|
       pg.map do |param|
+        next param if param.is_a?(Date)
         begin
           begin
             require 'chronic'
