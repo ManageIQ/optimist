@@ -31,11 +31,11 @@ end
 class VersionNeeded < StandardError
 end
 
-## Regex for floating point numbers
-FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
+# Regex for floating point numbers
+FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/ #:nodoc:
 
-## Regex for parameters
-PARAM_RE = /^-(-|\.$|[^\d\.])/
+# Regex for parameters
+PARAM_RE = /^-(-|\.$|[^\d\.])/ #:nodoc:
 
 ## The commandline parser. In typical usage, the methods in this class
 ## will be handled internally by Trollop::options. In this case, only the
@@ -592,24 +592,24 @@ end
 
 ## The option for each flag
 class Option
-  ## The set of values that indicate a flag option when passed as the
-  ## +:type+ parameter of #opt.
-  FLAG_TYPES = [:flag, :bool, :boolean]
+  # The set of values that indicate a flag option when passed as the
+  # +:type+ parameter of #opt.
+  FLAG_TYPES = [:flag, :bool, :boolean] #:nodoc:
 
-  ## The set of values that indicate a single-parameter (normal) option when
-  ## passed as the +:type+ parameter of #opt.
-  ##
-  ## A value of +io+ corresponds to a readable IO resource, including
-  ## a filename, URI, or the strings 'stdin' or '-'.
-  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date]
+  # The set of values that indicate a single-parameter (normal) option when
+  # passed as the +:type+ parameter of #opt.
+  #
+  # A value of +io+ corresponds to a readable IO resource, including
+  # a filename, URI, or the strings 'stdin' or '-'.
+  SINGLE_ARG_TYPES = [:int, :integer, :string, :double, :float, :io, :date] #:nodoc:
 
-  ## The set of values that indicate a multiple-parameter option (i.e., that
-  ## takes multiple space-separated values on the commandline) when passed as
-  ## the +:type+ parameter of #opt.
-  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates]
+  # The set of values that indicate a multiple-parameter option (i.e., that
+  # takes multiple space-separated values on the commandline) when passed as
+  # the +:type+ parameter of #opt.
+  MULTI_ARG_TYPES = [:ints, :integers, :strings, :doubles, :floats, :ios, :dates] #:nodoc:
 
-  ## The complete set of legal values for the +:type+ parameter of #opt.
-  TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
+  # The complete set of legal values for the +:type+ parameter of #opt.
+  TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES #:nodoc:
 
   attr_accessor :name, :opts
 
@@ -752,7 +752,7 @@ class Option
   def required? ; opts[:required] ; end
 
   # works for all except flags
-  def parse(params, arg) # XXX
+  def parse(params, arg) #:nodocs:
     case type
     #when :flag
     #  (sym.to_s =~ /^no_/ ? negative_given : !negative_given)
