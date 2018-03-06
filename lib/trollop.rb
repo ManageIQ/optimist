@@ -301,19 +301,10 @@ class Parser
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
-      case opts.type
-      when :flag
+      if opts.type == :flag
         vals[sym] = (sym.to_s =~ /^no_/ ? negative_given : !negative_given)
-      when :int, :ints
-        vals[sym] = params.map { |pg| pg.map { |p| parse_integer_parameter p, arg } }
-      when :float, :floats
-        vals[sym] = params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
-      when :string, :strings
-        vals[sym] = params.map { |pg| pg.map(&:to_s) }
-      when :io, :ios
-        vals[sym] = params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
-      when :date, :dates
-        vals[sym] = params.map { |pg| pg.map { |p| parse_date_parameter p, arg } }
+      else
+        vals[sym] = opts.parse(params, arg)
       end
 
       if opts.single_arg?
@@ -342,18 +333,6 @@ class Parser
       end
     end
     vals
-  end
-
-  def parse_date_parameter(param, arg) #:nodoc:
-    begin
-      require 'chronic'
-      time = Chronic.parse(param)
-    rescue LoadError
-      # chronic is not available
-    end
-    time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-  rescue ArgumentError
-    raise CommandlineError, "option '#{arg}' needs a date"
   end
 
   ## Print the help message to +stream+.
@@ -554,29 +533,6 @@ private
     end
 
     remains
-  end
-
-  def parse_integer_parameter(param, arg)
-    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
-    param.to_i
-  end
-
-  def parse_float_parameter(param, arg)
-    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
-    param.to_f
-  end
-
-  def parse_io_parameter(param, arg)
-    if param =~ /^(stdin|-)$/i
-      $stdin
-    else
-      require 'open-uri'
-      begin
-        open param
-      rescue SystemCallError => e
-        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
-      end
-    end
   end
 
   def collect_argument_parameters(args, start_at)
@@ -794,6 +750,61 @@ class Option
   def desc ; opts[:desc] ; end
 
   def required? ; opts[:required] ; end
+
+  # works for all except flags
+  def parse(params, arg) # XXX
+    case type
+    #when :flag
+    #  (sym.to_s =~ /^no_/ ? negative_given : !negative_given)
+    when :int, :ints
+      params.map { |pg| pg.map { |p| parse_integer_parameter p, arg } }
+    when :float, :floats
+      params.map { |pg| pg.map { |p| parse_float_parameter p, arg } }
+    when :string, :strings
+      params.map { |pg| pg.map(&:to_s) }
+    when :io, :ios
+      params.map { |pg| pg.map { |p| parse_io_parameter p, arg } }
+    when :date, :dates
+      params.map { |pg| pg.map { |p| parse_date_parameter p, arg } }
+    end
+  end
+
+  private
+
+  def parse_integer_parameter(param, arg) #:nodoc:
+    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^-?[\d_]+$/
+    param.to_i
+  end
+
+  def parse_float_parameter(param, arg) #:nodoc:
+    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
+    param.to_f
+  end
+
+  def parse_io_parameter(param, arg) #:nodoc:
+    if param =~ /^(stdin|-)$/i
+      $stdin
+    else
+      require 'open-uri'
+      begin
+        open param
+      rescue SystemCallError => e
+        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
+      end
+    end
+  end
+
+  def parse_date_parameter(param, arg) #:nodoc:
+    begin
+      require 'chronic'
+      time = Chronic.parse(param)
+    rescue LoadError
+      # chronic is not available
+    end
+    time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+  rescue ArgumentError
+    raise CommandlineError, "option '#{arg}' needs a date"
+  end
 
   def self.create(name, desc="", opts={})
     new(name, desc, opts)
