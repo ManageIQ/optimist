@@ -462,6 +462,7 @@ class Parser
 
   ## The per-parser version of Trollop::die (see that for documentation).
   def die(arg, msg = nil, error_code = nil)
+    msg, error_code = nil, msg if msg.kind_of?(Fixnum)
     if msg
       $stderr.puts "Error: argument --#{@specs[arg].long} #{msg}."
     else
@@ -891,6 +892,10 @@ end
 ##   end
 ##
 ##   Trollop::die "need at least one filename" if ARGV.empty?
+##
+## An exit code can be provide if needed
+##
+##   Trollop::die "need at least one filename", -2 if ARGV.empty?
 def die(arg, msg = nil, error_code = nil)
   if @last_parser
     @last_parser.die arg, msg, error_code

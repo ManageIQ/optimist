@@ -60,6 +60,15 @@ class TrollopTest < MiniTest::Test
     end
   end
 
+  def test_die_custom_error_code_two_args
+    assert_stderr(/Error: issue with parsing/) do
+      assert_system_exit(5) do
+        Trollop.options []
+        Trollop.die "issue with parsing", 5
+      end
+    end
+  end
+
   def test_educate_without_options_ever_run
     assert_raises(ArgumentError) { Trollop.educate }
   end
