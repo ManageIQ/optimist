@@ -458,6 +458,18 @@ Options:
     EOM
   end
 
+  def test_integer_formatting
+    @p.opt :arg, "desc", :type => :integer, :short => "i"
+    opts = @p.parse %w(-i 5)
+    assert_equal 5, opts[:arg]
+  end
+
+  def test_integer_formatting
+    @p.opt :arg, "desc", :type => :integer, :short => "i", :default => 3
+    opts = @p.parse %w(-i)
+    assert_equal 3, opts[:arg]
+  end
+
   def test_floating_point_formatting
     @p.opt :arg, "desc", :type => :float, :short => "f"
     opts = @p.parse %w(-f 1)
@@ -485,6 +497,12 @@ Options:
     assert_raises(CommandlineError) { @p.parse %w(-f 1.0.0) }
     assert_raises(CommandlineError) { @p.parse %w(-f .) }
     assert_raises(CommandlineError) { @p.parse %w(-f -.) }
+  end
+
+  def test_floating_point_formatting_default
+    @p.opt :arg, "desc", :type => :float, :short => "f", :default => 5.5
+    opts = @p.parse %w(-f)
+    assert_equal 5.5, opts[:arg]
   end
 
   def test_date_formatting
@@ -911,6 +929,9 @@ Options:
     opts = @p.parse %w(--arg2 5/1/2010)
     assert_kind_of Date, opts[:arg2]
     assert_equal Date.new(2010, 5, 1), opts[:arg2]
+
+    opts = @p.parse %w(--arg3)
+    assert_equal temp, opts[:arg3]
   end
 
   def test_unknown_arg_class_type
