@@ -58,7 +58,9 @@ class ParserTest < ::MiniTest::Test
     err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
     assert_match(/unknown argument '--bone'$/, err.message)
 
-    if Module::const_defined?("DidYouMean::JaroWinkler") and Module::const_defined?("DidYouMean::Levenshtein")
+    if (Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
       sugp.opt "cone"
       sugp.parse(%w(--cone))
 
