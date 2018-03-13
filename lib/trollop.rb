@@ -231,13 +231,16 @@ class Parser
 
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
-    if suggestions and  Module::const_defined?("DidYouMean::JaroWinkler") and Module::const_defined?("DidYouMean::Levenshtein")
+    if (suggestions &&
+        Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
       input = arg.sub(/^[-]*/,'')
-      #require 'did_you_mean'
+
       # Code borrowed from did_you_mean gem
       jw_threshold = 0.75
-      seed = candidates.select {|candidate| DidYouMean::JaroWinkler.distance(candidate, input) >= jw_threshold }
-               .sort_by! {|candidate| DidYouMean::JaroWinkler.distance(candidate.to_s, input) }
+      seed = candidates.select {|candidate| DidYouMean::JaroWinkler.distance(candidate, input) >= jw_threshold } \
+               .sort_by! {|candidate| DidYouMean::JaroWinkler.distance(candidate.to_s, input) } \
                .reverse!
       # Correct mistypes
       threshold   = (input.length * 0.25).ceil
