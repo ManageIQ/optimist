@@ -359,7 +359,8 @@ class Parser
     width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
 
-    left = @specs.map { |name, spec| [name, spec.educate] }.to_h
+    left = {}
+    @specs.each { |name, spec| left[name] = spec.educate }
     
     leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
