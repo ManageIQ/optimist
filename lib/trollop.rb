@@ -37,203 +37,6 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
 ## Regex for parameters
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
-class Option
-
-  attr_accessor :name, :short, :long, :default
-  attr_writer :multi_given
-  
-  def initialize
-    @long = nil
-    @short = nil
-    @name = nil
-    @multi_given = false
-    @hidden = false
-    @default = nil
-    @optshash = Hash.new()
-  end
-  
-  def opts (key)
-    @optshash[key]
-  end
-
-  def opts= (o)
-    @optshash = o
-  end
-  
-  ## Indicates a flag option, which is an option without an argument
-  def flag? ; false ; end
-
-  ## Indicates that this is a multivalued (Array type) argument
-  def multi_arg? ; false ; end
-  ## note: Option-Types with both multi_arg? and flag? false are single-parameter (normal) options.
-
-  def parse (_paramlist, _neg_given)
-    raise NotImplementedError, "parse must be overridden for newly registered type"
-  end
-
-  # provide education string.  default to empty, but user should probably override it
-  def educate ; "" ; end
-  
-  def short? ; short && short != :none ; end
-  def desc ; opts(:desc) ; end
-  def required? ; opts(:required) ; end
-  def callback ; opts(:callback) ; end
-  def multi ; @multi_given ; end
-  def multi? ; @multi_given ; end
-  def single_arg? ; !self.multi_arg? and !self.flag? ; end
-  def array_default? ; self.default.kind_of?(Array) ; end
-
-  ## Format the educate-line description including the default-value(s)
-  def format_description
-    return desc unless default
-    defstring = begin
-                  default_s = case default
-                              when $stdout   then "<stdout>"
-                              when $stdin    then "<stdin>"
-                              when $stderr   then "<stderr>"
-                              when Array
-                                default.join(", ")
-                              else
-                                default.to_s
-                              end
-                  
-                  if desc =~ /\.$/
-                    " (Default: #{default_s})"
-                  else
-                    " (default: #{default_s})"
-                  end
-                end
-    return desc + defstring
-    
-  end
-end
-
-# Flag option.  Has no arguments. Can be negated with "no-".
-class BooleanOption < Option
-  def initialize
-    super()
-    @default = false
-  end
-
-  def flag? ; true ; end
-  def parse(_paramlist, neg_given)
-    return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
-  end
-end
-
-# Floating point number option class.
-class FloatOption < Option
-  def educate ; "=<f>" ; end
-  def parse(paramlist, _neg_given)
-    paramlist.map do |pg|
-      pg.map do |param|
-        raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param =~ FLOAT_RE
-        param.to_f
-      end
-    end
-  end
-end
-
-# Integer number option class.
-class IntegerOption < Option
-  def educate ; "=<i>" ; end
-  def parse(paramlist, _neg_given)
-    paramlist.map do |pg|
-      pg.map do |param|
-        raise CommandlineError, "option '#{self.name}' needs an integer" unless param =~ /^-?[\d_]+$/
-        param.to_i
-      end
-    end
-  end
-end
-
-# Option class for handling IO objects and URLs.
-# Note that this will return the file-handle, not the file-name
-# in the case of file-paths given to it.
-class IOOption < Option
-  def educate ; "=<filename/uri>" ; end
-  def parse(paramlist, _neg_given)
-    paramlist.map do |pg|
-      pg.map do |param|
-        if param =~ /^(stdin|-)$/i
-          $stdin
-        else
-          require 'open-uri'
-          begin
-            open param
-          rescue SystemCallError => e
-            raise CommandlineError, "file or url for option '#{self.name}' cannot be opened: #{e.message}"
-          end
-        end
-      end
-    end
-  end
-end
-
-# Option class for handling Strings.
-class StringOption < Option
-  def educate ; "=<s>" ; end
-  def parse(paramlist, _neg_given)
-    paramlist.map { |pg| pg.map(&:to_s) }
-  end
-end
-
-# Option for dates.  Uses Chronic if it exists.
-class DateOption < Option
-  def educate ; "=<date>" ; end
-  def parse(paramlist, _neg_given)
-    paramlist.map do |pg|
-      pg.map do |param|
-        begin
-          begin
-            require 'chronic'
-            time = Chronic.parse(param)
-          rescue LoadError
-            # chronic is not available
-          end
-          time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-        rescue ArgumentError
-          raise CommandlineError, "option '#{self.name}' needs a date"
-        end
-      end
-    end
-  end
-end
-### MULTI_OPT_TYPES :
-## The set of values that indicate a multiple-parameter option (i.e., that
-## takes multiple space-separated values on the commandline) when passed as
-## the +:type+ parameter of #opt.
-
-# Option class for handling multiple Integers
-class IntegerArrayOption < IntegerOption
-  def educate ; "=<i+>" ; end
-  def multi_arg? ; true ; end
-end
-
-# Option class for handling multiple Floats
-class FloatArrayOption < FloatOption
-  def educate ; "=<f+>" ; end
-  def multi_arg? ; true ; end
-end
-
-# Option class for handling multiple Strings
-class StringArrayOption < StringOption
-  def educate ; "=<s+>" ; end
-  def multi_arg? ; true ; end
-end
-
-# Option class for handling multiple dates
-class DateArrayOption < DateOption
-  def educate ; "=<date+>" ; end
-  def multi_arg? ; true ; end
-end
-
-# Option class for handling Files/URLs via 'open'
-class IOArrayOption < IOOption
-  def educate ; "=<filename/uri+>" ; end
-  def multi_arg? ; true ; end
-end
-
 ## The commandline parser. In typical usage, the methods in this class
 ## will be handled internally by Trollop::options. In this case, only the
 ## #opt, #banner and #version, #depends, and #conflicts methods will
@@ -245,38 +48,17 @@ end
 ## Trollop::with_standard_exception_handling.
 class Parser
 
-  ## The registry is a class-variable Hash of registered option types.
-  ## By default, it contains flag(boolean), int, float, string, io and date types
-  ## and their plural versions.
-  @registry = {
-    # single opts
-    :fixnum => IntegerOption,
-    :int => IntegerOption,
-    :integer => IntegerOption,
-    :float => FloatOption,
-    :double => FloatOption,
-    :string => StringOption,
-    :bool => BooleanOption,
-    :boolean => BooleanOption,
-    :flag => BooleanOption,
-    :io => IOOption,
-    :date => DateOption,
-    :trueclass => BooleanOption,
-    :falseclass => BooleanOption,
-    ## array-arg opts
-    :fixnums => IntegerArrayOption,
-    :ints => IntegerArrayOption,
-    :integers => IntegerArrayOption,
-    :doubles => FloatArrayOption,
-    :floats => FloatArrayOption,
-    :strings => StringArrayOption,
-    :dates => DateArrayOption,
-    :ios => IOArrayOption,
-  }
+  ## The registry is a class-instance-variable map of option aliases to their subclassed Option class.
+  @registry = {}
+  
+  ## The Option subclasses are responsible for registering themselves using this function.
+  def self.register(lookup, klass)
+    @registry[lookup.to_sym] = klass
+  end
   
   ## Gets the class from the registry.
   ## Can be given either a class-name, e.g. Integer, a string, e.g "integer", or a symbol, e.g :integer
-  def self.registry_getklass(type)
+  def self.registry_getopttype(type)
     return nil unless type
     if type.respond_to?(:name)
       type = type.name
@@ -285,13 +67,7 @@ class Parser
       lookup = type.to_sym
     end
     raise ArgumentError, "Unsupported argument type '#{type}', registry lookup '#{lookup}'" unless @registry.has_key?(lookup)
-    return @registry[lookup]
-  end
-  
-  def self.registry_getopttype(type)
-    klass_or_nil = registry_getklass(type)
-    return nil unless klass_or_nil
-    return klass_or_nil.new
+    return @registry[lookup].new
   end
 
   INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
@@ -371,7 +147,7 @@ class Parser
     opts[:callback] ||= b if block_given?
     opts[:desc] ||= desc
 
-    o = OptionDispatch.create(name, desc, opts, @settings)
+    o = Option.create(name, desc, opts)
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
@@ -582,11 +358,8 @@ class Parser
   def educate(stream = $stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
           # call this unless the cursor's at the beginning of a line.
-    left = {}
-    @specs.each do |name, spec|
-      type_edu = spec.educate
-      left[name] = (spec.short? ? "-#{spec.short}, " : "") + "--#{spec.long}" + type_edu + (spec.flag? && spec.default ? ", --no-#{spec.long}" : "")
-    end
+
+    left = @specs.map { |name, spec| [name, spec.educate] }.to_h
     
     leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
@@ -608,7 +381,7 @@ class Parser
 
       spec = @specs[opt]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
-      desc = spec.format_description
+      desc = spec.description_with_default
 
       stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
     end
@@ -801,16 +574,101 @@ private
   end
 end
 
-## Determines which type of object to create based on arguments passed
-## to +Trollop::opt+.  This is trickier in Trollop, than other cmdline
-## parsers (e.g. Slop) because we allow the +default:+ to be able to
-## set the option's type.
+class Option
 
-class OptionDispatch
+  attr_accessor :name, :short, :long, :default
+  attr_writer :multi_given
+  
+  def initialize
+    @long = nil
+    @short = nil
+    @name = nil
+    @multi_given = false
+    @hidden = false
+    @default = nil
+    @optshash = Hash.new()
+  end
+  
+  def opts (key)
+    @optshash[key]
+  end
 
-  attr_reader :optinst
+  def opts= (o)
+    @optshash = o
+  end
+  
+  ## Indicates a flag option, which is an option without an argument
+  def flag? ; false ; end
+  def single_arg?
+    !self.multi_arg? and !self.flag?
+  end
 
-  def initialize(name, desc="", opts={}, settings={} &b)
+  def multi ; @multi_given ; end
+  alias multi? multi
+
+  ## Indicates that this is a multivalued (Array type) argument
+  def multi_arg? ; false ; end
+  ## note: Option-Types with both multi_arg? and flag? false are single-parameter (normal) options.
+
+  def array_default? ; self.default.kind_of?(Array) ; end
+  
+  def short? ; short && short != :none ; end
+
+  def callback ; opts(:callback) ; end
+  def desc ; opts(:desc) ; end
+
+  def required? ; opts(:required) ; end
+
+  def parse (_paramlist, _neg_given)
+    raise NotImplementedError, "parse must be overridden for newly registered type"
+  end
+
+  # provide type-format string.  default to empty, but user should probably override it
+  def type_format ; "" ; end
+  
+  def educate
+    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
+  end
+
+  ## Format the educate-line description including the default-value(s)
+  def description_with_default
+    return desc unless default
+    defstring = begin
+                  default_s = case default
+                              when $stdout   then "<stdout>"
+                              when $stdin    then "<stdin>"
+                              when $stderr   then "<stderr>"
+                              when Array
+                                default.join(", ")
+                              else
+                                default.to_s
+                              end
+                  
+                  if desc =~ /\.$/
+                    " (Default: #{default_s})"
+                  else
+                    " (default: #{default_s})"
+                  end
+                end
+    return desc + defstring
+    
+  end
+
+  ## Provide a way to register symbol aliases to the Parser
+  def self.register_alias(*alias_keys)
+    alias_keys.each do |alias_key|
+      # pass in the alias-key and the class
+      Parser.register(alias_key, self)
+    end
+  end
+  
+  ## Factory class methods ...
+  
+  # Determines which type of object to create based on arguments passed
+  # to +Trollop::opt+.  This is trickier in Trollop, than other cmdline
+  # parsers (e.g. Slop) because we allow the +default:+ to be able to
+  # set the option's type.
+  def self.create(name, desc="", opts={}, settings={})
 
     opttype = Trollop::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
@@ -820,10 +678,10 @@ class OptionDispatch
     @optinst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
 
     ## fill in :long
-    @optinst.long = handle_long_opt opts[:long], name
+    @optinst.long = handle_long_opt(opts[:long], name)
 
     ## fill in :short
-    @optinst.short = handle_short_opt opts[:short]
+    @optinst.short = handle_short_opt(opts[:short])
     
     ## fill in :multi
     multi_given = opts[:multi] || false
@@ -837,9 +695,12 @@ class OptionDispatch
     @optinst.default = defvalue
     @optinst.name = name
     @optinst.opts = opts
+    @optinst
   end
 
-  def get_type_from_disdef(optdef, opttype, disambiguated_default)
+  private
+  
+  def self.get_type_from_disdef(optdef, opttype, disambiguated_default)
     if disambiguated_default.is_a? Array
       return(optdef.first.class.name.downcase + "s") if !optdef.empty?
       if opttype
@@ -852,7 +713,7 @@ class OptionDispatch
     return disambiguated_default.class.name.downcase
   end
   
-  def get_klass_from_default(opts, opttype)
+  def self.get_klass_from_default(opts, opttype)
     ## for options with :multi => true, an array default doesn't imply
     ## a multi-valued argument. for that you have to specify a :type
     ## as well. (this is how we disambiguate an ambiguous situation;
@@ -869,9 +730,7 @@ class OptionDispatch
     return Trollop::Parser.registry_getopttype(type_from_default)
   end
 
-
-
-  def handle_long_opt(lopt, name)
+  def self.handle_long_opt(lopt, name)
     lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
     lopt = case lopt
            when /^--([^-].*)$/ then $1
@@ -880,7 +739,7 @@ class OptionDispatch
            end
   end
   
-  def handle_short_opt(sopt)
+  def self.handle_short_opt(sopt)
     sopt = sopt.to_s if sopt && sopt != :none
     sopt = case sopt
            when /^-(.)$/          then $1
@@ -894,10 +753,143 @@ class OptionDispatch
     return sopt
   end
   
-  def self.create(name, desc="", opts={}, settings={})
-    optdispatch = new(name, desc, opts, settings)
-    return optdispatch.optinst
+end
+
+# Flag option.  Has no arguments. Can be negated with "no-".
+class BooleanOption < Option
+  register_alias :flag, :bool, :boolean, :trueclass, :falseclass
+  def initialize
+    super()
+    @default = false
   end
+  def flag? ; true ; end
+  def parse(_paramlist, neg_given)
+    return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
+  end
+end
+
+# Floating point number option class.
+class FloatOption < Option
+  register_alias :float, :double
+  def type_format ; "=<f>" ; end
+  def parse(paramlist, _neg_given)
+    paramlist.map do |pg|
+      pg.map do |param|
+        raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param =~ FLOAT_RE
+        param.to_f
+      end
+    end
+  end
+end
+
+# Integer number option class.
+class IntegerOption < Option
+  register_alias :int, :integer, :fixnum
+  def type_format ; "=<i>" ; end
+  def parse(paramlist, _neg_given)
+    paramlist.map do |pg|
+      pg.map do |param|
+        raise CommandlineError, "option '#{self.name}' needs an integer" unless param =~ /^-?[\d_]+$/
+        param.to_i
+      end
+    end
+  end
+end
+
+# Option class for handling IO objects and URLs.
+# Note that this will return the file-handle, not the file-name
+# in the case of file-paths given to it.
+class IOOption < Option
+  register_alias :io
+  def type_format ; "=<filename/uri>" ; end
+  def parse(paramlist, _neg_given)
+    paramlist.map do |pg|
+      pg.map do |param|
+        if param =~ /^(stdin|-)$/i
+          $stdin
+        else
+          require 'open-uri'
+          begin
+            open param
+          rescue SystemCallError => e
+            raise CommandlineError, "file or url for option '#{self.name}' cannot be opened: #{e.message}"
+          end
+        end
+      end
+    end
+  end
+end
+
+# Option class for handling Strings.
+class StringOption < Option
+  register_alias :string
+  def type_format ; "=<s>" ; end
+  def parse(paramlist, _neg_given)
+    paramlist.map { |pg| pg.map(&:to_s) }
+  end
+end
+
+# Option for dates.  Uses Chronic if it exists.
+class DateOption < Option
+  register_alias :date
+  def type_format ; "=<date>" ; end
+  def parse(paramlist, _neg_given)
+    paramlist.map do |pg|
+      pg.map do |param|
+        begin
+          begin
+            require 'chronic'
+            time = Chronic.parse(param)
+          rescue LoadError
+            # chronic is not available
+          end
+          time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+        rescue ArgumentError
+          raise CommandlineError, "option '#{self.name}' needs a date"
+        end
+      end
+    end
+  end
+end
+
+### MULTI_OPT_TYPES :
+## The set of values that indicate a multiple-parameter option (i.e., that
+## takes multiple space-separated values on the commandline) when passed as
+## the +:type+ parameter of #opt.
+
+# Option class for handling multiple Integers
+class IntegerArrayOption < IntegerOption
+  register_alias :fixnums, :ints, :integers
+  def type_format ; "=<i+>" ; end
+  def multi_arg? ; true ; end
+end
+
+# Option class for handling multiple Floats
+class FloatArrayOption < FloatOption
+  register_alias :doubles, :floats
+  def type_format ; "=<f+>" ; end
+  def multi_arg? ; true ; end
+end
+
+# Option class for handling multiple Strings
+class StringArrayOption < StringOption
+  register_alias :strings
+  def type_format ; "=<s+>" ; end
+  def multi_arg? ; true ; end
+end
+
+# Option class for handling multiple dates
+class DateArrayOption < DateOption
+  register_alias :dates
+  def type_format ; "=<date+>" ; end
+  def multi_arg? ; true ; end
+end
+
+# Option class for handling Files/URLs via 'open'
+class IOArrayOption < IOOption
+  register_alias :ios
+  def type_format ; "=<filename/uri+>" ; end
+  def multi_arg? ; true ; end
 end
 
 ## The easy, syntactic-sugary entry method into Trollop. Creates a Parser,
