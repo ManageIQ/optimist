@@ -676,27 +676,27 @@ class Option
 
     raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
 
-    @optinst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
+    opt_inst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
 
     ## fill in :long
-    @optinst.long = handle_long_opt(opts[:long], name)
+    opt_inst.long = handle_long_opt(opts[:long], name)
 
     ## fill in :short
-    @optinst.short = handle_short_opt(opts[:short])
+    opt_inst.short = handle_short_opt(opts[:short])
     
     ## fill in :multi
     multi_given = opts[:multi] || false
-    @optinst.multi_given = multi_given
+    opt_inst.multi_given = multi_given
 
     ## fill in :default for flags
-    defvalue = opts[:default] || @optinst.default 
+    defvalue = opts[:default] || opt_inst.default 
 
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
-    @optinst.default = defvalue
-    @optinst.name = name
-    @optinst.opts = opts
-    @optinst
+    opt_inst.default = defvalue
+    opt_inst.name = name
+    opt_inst.opts = opts
+    opt_inst
   end
 
   private
