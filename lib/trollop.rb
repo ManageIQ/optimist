@@ -601,7 +601,7 @@ class Option
   ## Indicates a flag option, which is an option without an argument
   def flag? ; false ; end
   def single_arg?
-    !self.multi_arg? and !self.flag?
+    !self.multi_arg? && !self.flag?
   end
 
   def multi ; @multi_given ; end
@@ -634,25 +634,17 @@ class Option
   ## Format the educate-line description including the default-value(s)
   def description_with_default
     return desc unless default
-    defstring = begin
-                  default_s = case default
-                              when $stdout   then "<stdout>"
-                              when $stdin    then "<stdin>"
-                              when $stderr   then "<stderr>"
-                              when Array
-                                default.join(", ")
-                              else
-                                default.to_s
-                              end
-                  
-                  if desc =~ /\.$/
-                    " (Default: #{default_s})"
-                  else
-                    " (default: #{default_s})"
-                  end
+    default_s = case default
+                when $stdout   then '<stdout>'
+                when $stdin    then '<stdin>'
+                when $stderr   then '<stderr>'
+                when Array
+                  default.join(', ')
+                else
+                  default.to_s
                 end
-    return desc + defstring
-    
+    defword = desc.end_with?('.') ? 'Default' : 'default'
+    return "#{desc} (#{defword}: #{default_s})"
   end
 
   ## Provide a way to register symbol aliases to the Parser
