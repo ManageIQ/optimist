@@ -1,3 +1,11 @@
+== 2.X.X / 2018-07-05
+
+* Refactor each option type into subclasses of Option.  Define a registry for the registration of each option.  This makes the code more modular and facilitates extension by allowing additional Option subclasses.
+* Fixed implementation of ignore_invalid_options.
+* Various warning cleanup for ruby 2.1, 2.3, etc.
+* Trollop.die can now accept an error code.
+* Change from ruby license to MIT license in the code.
+
 == 2.1.2 / 2015-03-10
 * loosen mime-types requirements (for better ruby 1.8.7 support)
 * use io/console gem instead of curses (for better jruby support)
