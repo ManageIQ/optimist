@@ -50,12 +50,12 @@ class Parser
 
   ## The registry is a class-instance-variable map of option aliases to their subclassed Option class.
   @registry = {}
-  
+
   ## The Option subclasses are responsible for registering themselves using this function.
   def self.register(lookup, klass)
     @registry[lookup.to_sym] = klass
   end
-  
+
   ## Gets the class from the registry.
   ## Can be given either a class-name, e.g. Integer, a string, e.g "integer", or a symbol, e.g :integer
   def self.registry_getopttype(type)
@@ -361,7 +361,7 @@ class Parser
 
     left = {}
     @specs.each { |name, spec| left[name] = spec.educate }
-    
+
     leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
@@ -579,7 +579,7 @@ class Option
 
   attr_accessor :name, :short, :long, :default
   attr_writer :multi_given
-  
+
   def initialize
     @long = nil
     @short = nil
@@ -589,7 +589,7 @@ class Option
     @default = nil
     @optshash = Hash.new()
   end
-  
+
   def opts (key)
     @optshash[key]
   end
@@ -597,7 +597,7 @@ class Option
   def opts= (o)
     @optshash = o
   end
-  
+
   ## Indicates a flag option, which is an option without an argument
   def flag? ; false ; end
   def single_arg?
@@ -612,7 +612,7 @@ class Option
   ## note: Option-Types with both multi_arg? and flag? false are single-parameter (normal) options.
 
   def array_default? ; self.default.kind_of?(Array) ; end
-  
+
   def short? ; short && short != :none ; end
 
   def callback ; opts(:callback) ; end
@@ -626,7 +626,7 @@ class Option
 
   # provide type-format string.  default to empty, but user should probably override it
   def type_format ; "" ; end
-  
+
   def educate
     (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
@@ -654,9 +654,9 @@ class Option
       Parser.register(alias_key, self)
     end
   end
-  
+
   ## Factory class methods ...
-  
+
   # Determines which type of object to create based on arguments passed
   # to +Trollop::opt+.  This is trickier in Trollop, than other cmdline
   # parsers (e.g. Slop) because we allow the +default:+ to be able to
@@ -675,13 +675,13 @@ class Option
 
     ## fill in :short
     opt_inst.short = handle_short_opt(opts[:short])
-    
+
     ## fill in :multi
     multi_given = opts[:multi] || false
     opt_inst.multi_given = multi_given
 
     ## fill in :default for flags
-    defvalue = opts[:default] || opt_inst.default 
+    defvalue = opts[:default] || opt_inst.default
 
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
@@ -692,7 +692,7 @@ class Option
   end
 
   private
-  
+
   def self.get_type_from_disdef(optdef, opttype, disambiguated_default)
     if disambiguated_default.is_a? Array
       return(optdef.first.class.name.downcase + "s") if !optdef.empty?
@@ -705,7 +705,7 @@ class Option
     end
     return disambiguated_default.class.name.downcase
   end
-  
+
   def self.get_klass_from_default(opts, opttype)
     ## for options with :multi => true, an array default doesn't imply
     ## a multi-valued argument. for that you have to specify a :type
@@ -719,7 +719,7 @@ class Option
                             end
 
     return nil if disambiguated_default.nil?
-    type_from_default = get_type_from_disdef(opts[:default], opttype, disambiguated_default) 
+    type_from_default = get_type_from_disdef(opts[:default], opttype, disambiguated_default)
     return Trollop::Parser.registry_getopttype(type_from_default)
   end
 
@@ -731,7 +731,7 @@ class Option
            else                     raise ArgumentError, "invalid long option name #{lopt.inspect}"
            end
   end
-  
+
   def self.handle_short_opt(sopt)
     sopt = sopt.to_s if sopt && sopt != :none
     sopt = case sopt
@@ -745,7 +745,7 @@ class Option
     end
     return sopt
   end
-  
+
 end
 
 # Flag option.  Has no arguments. Can be negated with "no-".

@@ -13,7 +13,7 @@ class TrollopTest < MiniTest::Test
     opts = Trollop.options %w(-f) do
       opt :f
     end
-    
+
     assert_equal true, opts[:f]
   end
 
@@ -90,7 +90,7 @@ class TrollopTest < MiniTest::Test
     opts = Trollop::with_standard_exception_handling p do
       p.parse %w(-f)
     end
-    
+
     assert_equal true, opts[:f]
   end
 
