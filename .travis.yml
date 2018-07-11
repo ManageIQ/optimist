@@ -1,19 +1,12 @@
 language: ruby
 sudo: false
 rvm:
-  - "1.8.7"
-  - "1.9.2"
-  - "1.9.3"
-  - "2.0"
-  - "2.1"
   - "2.2"
   - "2.3.4"
-  - "2.4.1"
-  - ruby-head
+  - "2.6"
   - jruby-head
 gemfile: Gemfile.travis
 matrix:
   allow_failures:
-    - rvm: ruby-head
     - rvm: jruby-head
   fast_finish: true
