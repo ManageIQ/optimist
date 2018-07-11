@@ -1,18 +1,20 @@
-== 2.X.X / 2018-07-05
+== [2.1.3] / 2018-07-05
 
-* Refactor each option type into subclasses of Option.  Define a registry for the registration of each option.  This makes the code more modular and facilitates extension by allowing additional Option subclasses.
-* Fixed implementation of ignore_invalid_options.
-* Various warning cleanup for ruby 2.1, 2.3, etc.
+* Refactor each option type into subclasses of Option.  Define a registry for the registration of each option.  This makes the code more modular and facilitates extension by allowing additional Option subclasses. (thanks @clxy)
+* Fixed implementation of ignore_invalid_options. (thanks @metcalf)
+* Various warning cleanup for ruby 2.1, 2.3, etc. (thanks @nanobowers)
 * Trollop.die can now accept an error code.
+* fixed default (thanks @nanobowers)
 * Change from ruby license to MIT license in the code.
 
-== 2.1.2 / 2015-03-10
+== [2.1.2] / 2015-03-10
 * loosen mime-types requirements (for better ruby 1.8.7 support)
 * use io/console gem instead of curses (for better jruby support)
 * fix parsing bug when chronic gem is not available
 * allow default array to be empty if a type is specified
 * better specified license and better spec coverage
-== 2.1.1 / 2015-01-03
+
+== [2.1.1] / 2015-01-03
 * Remove curses as a hard dependency. It is optional. This can leverage the gem if it is present.
 * Fix ruby -w warnings
 
@@ -156,3 +158,7 @@
 
 == 1.0 / 2007-01-29
 * Initial release.
+
+[2.1.3]: https://github.com/ManageIQ/trollop/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/ManageIQ/trollop/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/ManageIQ/trollop/compare/v2.1.0...v2.1.1
