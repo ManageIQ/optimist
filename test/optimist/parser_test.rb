@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Trollop
+module Optimist
 
 class ParserTest < ::MiniTest::Test
   def setup
@@ -17,8 +17,8 @@ class ParserTest < ::MiniTest::Test
 
   def test_version
     assert_nil parser.version
-    assert_equal "trollop 5.2.3", parser.version("trollop 5.2.3")
-    assert_equal "trollop 5.2.3", parser.version
+    assert_equal "optimist 5.2.3", parser.version("optimist 5.2.3")
+    assert_equal "optimist 5.2.3", parser.version
   end
 
   def test_usage
@@ -329,7 +329,7 @@ class ParserTest < ::MiniTest::Test
     assert_raises(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
   end
 
-  ## note: this behavior has changed in trollop 2.0!
+  ## note: this behavior has changed in optimist 2.0!
   def test_flag_parameters
     @p.opt :defaultnone, "desc"
     @p.opt :defaultfalse, "desc", :default => false
@@ -354,7 +354,7 @@ class ParserTest < ::MiniTest::Test
     assert_equal false, opts[:defaulttrue]
   end
 
-  ## note: this behavior has changed in trollop 2.0!
+  ## note: this behavior has changed in optimist 2.0!
   def test_flag_parameters_for_inverted_flags
     @p.opt :no_default_none, "desc"
     @p.opt :no_default_false, "desc", :default => false
@@ -901,7 +901,7 @@ Options:
   def test_alternate_args
     args = %w(-a -b -c)
 
-    opts = ::Trollop.options(args) do
+    opts = ::Optimist.options(args) do
       opt :alpher, "Ralph Alpher", :short => "-a"
       opt :bethe, "Hans Bethe", :short => "-b"
       opt :gamow, "George Gamow", :short => "-c"
@@ -1079,7 +1079,7 @@ Options:
   def test_simple_interface_handles_help
     assert_stdout(/Options:/) do
       assert_raises(SystemExit) do
-        ::Trollop::options(%w(-h)) do
+        ::Optimist::options(%w(-h)) do
           opt :potato
         end
       end
@@ -1089,7 +1089,7 @@ Options:
 
     assert_stdout do
       begin
-        ::Trollop::options(%w(-h)) do
+        ::Optimist::options(%w(-h)) do
           opt :potato
         end
       rescue SystemExit => e
@@ -1101,7 +1101,7 @@ Options:
   def test_simple_interface_handles_version
     assert_stdout(/1.2/) do
       assert_raises(SystemExit) do
-        ::Trollop::options(%w(-v)) do
+        ::Optimist::options(%w(-v)) do
           version "1.2"
           opt :potato
         end
@@ -1110,7 +1110,7 @@ Options:
   end
 
   def test_simple_interface_handles_regular_usage
-    opts = ::Trollop::options(%w(--potato)) do
+    opts = ::Optimist::options(%w(--potato)) do
       opt :potato
     end
     assert opts[:potato]
@@ -1118,32 +1118,32 @@ Options:
 
   def test_simple_interface_handles_die
     assert_stderr do
-      ::Trollop::options(%w(--potato)) do
+      ::Optimist::options(%w(--potato)) do
         opt :potato
       end
-      assert_raises(SystemExit) { ::Trollop::die :potato, "is invalid" }
+      assert_raises(SystemExit) { ::Optimist::die :potato, "is invalid" }
     end
   end
 
   def test_simple_interface_handles_die_without_message
     assert_stderr(/Error:/) do
-      ::Trollop::options(%w(--potato)) do
+      ::Optimist::options(%w(--potato)) do
         opt :potato
       end
-      assert_raises(SystemExit) { ::Trollop::die :potato }
+      assert_raises(SystemExit) { ::Optimist::die :potato }
     end
   end
 
   def test_invalid_option_with_simple_interface
     assert_stderr do
       assert_raises(SystemExit) do
-        ::Trollop.options(%w(--potato))
+        ::Optimist.options(%w(--potato))
       end
     end
 
     assert_stderr do
       begin
-        ::Trollop.options(%w(--potato))
+        ::Optimist.options(%w(--potato))
       rescue SystemExit => e
         assert_equal(-1, e.status)
       end

@@ -1,17 +1,17 @@
-# lib/trollop.rb -- trollop command-line processing library
+# lib/optimist.rb -- optimist command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
 # Copyright (c) 2014 Red Hat, Inc.
-# trollop is licensed under the MIT license.
+# optimist is licensed under the MIT license.
 
 require 'date'
 
-module Trollop
+module Optimist
   # note: this is duplicated in gemspec
   # please change over there too
 VERSION = "2.1.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
-## you're using the Trollop::options entry.
+## you're using the Optimist::options entry.
 class CommandlineError < StandardError
   attr_reader :error_code
 
@@ -22,12 +22,12 @@ class CommandlineError < StandardError
 end
 
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
-## automatically by Trollop#options.
+## automatically by Optimist#options.
 class HelpNeeded < StandardError
 end
 
 ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
-## automatically by Trollop#options.
+## automatically by Optimist#options.
 class VersionNeeded < StandardError
 end
 
@@ -38,14 +38,14 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
 ## The commandline parser. In typical usage, the methods in this class
-## will be handled internally by Trollop::options. In this case, only the
+## will be handled internally by Optimist::options. In this case, only the
 ## #opt, #banner and #version, #depends, and #conflicts methods will
 ## typically be called.
 ##
 ## If you want to instantiate this class yourself (for more complicated
 ## argument-parsing logic), call #parse to actually produce the output hash,
 ## and consider calling it from within
-## Trollop::with_standard_exception_handling.
+## Optimist::with_standard_exception_handling.
 class Parser
 
   ## The registry is a class-instance-variable map of option aliases to their subclassed Option class.
@@ -113,7 +113,7 @@ class Parser
   ## [+:long+] Specify the long form of the argument, i.e. the form with two dashes. If unspecified, will be automatically derived based on the argument name by turning the +name+ option into a string, and replacing any _'s by -'s.
   ## [+:short+] Specify the short form of the argument, i.e. the form with one dash. If unspecified, will be automatically derived from +name+. Use :none: to not have a short value.
   ## [+:type+] Require that the argument take a parameter or parameters of type +type+. For a single parameter, the value can be a member of +SINGLE_ARG_TYPES+, or a corresponding Ruby class (e.g. +Integer+ for +:int+). For multiple-argument parameters, the value can be any member of +MULTI_ARG_TYPES+ constant. If unset, the default argument type is +:flag+, meaning that the argument does not take a parameter. The specification of +:type+ is not necessary if a +:default+ is given.
-  ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Trollop::options) will have a +nil+ value for this key unless the argument is given on the commandline. The argument type is derived automatically from the class of the default value given, so specifying a +:type+ is not necessary if a +:default+ is given. (But see below for an important caveat when +:multi+: is specified too.) If the argument is a flag, and the default is set to +true+, then if it is specified on the the commandline the value will be +false+.
+  ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Optimist::options) will have a +nil+ value for this key unless the argument is given on the commandline. The argument type is derived automatically from the class of the default value given, so specifying a +:type+ is not necessary if a +:default+ is given. (But see below for an important caveat when +:multi+: is specified too.) If the argument is a flag, and the default is set to +true+, then if it is specified on the the commandline the value will be +false+.
   ## [+:required+] If set to +true+, the argument must be provided on the commandline.
   ## [+:multi+] If set to +true+, allows multiple occurrences of the option on the commandline. Otherwise, only a single instance of the option is allowed. (Note that this is different from taking multiple parameters. See below.)
   ##
@@ -139,7 +139,7 @@ class Parser
   ## There's one ambiguous case to be aware of: when +:multi+: is true and a
   ## +:default+ is set to an array (of something), it's ambiguous whether this
   ## is a multi-value argument as well as a multi-occurrence argument.
-  ## In thise case, Trollop assumes that it's not a multi-value argument.
+  ## In thise case, Optimist assumes that it's not a multi-value argument.
   ## If you want a multi-value, multi-occurrence argument with a default
   ## value, you must specify +:type+ as well.
 
@@ -187,7 +187,7 @@ class Parser
 
   ## Marks two (or more!) options as requiring each other. Only handles
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
-  ## better modeled with Trollop::die.
+  ## better modeled with Optimist::die.
   def depends(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
@@ -205,7 +205,7 @@ class Parser
   ## intact.
   ##
   ## A typical use case would be for subcommand support, where these
-  ## would be set to the list of subcommands. A subsequent Trollop
+  ## would be set to the list of subcommands. A subsequent Optimist
   ## invocation would then be used to parse subcommand options, after
   ## shifting the subcommand off of ARGV.
   def stop_on(*words)
@@ -226,7 +226,7 @@ class Parser
     @educate_on_error = true
   end
 
-  ## Parses the commandline. Typically called by Trollop::options,
+  ## Parses the commandline. Typically called by Optimist::options,
   ## but you can call it directly if you need more control.
   ##
   ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
@@ -423,7 +423,7 @@ class Parser
     end
   end
 
-  ## The per-parser version of Trollop::die (see that for documentation).
+  ## The per-parser version of Optimist::die (see that for documentation).
   def die(arg, msg = nil, error_code = nil)
     msg, error_code = nil, msg if msg.kind_of?(Integer)
     if msg
@@ -658,17 +658,17 @@ class Option
   ## Factory class methods ...
 
   # Determines which type of object to create based on arguments passed
-  # to +Trollop::opt+.  This is trickier in Trollop, than other cmdline
+  # to +Optimist::opt+.  This is trickier in Optimist, than other cmdline
   # parsers (e.g. Slop) because we allow the +default:+ to be able to
   # set the option's type.
   def self.create(name, desc="", opts={}, settings={})
 
-    opttype = Trollop::Parser.registry_getopttype(opts[:type])
+    opttype = Optimist::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
 
     raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
 
-    opt_inst = (opttype || opttype_from_default || Trollop::BooleanOption.new)
+    opt_inst = (opttype || opttype_from_default || Optimist::BooleanOption.new)
 
     ## fill in :long
     opt_inst.long = handle_long_opt(opts[:long], name)
@@ -720,7 +720,7 @@ class Option
 
     return nil if disambiguated_default.nil?
     type_from_default = get_type_from_disdef(opts[:default], opttype, disambiguated_default)
-    return Trollop::Parser.registry_getopttype(type_from_default)
+    return Optimist::Parser.registry_getopttype(type_from_default)
   end
 
   def self.handle_long_opt(lopt, name)
@@ -741,7 +741,7 @@ class Option
            end
 
     if sopt
-      raise ArgumentError, "a short option name can't be a number or a dash" if sopt =~ ::Trollop::Parser::INVALID_SHORT_ARG_REGEX
+      raise ArgumentError, "a short option name can't be a number or a dash" if sopt =~ ::Optimist::Parser::INVALID_SHORT_ARG_REGEX
     end
     return sopt
   end
@@ -886,7 +886,7 @@ class IOArrayOption < IOOption
   def multi_arg? ; true ; end
 end
 
-## The easy, syntactic-sugary entry method into Trollop. Creates a Parser,
+## The easy, syntactic-sugary entry method into Optimist. Creates a Parser,
 ## passes the block to it, then parses +args+ with it, handling any errors or
 ## requests for help or version information appropriately (and then exiting).
 ## Modifies +args+ in place. Returns a hash of option values.
@@ -903,8 +903,8 @@ end
 ##
 ## Example:
 ##
-##   require 'trollop'
-##   opts = Trollop::options do
+##   require 'optimist'
+##   opts = Optimist::options do
 ##     opt :monkey, "Use monkey mode"                    # a flag --monkey, defaulting to false
 ##     opt :name, "Monkey name", :type => :string        # a string --name <s>, defaulting to nil
 ##     opt :num_limbs, "Number of limbs", :default => 4  # an integer --num-limbs <i>, defaulting to 4
@@ -916,13 +916,13 @@ end
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
-## See more examples at http://trollop.rubyforge.org.
+## See more examples at http://optimist.rubyforge.org.
 def options(args = ARGV, *a, &b)
   @last_parser = Parser.new(*a, &b)
   with_standard_exception_handling(@last_parser) { @last_parser.parse args }
 end
 
-## If Trollop::options doesn't do quite what you want, you can create a Parser
+## If Optimist::options doesn't do quite what you want, you can create a Parser
 ## object and call Parser#parse on it. That method will throw CommandlineError,
 ## HelpNeeded and VersionNeeded exceptions when necessary; if you want to
 ## have these handled for you in the standard manner (e.g. show the help
@@ -933,15 +933,15 @@ end
 ##
 ## Usage example:
 ##
-##   require 'trollop'
-##   p = Trollop::Parser.new do
+##   require 'optimist'
+##   p = Optimist::Parser.new do
 ##     opt :monkey, "Use monkey mode"                     # a flag --monkey, defaulting to false
 ##     opt :goat, "Use goat mode", :default => true       # a flag --goat, defaulting to true
 ##   end
 ##
-##   opts = Trollop::with_standard_exception_handling p do
+##   opts = Optimist::with_standard_exception_handling p do
 ##     o = p.parse ARGV
-##     raise Trollop::HelpNeeded if ARGV.empty? # show help screen
+##     raise Optimist::HelpNeeded if ARGV.empty? # show help screen
 ##     o
 ##   end
 ##
@@ -976,16 +976,16 @@ end
 ##     opt :whatever # ...
 ##   end
 ##
-##   Trollop::die "need at least one filename" if ARGV.empty?
+##   Optimist::die "need at least one filename" if ARGV.empty?
 ##
 ## An exit code can be provide if needed
 ##
-##   Trollop::die "need at least one filename", -2 if ARGV.empty?
+##   Optimist::die "need at least one filename", -2 if ARGV.empty?
 def die(arg, msg = nil, error_code = nil)
   if @last_parser
     @last_parser.die arg, msg, error_code
   else
-    raise ArgumentError, "Trollop::die can only be called after Trollop::options"
+    raise ArgumentError, "Optimist::die can only be called after Optimist::options"
   end
 end
 
@@ -1000,13 +1000,13 @@ end
 ##   EOS
 ##   end
 ##
-##   Trollop::educate if ARGV.empty?
+##   Optimist::educate if ARGV.empty?
 def educate
   if @last_parser
     @last_parser.educate
     exit
   else
-    raise ArgumentError, "Trollop::educate can only be called after Trollop::options"
+    raise ArgumentError, "Optimist::educate can only be called after Optimist::options"
   end
 end
 

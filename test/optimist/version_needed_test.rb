@@ -1,6 +1,6 @@
 require 'test_helper'
 
-module Trollop
+module Optimist
   class VersionNeededTest < ::MiniTest::Test
     def test_class
       assert_kind_of Exception, vn("message")

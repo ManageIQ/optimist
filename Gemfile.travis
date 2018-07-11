@@ -8,5 +8,4 @@ if RUBY_VERSION < "1.9"
   gem 'mime-types', '~> 1.16'
 end
 
-# Specify your gem's dependencies in trollop.gemspec
 gemspec

@@ -1,16 +1,16 @@
 require 'test_helper'
 
-class TrollopTest < MiniTest::Test
+class OptimistTest < MiniTest::Test
   def setup
-    Trollop.send(:instance_variable_set, "@last_parser", nil)
+    Optimist.send(:instance_variable_set, "@last_parser", nil)
   end
 
   def parser(&block)
-    Trollop::Parser.new(&block)
+    Optimist::Parser.new(&block)
   end
 
   def test_options
-    opts = Trollop.options %w(-f) do
+    opts = Optimist.options %w(-f) do
       opt :f
     end
 
@@ -20,7 +20,7 @@ class TrollopTest < MiniTest::Test
   def test_options_die_default
     assert_stderr(/Error: unknown argument.*Try --help/m) do
       assert_system_exit(-1) do
-        Trollop.options %w(-f) do
+        Optimist.options %w(-f) do
           opt :x
         end
       end
@@ -30,7 +30,7 @@ class TrollopTest < MiniTest::Test
   def test_options_die_educate_on_error
     assert_stderr(/Error: unknown argument.*Options/m) do
       assert_system_exit(-1) do
-        Trollop.options %w(-f) do
+        Optimist.options %w(-f) do
           opt :x
           educate_on_error
         end
@@ -39,14 +39,14 @@ class TrollopTest < MiniTest::Test
   end
 
   def test_die_without_options_ever_run
-    assert_raises(ArgumentError) { Trollop.die 'hello' }
+    assert_raises(ArgumentError) { Optimist.die 'hello' }
   end
 
   def test_die
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(-1) do
-        Trollop.options []
-        Trollop.die "issue with parsing"
+        Optimist.options []
+        Optimist.die "issue with parsing"
       end
     end
   end
@@ -54,8 +54,8 @@ class TrollopTest < MiniTest::Test
   def test_die_custom_error_code
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(5) do
-        Trollop.options []
-        Trollop.die "issue with parsing", nil, 5
+        Optimist.options []
+        Optimist.die "issue with parsing", nil, 5
       end
     end
   end
@@ -63,21 +63,21 @@ class TrollopTest < MiniTest::Test
   def test_die_custom_error_code_two_args
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(5) do
-        Trollop.options []
-        Trollop.die "issue with parsing", 5
+        Optimist.options []
+        Optimist.die "issue with parsing", 5
       end
     end
   end
 
   def test_educate_without_options_ever_run
-    assert_raises(ArgumentError) { Trollop.educate }
+    assert_raises(ArgumentError) { Optimist.educate }
   end
 
   def test_educate
     assert_stdout(/Show this message/) do
       assert_system_exit(0) do
-        Trollop.options []
-        Trollop.educate
+        Optimist.options []
+        Optimist.educate
       end
     end
   end
@@ -87,7 +87,7 @@ class TrollopTest < MiniTest::Test
       opt :f
     end
 
-    opts = Trollop::with_standard_exception_handling p do
+    opts = Optimist::with_standard_exception_handling p do
       p.parse %w(-f)
     end
 
@@ -101,8 +101,8 @@ class TrollopTest < MiniTest::Test
 
     assert_stdout(/5\.5/) do
       assert_system_exit(0) do
-        Trollop::with_standard_exception_handling p do
-          raise Trollop::VersionNeeded
+        Optimist::with_standard_exception_handling p do
+          raise Optimist::VersionNeeded
         end
       end
     end
@@ -115,7 +115,7 @@ class TrollopTest < MiniTest::Test
 
     assert_stdout(/5\.5/) do
       assert_system_exit(0) do
-        Trollop::with_standard_exception_handling p do
+        Optimist::with_standard_exception_handling p do
           p.parse %w(-v)
         end
       end
@@ -126,8 +126,8 @@ class TrollopTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(-1) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
-          raise ::Trollop::CommandlineError.new('cl error')
+        Optimist.with_standard_exception_handling(p) do
+          raise ::Optimist::CommandlineError.new('cl error')
         end
       end
     end
@@ -137,8 +137,8 @@ class TrollopTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(5) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
-          raise ::Trollop::CommandlineError.new('cl error', 5)
+        Optimist.with_standard_exception_handling(p) do
+          raise ::Optimist::CommandlineError.new('cl error', 5)
         end
       end
     end
@@ -148,7 +148,7 @@ class TrollopTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(-1) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
+        Optimist.with_standard_exception_handling(p) do
           p.die 'cl error'
         end
       end
@@ -159,7 +159,7 @@ class TrollopTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(3) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
+        Optimist.with_standard_exception_handling(p) do
           p.die 'cl error', nil, 3
         end
       end
@@ -170,8 +170,8 @@ class TrollopTest < MiniTest::Test
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
-          raise Trollop::HelpNeeded
+        Optimist.with_standard_exception_handling(p) do
+          raise Optimist::HelpNeeded
         end
       end
     end
@@ -181,7 +181,7 @@ class TrollopTest < MiniTest::Test
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
-        Trollop.with_standard_exception_handling(p) do
+        Optimist.with_standard_exception_handling(p) do
           p.parse(%w(-h))
         end
       end
