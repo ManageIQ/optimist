@@ -3,7 +3,7 @@ sudo: false
 rvm:
   - "2.2"
   - "2.3.4"
-  - "2.6"
+  - "2.5.1"
   - jruby-head
 gemfile: Gemfile.travis
 matrix:
