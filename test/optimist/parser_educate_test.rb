@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Trollop
+module Optimist
   class ParserEduateTest < ::MiniTest::Test
     def setup
     end
@@ -37,7 +37,7 @@ module Trollop
 
 ############
 # convert these into multiple tests
-# pulled out of trollop_test for now
+# pulled out of optimist_test for now
   def test_help_has_default_banner
     @p = Parser.new
     sio = StringIO.new "w"

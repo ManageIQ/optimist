@@ -1,22 +1,22 @@
-# trollop
+# optimist
 
-http://manageiq.github.io/trollop/
+http://manageiq.github.io/optimist/
 
-[![Gem Version](https://badge.fury.io/rb/trollop.svg)](http://badge.fury.io/rb/trollop)
-[![Build Status](https://travis-ci.org/ManageIQ/trollop.svg)](https://travis-ci.org/ManageIQ/trollop)
-[![Code Climate](https://codeclimate.com/github/ManageIQ/trollop/badges/gpa.svg)](https://codeclimate.com/github/ManageIQ/trollop)
-[![Coverage Status](http://img.shields.io/coveralls/ManageIQ/trollop.svg)](https://coveralls.io/r/ManageIQ/trollop)
-[![Dependency Status](https://gemnasium.com/ManageIQ/trollop.svg)](https://gemnasium.com/ManageIQ/trollop)
+[![Gem Version](https://badge.fury.io/rb/optimist.svg)](http://badge.fury.io/rb/optimist)
+[![Build Status](https://travis-ci.org/ManageIQ/optimist.svg)](https://travis-ci.org/ManageIQ/optimist)
+[![Code Climate](https://codeclimate.com/github/ManageIQ/optimist/badges/gpa.svg)](https://codeclimate.com/github/ManageIQ/optimist)
+[![Coverage Status](http://img.shields.io/coveralls/ManageIQ/optimist.svg)](https://coveralls.io/r/ManageIQ/optimist)
+[![Dependency Status](https://gemnasium.com/ManageIQ/optimist.svg)](https://gemnasium.com/ManageIQ/optimist)
 
 ## Documentation
 
-- Quickstart: See `Trollop.options` and then `Trollop::Parser#opt`.
-- Examples: http://manageiq.github.io/trollop/.
-- Wiki: http://github.com/ManageIQ/trollop/wiki
+- Quickstart: See `Optimist.options` and then `Optimist::Parser#opt`.
+- Examples: http://manageiq.github.io/optimist/.
+- Wiki: http://github.com/ManageIQ/optimist/wiki
 
 ## Description
 
-Trollop is a commandline option parser for Ruby that just gets out of your way.
+Optimist is a commandline option parser for Ruby that just gets out of your way.
 One line of code per option is all you need to write. For that, you get a nice
 automatically-generated help page, robust option parsing, and sensible defaults
 for everything you don't specify.
@@ -36,13 +36,13 @@ for everything you don't specify.
 
 ## Install
 
-* gem install trollop
+* gem install optimist
 
 ## Synopsis
 
 ```ruby
-require 'trollop'
-opts = Trollop::options do
+require 'optimist'
+opts = Optimist::options do
   opt :monkey, "Use monkey mode"                    # flag --monkey, default false
   opt :name, "Monkey name", :type => :string        # string --name <s>, default nil
   opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
@@ -57,4 +57,4 @@ Copyright &copy; 2008-2014 [William Morgan](http://masanjin.net/).
 
 Copyright &copy; 2014 Red Hat, Inc.
 
-Trollop is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+Optimist is released under the [MIT License](http://www.opensource.org/licenses/MIT).

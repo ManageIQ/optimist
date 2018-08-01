@@ -3,7 +3,7 @@
 * Refactor each option type into subclasses of Option.  Define a registry for the registration of each option.  This makes the code more modular and facilitates extension by allowing additional Option subclasses. (thanks @clxy)
 * Fixed implementation of ignore_invalid_options. (thanks @metcalf)
 * Various warning cleanup for ruby 2.1, 2.3, etc. (thanks @nanobowers)
-* Trollop.die can now accept an error code.
+* Optimist.die can now accept an error code.
 * fixed default (thanks @nanobowers)
 * Change from ruby license to MIT license in the code.
 
@@ -27,7 +27,7 @@
   passed on the commandline
 * Parser#opt learned to accept a block or a :callback option which it will call
   after parsing the option.
-* Add Trollop::educate which displays the help message and dies.
+* Add Optimist::educate which displays the help message and dies.
 * Reformat help message to be more GNUish.
 * Fix command name in help message when script has no extension.
 * Fix handling of newlines inside descriptions
@@ -43,13 +43,13 @@
 * Minor documentation fixes
 
 == 1.16.2 / 2010-04-06
-* Bugfix in Trollop::options. Thanks to Brian C. Thomas for pointing it out.
+* Bugfix in Optimist::options. Thanks to Brian C. Thomas for pointing it out.
 
 == 1.16.1 / 2010-04-05
-* Bugfix in Trollop::die method introduced in last release.
+* Bugfix in Optimist::die method introduced in last release.
 
 == 1.16 / 2010-04-01
-* Add Trollop::with_standard_exception_handling method for easing the use of Parser directly.
+* Add Optimist::with_standard_exception_handling method for easing the use of Parser directly.
 * Handle scientific notation in float arguments, thanks to Will Fitzgerald.
 * Drop hoe dependency.
 
@@ -144,12 +144,12 @@
 * Removed hoe dependency.
 
 == 1.1 / 2007-01-30
-* Trollop::options now passes any arguments as block arguments. Since
+* Optimist::options now passes any arguments as block arguments. Since
   instance variables are not properly captured by the block, this
   makes it slightly less noisy to pass them in as local variables.
   (A real-life use for _why's cloaker!)
 * Help display now preserves original argument order.
-* Trollop::die now also has a single string form in case death is not
+* Optimist::die now also has a single string form in case death is not
   due to a single argument.
 * Parser#text now an alias for Parser#banner, and can be called
   multiple times, with the output being placed in the right position
@@ -159,6 +159,6 @@
 == 1.0 / 2007-01-29
 * Initial release.
 
-[2.1.3]: https://github.com/ManageIQ/trollop/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/ManageIQ/trollop/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/ManageIQ/trollop/compare/v2.1.0...v2.1.1
+[2.1.3]: https://github.com/ManageIQ/optimist/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/ManageIQ/optimist/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/ManageIQ/optimist/compare/v2.1.0...v2.1.1

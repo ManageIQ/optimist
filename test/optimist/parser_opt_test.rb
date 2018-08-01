@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Trollop
+module Optimist
 
   class ParserOptTest < ::MiniTest::Test
 

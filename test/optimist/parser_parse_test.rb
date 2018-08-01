@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Trollop
+module Optimist
   class ParserParseTest < ::MiniTest::Test
 
   # TODO: parse
@@ -41,7 +41,7 @@ module Trollop
   end
 
   def test_version_needed
-    parser.version "trollop 5.2.3"
+    parser.version "optimist 5.2.3"
     assert_raises(VersionNeeded) { parser.parse %w(-v) }
     assert_raises(VersionNeeded) { parser.parse %w(--version) }
   end
