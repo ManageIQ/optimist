@@ -1,3 +1,5 @@
+warn "[DEPRECATION] This gem has been renamed to optimist and will no longer be supported. Please switch to optimist as soon as possible."
+
 # lib/trollop.rb -- trollop command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
 # Copyright (c) 2014 Red Hat, Inc.
@@ -8,7 +10,7 @@ require 'date'
 module Trollop
   # note: this is duplicated in gemspec
   # please change over there too
-VERSION = "2.1.2"
+VERSION = "2.9.9"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
