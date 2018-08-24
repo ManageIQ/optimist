@@ -5,7 +5,6 @@ rvm:
   - "2.3.4"
   - "2.5.1"
   - jruby-head
-gemfile: Gemfile.travis
 matrix:
   allow_failures:
     - rvm: jruby-head
