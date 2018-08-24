@@ -2,10 +2,12 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
+require 'optimist'
+
 Gem::Specification.new do |spec|
   spec.name          = "optimist"
-  spec.version       = "2.1.3"
-  spec.authors       = ["William Morgan", "Keenan Brock"]
+  spec.version       = Optimist::VERSION
+  spec.authors       = ["William Morgan", "Keenan Brock", "Jason Frey"]
   spec.email         = "keenan@thebrocks.net"
   spec.summary       = "Optimist is a commandline option parser for Ruby that just gets out of your way."
   spec.description   = "Optimist is a commandline option parser for Ruby that just
