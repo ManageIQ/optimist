@@ -4,7 +4,7 @@ vi History.txt    # and describe changes
 git-rank-contributors -o -h >> www/index.html
 vi www/index.html # and integrate contributors
 ## git add, git commit, etc
-vi lib/trollop.rb # and bump version number
+vi lib/optimist.rb # and bump version number
 git commit -a -m "bump to..."
 git tag release-<releasename>
 rake gem
