@@ -590,11 +590,11 @@ class Option
     @optshash = Hash.new()
   end
 
-  def opts (key)
+  def opts(key)
     @optshash[key]
   end
 
-  def opts= (o)
+  def opts=(o)
     @optshash = o
   end
 
@@ -620,7 +620,7 @@ class Option
 
   def required? ; opts(:required) ; end
 
-  def parse (_paramlist, _neg_given)
+  def parse(_paramlist, _neg_given)
     raise NotImplementedError, "parse must be overridden for newly registered type"
   end
 
