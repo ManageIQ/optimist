@@ -876,6 +876,19 @@ Options:
     assert_equal @q.leftovers, []
   end
 
+  def test_stopwords_stopped
+    @p.stop_on %w(sub-command-1)
+    opts = @p.parse %w(sub-command-1)
+
+    assert_equal true, opts[:stopped]
+
+    @q = Parser.new
+    @q.stop_on %w(sub-command-1)
+    opts = @q.parse %w(sub-command-2)
+
+    assert_equal false, opts[:stopped]
+  end
+
   def test_unknown_subcommand
     @p.opt :global_flag, "Global flag", :short => "-g", :type => :flag
     @p.opt :global_param, "Global parameter", :short => "-p", :default => 5
