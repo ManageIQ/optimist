@@ -351,7 +351,7 @@ class Parser
         self[m] || self[m.to_s]
       end
     end
-    vals[:stopped] = @stopped || false unless @stop_words.empty?
+    vals[:_stopped] = @stopped || false unless @stop_words.empty?
     vals
   end
 

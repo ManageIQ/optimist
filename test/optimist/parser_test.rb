@@ -880,13 +880,13 @@ Options:
     @p.stop_on %w(sub-command-1)
     opts = @p.parse %w(sub-command-1)
 
-    assert_equal true, opts[:stopped]
+    assert_equal true, opts[:_stopped]
 
     @q = Parser.new
     @q.stop_on %w(sub-command-1)
     opts = @q.parse %w(sub-command-2)
 
-    assert_equal false, opts[:stopped]
+    assert_equal false, opts[:_stopped]
   end
 
   def test_unknown_subcommand
