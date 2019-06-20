@@ -390,12 +390,12 @@ class ParserTest < ::MiniTest::Test
     opts = @p.parse %w(-a -b)
     assert_equal true, opts[:arg1]
     assert_equal true, opts[:arg2]
-    assert_equal nil, opts[:arg3]
+    assert_nil opts[:arg3]
 
     opts = @p.parse %w(-ab)
     assert_equal true, opts[:arg1]
     assert_equal true, opts[:arg2]
-    assert_equal nil, opts[:arg3]
+    assert_nil opts[:arg3]
 
     opts = @p.parse %w(-ac 4 -b)
     assert_equal true, opts[:arg1]
@@ -464,7 +464,7 @@ Options:
     assert_equal 5, opts[:arg]
   end
 
-  def test_integer_formatting
+  def test_integer_formatting_default
     @p.opt :arg, "desc", :type => :integer, :short => "i", :default => 3
     opts = @p.parse %w(-i)
     assert_equal 3, opts[:arg]
