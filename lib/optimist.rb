@@ -84,8 +84,8 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
-  DEFAULT_SETTINGS = { suggestions: true }
-
+  DEFAULT_SETTINGS = { suggestions: true, exact_match: false }
+  
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
     @version = nil
@@ -246,12 +246,27 @@ class Parser
     @educate_on_error = true
   end
 
+  ## Match long variables with inexact match.
+  ## If we hit a complete match, then use that, otherwise see how many long-options partially match.
+  ## If only one partially matches, then we can safely use that.
+  ## Otherwise, we raise an error that the partially given option was ambiguous.
+  def perform_inexact_match(arg, partial_match)  # :nodoc:
+    return @long[partial_match] if @long.has_key?(partial_match)
+    partially_matched_keys = @long.keys.grep(/^#{partial_match}/)
+    case partially_matched_keys.size
+    when 0 ; nil
+    when 1 ; @long[partially_matched_keys.first]
+    else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{partially_matched_keys.join(',')})"
+    end
+  end
+  private :perform_inexact_match
+
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
     if (suggestions &&
-      Module::const_defined?("DidYouMean") &&
-      Module::const_defined?("DidYouMean::JaroWinkler") &&
-      Module::const_defined?("DidYouMean::Levenshtein"))
+        Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
       input = arg.sub(/^[-]*/,'')
 
       # Code borrowed from did_you_mean gem
@@ -318,8 +333,12 @@ class Parser
 
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
+      ## Support inexact matching of long-arguments like perl's Getopt::Long
+      if !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
+        sym = perform_inexact_match(arg, $1)
+      end
+      
       next nil if ignore_invalid_options && !sym
-
       handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
@@ -995,6 +1014,20 @@ end
 ##
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
+##
+## Settings:
+##   Optimist::options and Optimist::Parser.new accept +settings+ to control how
+##   options are interpreted.  These settings are given as hash arguments, e.g:
+##
+##   opts = Optimist::options(ARGV, exact_match: false) do
+##     opt :foobar, 'messed up'
+##     opt :forget, 'forget it'
+##   end
+##
+##  +settings+ include:
+##  * :exact_match  : (default=false) Allow minimum unambigous number of characters to match a long option
+##  * :suggestions  : (default=true) Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
+##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
 ## See more examples at https://www.manageiq.org/optimist
 def options(args = ARGV, *a, &b)

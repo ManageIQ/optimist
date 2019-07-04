@@ -45,10 +45,57 @@ class ParserTest < ::Minitest::Test
 
 
   def test_unknown_arguments
-    assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
+    err = assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
+    assert_match(/unknown argument '--arg'$/, err.message)
     @p.opt "arg"
     @p.parse(%w(--arg))
-    assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
+    err = assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
+    assert_match(/unknown argument '--arg2'$/, err.message)
+  end
+  
+  def test_unknown_arguments_with_suggestions
+    sugp = Parser.new(:suggestions => true)
+    err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
+    assert_match(/unknown argument '--bone'$/, err.message)
+
+    if (Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
+      sugp.opt "cone"
+      sugp.parse(%w(--cone))
+
+      # single letter mismatch
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
+      assert_match(/unknown argument '--bone'.  Did you mean: \[--cone\] \?$/, err.message)
+
+      # transposition
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--ocne)) }
+      assert_match(/unknown argument '--ocne'.  Did you mean: \[--cone\] \?$/, err.message)
+
+      # extra letter at end
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--cones)) }
+      assert_match(/unknown argument '--cones'.  Did you mean: \[--cone\] \?$/, err.message)
+
+      # too big of a mismatch to suggest (extra letters in front)
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--snowcone)) }
+      assert_match(/unknown argument '--snowcone'$/, err.message)
+
+      # too big of a mismatch to suggest (nothing close)
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--clown-nose)) }
+      assert_match(/unknown argument '--clown-nose'$/, err.message)
+
+      sugp.opt "zippy"
+      sugp.opt "zapzy"
+      # single letter mismatch, matches two
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--zipzy)) }
+      assert_match(/unknown argument '--zipzy'.  Did you mean: \[--zippy, --zapzy\] \?$/, err.message)
+
+      sugp.opt "big_bug"
+      # suggest common case of dash versus underscore in argnames
+      err = assert_raises(CommandlineError) { sugp.parse(%w(--big_bug)) }
+      assert_match(/unknown argument '--big_bug'.  Did you mean: \[--big-bug\] \?$/, err.message)
+    end
+    
   end
 
   def test_unknown_arguments_with_suggestions
@@ -778,6 +825,20 @@ Options:
     end
     assert_equal @goat, boat
   end
+  
+  ## test-only access reader method so that we dont have to
+  ## expose settings in the public API.
+  class Optimist::Parser
+    def get_settings_for_testing ; return @settings ;end
+  end
+  
+  def test_two_arguments_passed_through_block
+    newp = Parser.new(:abcd => 123, :efgh => "other" ) do |i|
+    end
+    assert_equal newp.get_settings_for_testing[:abcd], 123
+    assert_equal newp.get_settings_for_testing[:efgh], "other"
+  end
+
 
   def test_version_and_help_override_errors
     @p.opt :asdf, "desc", :type => String
@@ -1161,6 +1222,54 @@ Options:
     assert opts[:ccd]
   end
 
+  def test_inexact_match
+    newp = Parser.new()
+    newp.opt :liberation, "liberate something", :type => :int
+    newp.opt :evaluate, "evaluate something", :type => :string
+    opts = newp.parse %w(--lib 5 --ev bar)
+    assert_equal 5, opts[:liberation]
+    assert_equal 'bar', opts[:evaluate]
+    assert_equal nil, opts[:eval]
+  end
+
+  def test_exact_match
+    newp = Parser.new(exact_match: true)
+    newp.opt :liberation, "liberate something", :type => :int
+    newp.opt :evaluate, "evaluate something", :type => :string
+    assert_raises(CommandlineError, /unknown argument '--lib'/) do
+      newp.parse %w(--lib 5)
+    end
+    assert_raises_errmatch(CommandlineError, /unknown argument '--ev'/) do
+      newp.parse %w(--ev bar)
+    end
+  end
+
+  def test_inexact_collision
+    newp = Parser.new()
+    newp.opt :bookname, "name of a book", :type => :string
+    newp.opt :bookcost, "cost of the book", :type => :string
+    opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)
+    assert_equal 'hairy_potsworth', opts[:bookname]
+    assert_equal '10', opts[:bookcost]
+    assert_raises(CommandlineError) do
+      newp.parse %w(--book 5) # ambiguous
+    end
+    ## partial match causes 'specified multiple times' error
+    assert_raises(CommandlineError, /specified multiple times/) do
+      newp.parse %w(--bookc 17 --bookcost 22)
+    end
+  end
+
+  def test_inexact_collision_with_exact
+    newp = Parser.new()
+    newp.opt :book, "name of a book", :type => :string, :default => "ABC"
+    newp.opt :bookcost, "cost of the book", :type => :int, :default => 5
+    opts = newp.parse %w(--book warthog --bookc 3)
+    assert_equal 'warthog', opts[:book]
+    assert_equal 3, opts[:bookcost]
+
+  end
+
   def test_accepts_arguments_with_spaces
     @p.opt :arg1, "arg", :type => String
     @p.opt :arg2, "arg2", :type => String
@@ -1315,6 +1424,36 @@ Options:
     opts = @p.parse %w{-abu potato}
     assert opts[:arg1]
     assert_equal %w{-bu potato}, @p.leftovers
+  end
+
+  # Due to strangeness in how the cloaker works, there were
+  # cases where Optimist.parse would work, but Optimist.options
+  # did not, depending on arguments given to the function.
+  # These serve to validate different args given to Optimist.options
+  def test_options_takes_hashy_settings
+    passargs_copy = []
+    settings_copy = []
+    ::Optimist.options(%w(--wig --pig), :fizz=>:buzz, :bear=>:cat) do |*passargs|
+      opt :wig
+      opt :pig
+      passargs_copy = passargs.dup
+      settings_copy = @settings
+    end
+    assert_equal [], passargs_copy
+    assert_equal({:fizz=>:buzz, :bear=>:cat}, settings_copy)
+  end
+  
+  def test_options_takes_some_other_data
+    passargs_copy = []
+    settings_copy = []
+    ::Optimist.options(%w(--nose --close), 1, 2, 3) do |*passargs|
+      opt :nose
+      opt :close
+      passargs_copy = passargs.dup
+      settings_copy = @settings
+    end
+    assert_equal [1,2,3], passargs_copy
+    assert_equal({}, settings_copy)
   end
 end
 
