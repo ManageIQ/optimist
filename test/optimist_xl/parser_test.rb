@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Optimist
+module OptimistXL
 
 class ParserTest < ::MiniTest::Test
   def setup
@@ -901,7 +901,7 @@ Options:
   def test_alternate_args
     args = %w(-a -b -c)
 
-    opts = ::Optimist.options(args) do
+    opts = ::OptimistXL.options(args) do
       opt :alpher, "Ralph Alpher", :short => "-a"
       opt :bethe, "Hans Bethe", :short => "-b"
       opt :gamow, "George Gamow", :short => "-c"
@@ -1079,7 +1079,7 @@ Options:
   def test_simple_interface_handles_help
     assert_stdout(/Options:/) do
       assert_raises(SystemExit) do
-        ::Optimist::options(%w(-h)) do
+        ::OptimistXL::options(%w(-h)) do
           opt :potato
         end
       end
@@ -1089,7 +1089,7 @@ Options:
 
     assert_stdout do
       begin
-        ::Optimist::options(%w(-h)) do
+        ::OptimistXL::options(%w(-h)) do
           opt :potato
         end
       rescue SystemExit => e
@@ -1101,7 +1101,7 @@ Options:
   def test_simple_interface_handles_version
     assert_stdout(/1.2/) do
       assert_raises(SystemExit) do
-        ::Optimist::options(%w(-v)) do
+        ::OptimistXL::options(%w(-v)) do
           version "1.2"
           opt :potato
         end
@@ -1110,7 +1110,7 @@ Options:
   end
 
   def test_simple_interface_handles_regular_usage
-    opts = ::Optimist::options(%w(--potato)) do
+    opts = ::OptimistXL::options(%w(--potato)) do
       opt :potato
     end
     assert opts[:potato]
@@ -1118,32 +1118,32 @@ Options:
 
   def test_simple_interface_handles_die
     assert_stderr do
-      ::Optimist::options(%w(--potato)) do
+      ::OptimistXL::options(%w(--potato)) do
         opt :potato
       end
-      assert_raises(SystemExit) { ::Optimist::die :potato, "is invalid" }
+      assert_raises(SystemExit) { ::OptimistXL::die :potato, "is invalid" }
     end
   end
 
   def test_simple_interface_handles_die_without_message
     assert_stderr(/Error:/) do
-      ::Optimist::options(%w(--potato)) do
+      ::OptimistXL::options(%w(--potato)) do
         opt :potato
       end
-      assert_raises(SystemExit) { ::Optimist::die :potato }
+      assert_raises(SystemExit) { ::OptimistXL::die :potato }
     end
   end
 
   def test_invalid_option_with_simple_interface
     assert_stderr do
       assert_raises(SystemExit) do
-        ::Optimist.options(%w(--potato))
+        ::OptimistXL.options(%w(--potato))
       end
     end
 
     assert_stderr do
       begin
-        ::Optimist.options(%w(--potato))
+        ::OptimistXL.options(%w(--potato))
       rescue SystemExit => e
         assert_equal(-1, e.status)
       end

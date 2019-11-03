@@ -1,7 +1,7 @@
 require 'stringio'
 require 'test_helper'
 
-module Optimist
+module OptimistXL
 
   class ParserOptTest < ::MiniTest::Test
 

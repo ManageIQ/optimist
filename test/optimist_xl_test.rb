@@ -1,16 +1,16 @@
 require 'test_helper'
 
-class OptimistTest < MiniTest::Test
+class OptimistXLTest < MiniTest::Test
   def setup
-    Optimist.send(:instance_variable_set, "@last_parser", nil)
+    OptimistXL.send(:instance_variable_set, "@last_parser", nil)
   end
 
   def parser(&block)
-    Optimist::Parser.new(&block)
+    OptimistXL::Parser.new(&block)
   end
 
   def test_options
-    opts = Optimist.options %w(-f) do
+    opts = OptimistXL.options %w(-f) do
       opt :f
     end
 
@@ -20,7 +20,7 @@ class OptimistTest < MiniTest::Test
   def test_options_die_default
     assert_stderr(/Error: unknown argument.*Try --help/m) do
       assert_system_exit(-1) do
-        Optimist.options %w(-f) do
+        OptimistXL.options %w(-f) do
           opt :x
         end
       end
@@ -30,7 +30,7 @@ class OptimistTest < MiniTest::Test
   def test_options_die_educate_on_error
     assert_stderr(/Error: unknown argument.*Options/m) do
       assert_system_exit(-1) do
-        Optimist.options %w(-f) do
+        OptimistXL.options %w(-f) do
           opt :x
           educate_on_error
         end
@@ -39,14 +39,14 @@ class OptimistTest < MiniTest::Test
   end
 
   def test_die_without_options_ever_run
-    assert_raises(ArgumentError) { Optimist.die 'hello' }
+    assert_raises(ArgumentError) { OptimistXL.die 'hello' }
   end
 
   def test_die
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(-1) do
-        Optimist.options []
-        Optimist.die "issue with parsing"
+        OptimistXL.options []
+        OptimistXL.die "issue with parsing"
       end
     end
   end
@@ -54,8 +54,8 @@ class OptimistTest < MiniTest::Test
   def test_die_custom_error_code
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(5) do
-        Optimist.options []
-        Optimist.die "issue with parsing", nil, 5
+        OptimistXL.options []
+        OptimistXL.die "issue with parsing", nil, 5
       end
     end
   end
@@ -63,21 +63,21 @@ class OptimistTest < MiniTest::Test
   def test_die_custom_error_code_two_args
     assert_stderr(/Error: issue with parsing/) do
       assert_system_exit(5) do
-        Optimist.options []
-        Optimist.die "issue with parsing", 5
+        OptimistXL.options []
+        OptimistXL.die "issue with parsing", 5
       end
     end
   end
 
   def test_educate_without_options_ever_run
-    assert_raises(ArgumentError) { Optimist.educate }
+    assert_raises(ArgumentError) { OptimistXL.educate }
   end
 
   def test_educate
     assert_stdout(/Show this message/) do
       assert_system_exit(0) do
-        Optimist.options []
-        Optimist.educate
+        OptimistXL.options []
+        OptimistXL.educate
       end
     end
   end
@@ -87,7 +87,7 @@ class OptimistTest < MiniTest::Test
       opt :f
     end
 
-    opts = Optimist::with_standard_exception_handling p do
+    opts = OptimistXL::with_standard_exception_handling p do
       p.parse %w(-f)
     end
 
@@ -101,8 +101,8 @@ class OptimistTest < MiniTest::Test
 
     assert_stdout(/5\.5/) do
       assert_system_exit(0) do
-        Optimist::with_standard_exception_handling p do
-          raise Optimist::VersionNeeded
+        OptimistXL::with_standard_exception_handling p do
+          raise OptimistXL::VersionNeeded
         end
       end
     end
@@ -115,7 +115,7 @@ class OptimistTest < MiniTest::Test
 
     assert_stdout(/5\.5/) do
       assert_system_exit(0) do
-        Optimist::with_standard_exception_handling p do
+        OptimistXL::with_standard_exception_handling p do
           p.parse %w(-v)
         end
       end
@@ -126,8 +126,8 @@ class OptimistTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(-1) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
-          raise ::Optimist::CommandlineError.new('cl error')
+        OptimistXL.with_standard_exception_handling(p) do
+          raise ::OptimistXL::CommandlineError.new('cl error')
         end
       end
     end
@@ -137,8 +137,8 @@ class OptimistTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(5) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
-          raise ::Optimist::CommandlineError.new('cl error', 5)
+        OptimistXL.with_standard_exception_handling(p) do
+          raise ::OptimistXL::CommandlineError.new('cl error', 5)
         end
       end
     end
@@ -148,7 +148,7 @@ class OptimistTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(-1) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
+        OptimistXL.with_standard_exception_handling(p) do
           p.die 'cl error'
         end
       end
@@ -159,7 +159,7 @@ class OptimistTest < MiniTest::Test
     assert_stderr(/Error: cl error/) do
       assert_system_exit(3) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
+        OptimistXL.with_standard_exception_handling(p) do
           p.die 'cl error', nil, 3
         end
       end
@@ -170,8 +170,8 @@ class OptimistTest < MiniTest::Test
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
-          raise Optimist::HelpNeeded
+        OptimistXL.with_standard_exception_handling(p) do
+          raise OptimistXL::HelpNeeded
         end
       end
     end
@@ -181,7 +181,7 @@ class OptimistTest < MiniTest::Test
     assert_stdout(/Options/) do
       assert_system_exit(0) do
         p = parser
-        Optimist.with_standard_exception_handling(p) do
+        OptimistXL.with_standard_exception_handling(p) do
           p.parse(%w(-h))
         end
       end
