@@ -1,22 +1,21 @@
-# optimist
+# OptimistXL
 
-http://manageiq.github.io/optimist/
+http://github.com/nanobowers/optimist_xl/
 
-[![Gem Version](https://badge.fury.io/rb/optimist.svg)](http://badge.fury.io/rb/optimist)
-[![Build Status](https://travis-ci.org/ManageIQ/optimist.svg)](https://travis-ci.org/ManageIQ/optimist)
-[![Code Climate](https://codeclimate.com/github/ManageIQ/optimist/badges/gpa.svg)](https://codeclimate.com/github/ManageIQ/optimist)
-[![Coverage Status](http://img.shields.io/coveralls/ManageIQ/optimist.svg)](https://coveralls.io/r/ManageIQ/optimist)
-[![Dependency Status](https://gemnasium.com/ManageIQ/optimist.svg)](https://gemnasium.com/ManageIQ/optimist)
+[![Gem Version](https://badge.fury.io/rb/optimist_xl.svg)](http://badge.fury.io/rb/optimist_xl)
+[![Build Status](https://travis-ci.org/nanobowers/optimist_xl.svg)](https://travis-ci.org/nanobowers/optimist_xl)
+[![Code Climate](https://codeclimate.com/github/nanobowers/optimist_xl/badges/gpa.svg)](https://codeclimate.com/github/nanobowers/optimist_xl)
+[![Coverage Status](http://img.shields.io/coveralls/nanobowers/optimist_xl.svg)](https://coveralls.io/r/nanobowers/optimist_xl)
 
 ## Documentation
 
-- Quickstart: See `Optimist.options` and then `Optimist::Parser#opt`.
-- Examples: http://manageiq.github.io/optimist/.
-- Wiki: http://github.com/ManageIQ/optimist/wiki
+- Quickstart: See `OptimistXL.options` and then `OptimistXL::Parser#opt`.
+- Examples: http://github.com/nanobowers/optimist_xl/.
+- Wiki: http://github.com/nanobowers/optimist_xl/wiki
 
 ## Description
 
-Optimist is a commandline option parser for Ruby that just gets out of your way.
+OptimistXL is a commandline option parser for Ruby that just gets out of your way.
 One line of code per option is all you need to write. For that, you get a nice
 automatically-generated help page, robust option parsing, and sensible defaults
 for everything you don't specify.
@@ -36,13 +35,13 @@ for everything you don't specify.
 
 ## Install
 
-* gem install optimist
+* gem install optimist_xl
 
 ## Synopsis
 
 ```ruby
-require 'optimist'
-opts = Optimist::options do
+require 'optimist_xl'
+opts = OptimistXL::options do
   opt :monkey, "Use monkey mode"                    # flag --monkey, default false
   opt :name, "Monkey name", :type => :string        # string --name <s>, default nil
   opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
@@ -57,4 +56,6 @@ Copyright &copy; 2008-2014 [William Morgan](http://masanjin.net/).
 
 Copyright &copy; 2014 Red Hat, Inc.
 
-Optimist is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+Copyright &copy; 2019 Ben Bowers
+
+OptimistXL is released under the [MIT License](http://www.opensource.org/licenses/MIT).
