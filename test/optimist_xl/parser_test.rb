@@ -755,7 +755,7 @@ Options:
   
   ## test-only access reader method so that we dont have to
   ## expose settings in the public API.
-  class Optimist::Parser
+  class OptimistXL::Parser
     def get_settings_for_testing ; return @settings ;end
   end
   
@@ -1314,13 +1314,13 @@ Options:
   end
 
   # Due to strangeness in how the cloaker works, there were
-  # cases where Optimist.parse would work, but Optimist.options
+  # cases where OptimistXL.parse would work, but OptimistXL.options
   # did not, depending on arguments given to the function.
-  # These serve to validate different args given to Optimist.options
+  # These serve to validate different args given to OptimistXL.options
   def test_options_takes_hashy_settings
     passargs_copy = []
     settings_copy = []
-    ::Optimist.options(%w(--wig --pig), :fizz=>:buzz, :bear=>:cat) do |*passargs|
+    ::OptimistXL.options(%w(--wig --pig), :fizz=>:buzz, :bear=>:cat) do |*passargs|
       opt :wig
       opt :pig
       passargs_copy = passargs.dup
@@ -1333,7 +1333,7 @@ Options:
   def test_options_takes_some_other_data
     passargs_copy = []
     settings_copy = []
-    ::Optimist.options(%w(--nose --close), 1, 2, 3) do |*passargs|
+    ::OptimistXL.options(%w(--nose --close), 1, 2, 3) do |*passargs|
       opt :nose
       opt :close
       passargs_copy = passargs.dup

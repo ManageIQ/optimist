@@ -29,13 +29,17 @@ for everything you don't specify.
   conversion.
 - Automatic help message generation, wrapped to current screen width.
 
+## Extended features
+
+- inexact match
+
 ## Requirements
 
 * A burning desire to write less code.
 
 ## Install
 
-* gem install optimist_xl
+* `gem install optimist_xl`
 
 ## Synopsis
 
