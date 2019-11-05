@@ -1121,6 +1121,19 @@ Options:
     assert opts[:ccd]
   end
 
+  def test_short_opts_not_implicitly_created
+    newp = Parser.new(:explicit_short_opts => true)
+    newp.opt :user1, "user1"
+    newp.opt :bag, "bag", :short => 'b'
+    assert_raises(CommandlineError) do
+      newp.parse %w(-u)
+    end
+    opts = newp.parse %w(--user1)
+    assert opts[:user1]
+    opts = newp.parse %w(-b)
+    assert opts[:bag]
+  end
+
   def test_inexact_match
     newp = Parser.new(:inexact_match => true)
     newp.opt :liberation, "liberate something", :type => :int

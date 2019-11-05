@@ -304,7 +304,7 @@ class Parser
       vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options!
+    resolve_default_short_options! unless @settings[:explicit_short_opts]
 
     ## resolve symbols
     given_args = {}
@@ -983,18 +983,20 @@ end
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
 ## Settings:
-##   Optimist::options and Optimist::Parser.new accept +settings+ to control how
+##   OptimistXL::options and OptimistXL::Parser.new accept +settings+ to control how
 ##   options are interpreted.  These settings are given as hash arguments, e.g:
 ##
-##   opts = Optimist::options(ARGV, :inexact_match => true) do
+##   opts = OptimistXL::options(ARGV, :inexact_match => true) do
 ##     opt :foobar, 'messed up'
 ##     opt :forget, 'forget it'
 ##   end
 ##
 ##  +settings+ include:
 ##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
-##  * :suggestions  : Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
-##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
+##  * :suggestions    : Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
+##  * :explicit_short : Short options will only be created where explicitly defined.  If you do not like short-options, this will prevent having to define :short=> :none for all of your options.
+
+##  Because OptimistXL::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
 ## See more examples at http://optimist.rubyforge.org.
 def options(args = ARGV, *a, &b)
