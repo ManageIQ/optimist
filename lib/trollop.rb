@@ -1,4 +1,4 @@
-warn "[DEPRECATION] This gem has been renamed to optimist and will no longer be supported. Please switch to optimist as soon as possible."
+warn "[DEPRECATION] The trollop gem has been renamed to optimist and will no longer be supported. Please switch to optimist as soon as possible."
 
 # lib/trollop.rb -- trollop command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
