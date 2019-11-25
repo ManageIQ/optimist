@@ -1,4 +1,7 @@
-== [2.9.9] / 2018-08-49
+== [2.9.10] / 2019-11-25
+* Improved deprecation messge to include this gem's name (thanks @henrik)
+
+== [2.9.9] / 2018-08-24
 
 * [DEPRECATION] This gem has been renamed to optimist and will no longer be supported. Please switch to optimist as soon as possible.
 

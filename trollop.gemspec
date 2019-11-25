@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "trollop"
-  spec.version       = "2.9.9"
+  spec.version       = "2.9.10"
   spec.authors       = ["William Morgan", "Keenan Brock"]
   spec.email         = "keenan@thebrocks.net"
   spec.summary       = "Trollop is a commandline option parser for Ruby that just gets out of your way."

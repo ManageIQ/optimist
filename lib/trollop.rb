@@ -10,7 +10,7 @@ require 'date'
 module Trollop
   # note: this is duplicated in gemspec
   # please change over there too
-VERSION = "2.9.9"
+VERSION = "2.9.10"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Trollop::options entry.
