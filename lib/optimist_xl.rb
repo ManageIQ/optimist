@@ -163,6 +163,7 @@ class Parser
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
     raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
+    raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil or an array;" unless o.permitted_type_valid?
     @long[o.long] = o.name
     @short[o.short] = o.name if o.short?
     @specs[o.name] = o
@@ -388,6 +389,10 @@ class Parser
         params << (opts.array_default? ? opts.default.clone : [opts.default])
       end
 
+      params[0].each do |p|
+        raise CommandlineError, "option '#{arg}' only accepts #{opts.permitted_valid_string}" unless opts.permitted_value?(p)
+      end unless opts.permitted.nil?
+
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
       vals[sym] = opts.parse(params, negative_given)
@@ -448,7 +453,7 @@ class Parser
 
       spec = @specs[opt]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
-      desc = spec.description_with_default
+      desc = spec.full_description
 
       stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
     end
@@ -643,7 +648,7 @@ end
 
 class Option
 
-  attr_accessor :name, :short, :long, :default
+  attr_accessor :name, :short, :long, :default, :permitted
   attr_writer :multi_given
 
   def initialize
@@ -653,6 +658,7 @@ class Option
     @multi_given = false
     @hidden = false
     @default = nil
+    @permitted = nil
     @optshash = Hash.new()
   end
 
@@ -697,22 +703,86 @@ class Option
     (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
 
+  ## Format the educate-line description including the default and permitted value(s)
+  def full_description
+    desc_str = desc
+    desc_str = description_with_default desc_str if default
+    desc_str = description_with_permitted desc_str if permitted
+    desc_str
+  end
+
+  ## Format stdio like objects to a string
+  def format_stdio(obj)
+    case obj
+    when $stdout   then '<stdout>'
+    when $stdin    then '<stdin>'
+    when $stderr   then '<stderr>'
+    else obj # pass-through-case
+    end
+  end
+  
   ## Format the educate-line description including the default-value(s)
-  def description_with_default
-    return desc unless default
+  def description_with_default(str)
+    return str unless default
     default_s = case default
-                when $stdout   then '<stdout>'
-                when $stdin    then '<stdin>'
-                when $stderr   then '<stderr>'
                 when Array
                   default.join(', ')
                 else
-                  default.to_s
+                  format_stdio(default).to_s
                 end
-    defword = desc.end_with?('.') ? 'Default' : 'default'
-    return "#{desc} (#{defword}: #{default_s})"
+    #defword = str.end_with?('.') ? 'Default' : 'default'
+    return "#{str} (Default: #{default_s})"
   end
 
+  ## Format the educate-line description including the permitted-value(s)
+  def description_with_permitted(str)
+    permitted_s = case permitted
+                  when Array
+                    permitted.map do |p|
+                      format_stdio(p).to_s
+                    end.join(', ')
+                  when Range
+                    permitted.to_a.map(&:to_s).join(', ')
+                  when Regexp
+                    permitted.to_s
+                  end
+    #permword = str.end_with?('.') ? 'Permitted' : 'permitted'
+    return "#{str} (Permitted: #{permitted_s})"
+  end
+
+  def permitted_valid_string
+    case permitted
+    when Array
+      return "one of: " + permitted.to_a.map(&:to_s).join(', ')
+    when Range
+      return "value in range of: #{permitted.to_s}"
+    when Regexp
+      return "value matching: #{permitted.inspect}"
+    end
+    raise StandardError, "invalid branch"
+  end
+  
+  def permitted_type_valid?
+    return true if permitted.nil?
+    return true if permitted.is_a? Array
+    return true if permitted.is_a? Range
+    return true if permitted.is_a? Regexp
+    false
+  end
+
+  # incoming values from the command-line should be strings, so we should
+  # stringify any permitted types as the basis of comparison.
+  def permitted_value?(val)
+    case permitted
+    when nil then true
+    when Regexp then val.match permitted
+    when Range then permitted.to_a.map(&:to_s).include? val
+    when Array then permitted.map(&:to_s).include? val
+    else false
+    end
+  end  
+    
+  
   ## Provide a way to register symbol aliases to the Parser
   def self.register_alias(*alias_keys)
     alias_keys.each do |alias_key|
@@ -749,8 +819,12 @@ class Option
     ## fill in :default for flags
     defvalue = opts[:default] || opt_inst.default
 
+    ## fill in permitted values
+    permitted = opts[:permitted] || nil
+
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
+    opt_inst.permitted = permitted
     opt_inst.default = defvalue
     opt_inst.name = name
     opt_inst.opts = opts
