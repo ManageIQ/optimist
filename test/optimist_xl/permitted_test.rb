@@ -37,6 +37,13 @@ class PermittedTest < ::MiniTest::Test
     assert_raises(CommandlineError) { @p.parse(%w(--fiz rat)) }
   end
 
+  def test_permitted_with_numeric_array
+    @p.opt 'mynum', 'desc', :type => Integer, :permitted => [1,2,4]
+    @p.parse(%w(--mynum 1)) 
+    @p.parse(%w(--mynum 4)) 
+    assert_raises(CommandlineError) { @p.parse(%w(--mynum 3)) }
+  end
+
   def test_permitted_with_numeric_range
     @p.opt 'fiz', 'desc', :type => Integer, :permitted => 1..3
     opts = @p.parse(%w(--fiz 1))
