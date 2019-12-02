@@ -25,6 +25,11 @@ end
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by OptimistXL#options.
 class HelpNeeded < StandardError
+  attr_reader :parser
+  def initialize(msg=nil, parser: nil)
+    super(msg)
+    @parser = parser
+  end
 end
 
 ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
@@ -105,7 +110,8 @@ class Parser
     @educate_on_error = false
     @synopsis = nil
     @usage = nil
-    
+    @subcommand_parsers = {}
+
     ## allow passing settings through Parser.new as an optional hash.
     ## but keep compatibility with non-hashy args, though.
     begin
@@ -175,6 +181,12 @@ class Parser
     @short[o.short] = o.name if o.short?
     @specs[o.name] = o
     @order << [:opt, o.name]
+  end
+
+  def subcmd(name, desc=nil, args = {}, &b)
+    sc = SubcommandParser.new(name, desc, *args, &b)
+    @subcommand_parsers[name.to_sym] = sc
+    return sc
   end
 
   ## Sets the version string. If set, the user can request the version
@@ -261,7 +273,7 @@ class Parser
   private :perform_inexact_match
 
   def handle_unknown_argument(arg, candidates, suggestions)
-    errstring = "unknown argument '#{arg}'"
+    errstring = "unknown argument '#{arg}'"    
     if (suggestions &&
         Module::const_defined?("DidYouMean") &&
         Module::const_defined?("DidYouMean::JaroWinkler") &&
@@ -295,14 +307,44 @@ class Parser
   end
   private :handle_unknown_argument
 
+  # Provide a list of given subcommands.
+  # List will be empty if subcmd was never given.
+  def subcommands
+    @subcommand_parsers.keys
+  end
+
   ## Parses the commandline. Typically called by OptimistXL::options,
   ## but you can call it directly if you need more control.
   ##
   ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
   def parse(cmdline = ARGV)
+    if subcommands.empty?
+      parse_base(cmdline)
+    else
+      # set state for subcommand-parse
+      @stop_words += subcommands
+      @stop_on_unknown = true
+      # parse global options
+      global_result = parse_base(cmdline)
+      # grab subcommand
+      cmd = cmdline.shift
+      raise CommandlineError.new('no subcommand provided') unless cmd
+      # parse subcommand options
+      subcmd_parser = @subcommand_parsers[cmd.to_sym]
+      raise CommandlineError.new("unknown subcommand '#{cmd}'") unless subcmd_parser
+      subcmd_result = subcmd_parser.parse_base(cmdline)
+      SubcommandResult.new(subcommand: cmd,
+                           global_options: global_result,
+                           subcommand_options: subcmd_result,
+                           leftovers: subcmd_parser.leftovers)
+    end
+  end
+  
+  def parse_base(cmdline = ARGV)
     vals = {}
     required = {}
 
+    # create default version/help options if not already defined
     opt :version, "Print version and exit" if @version && ! (@specs[:version] || @long["version"])
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
@@ -367,9 +409,11 @@ class Parser
       num_params_taken
     end
 
-    ## check for version and help args
+    ## check for version and help args, and raise if set.
+    ## HelpNeeded should pass the parser object so we know how to educate
+    ## if we are in a global-command or subcommand
     raise VersionNeeded if given_args.include? :version
-    raise HelpNeeded if given_args.include? :help
+    raise HelpNeeded.new(nil, parser: self) if given_args.include? :help
 
     ## check constraint satisfaction
     @constraints.each do |type, syms|
@@ -436,6 +480,28 @@ class Parser
     vals
   end
 
+  # Create default text banner in a string so we can override it
+  # in the SubcommandParser class.
+  def default_banner
+    command_name = File.basename($0).gsub(/\.[^.]+$/, '')
+    bannertext = ''
+    bannertext << "Usage: #{command_name} #{@usage}\n" if @usage
+    bannertext << "#{@synopsis}\n" if @synopsis
+    bannertext << "\n" if @usage || @synopsis
+    bannertext << "#{@version}\n" if @version
+    unless subcommands.empty?
+      bannertext << "\n" if @version   
+      bannertext << "Commands:\n"
+      @subcommand_parsers.each_value do |scmd|
+        bannertext << sprintf("  %-20s %s\n", scmd.name, scmd.desc)
+      end
+      bannertext << "\n"   
+    end
+    bannertext << "Options:\n"
+    return bannertext
+  end
+
+  
   ## Print the help message to +stream+.
   def educate(stream = $stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
@@ -447,17 +513,14 @@ class Parser
     leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
+    # print a default banner here if there is no text/banner
     unless @order.size > 0 && @order.first.first == :text
-      command_name = File.basename($0).gsub(/\.[^.]+$/, '')
-      stream.puts "Usage: #{command_name} #{@usage}\n" if @usage
-      stream.puts "#{@synopsis}\n" if @synopsis
-      stream.puts if @usage || @synopsis
-      stream.puts "#{@version}\n" if @version
-      stream.puts "Options:"
+      stream.puts default_banner()
     end
 
     @order.each do |what, opt|
       if what == :text
+        # print text/banner here
         stream.puts wrap(opt)
         next
       end
@@ -655,6 +718,37 @@ private
       meth
     end
   end
+end
+
+# If used with subcommands, then return this object instead of a Hash.
+class SubcommandResult
+  def initialize(subcommand: nil, global_options: {}, subcommand_options: {}, leftovers: [])
+    @subcommand = subcommand
+    @global_options = global_options
+    @subcommand_options = subcommand_options
+    @leftovers = leftovers
+  end
+  attr_accessor :subcommand, :global_options, :subcommand_options, :leftovers
+end
+
+class SubcommandParser < Parser
+  attr_reader :name, :desc
+  def initialize(name, desc, *a, &b)
+    super(a, &b)
+    @name = name
+    @desc = desc
+  end
+
+  def default_banner()
+    command_name = File.basename($0).gsub(/\.[^.]+$/, '')
+    bannertext = ''
+    bannertext << "Usage: #{command_name} #{@name} #{@usage}\n\n" if @usage
+    bannertext << "#{@synopsis}\n\n" if @synopsis
+    bannertext << "#{desc}\n\n" if @desc
+    bannertext << "Options:\n"
+    return bannertext
+  end
+
 end
 
 class Option
@@ -1127,8 +1221,8 @@ def with_standard_exception_handling(parser)
   yield
 rescue CommandlineError => e
   parser.die(e.message, nil, e.error_code)
-rescue HelpNeeded
-  parser.educate
+rescue HelpNeeded => e
+  e.parser.educate
   exit
 rescue VersionNeeded
   puts parser.version
@@ -1188,3 +1282,13 @@ end
 
 module_function :options, :die, :educate, :with_standard_exception_handling
 end # module
+
+
+# @global_parser.stop_on(subcommands)
+#        @global_parser.stop_on_unknown
+#        Trollop::with_standard_exception_handling(@global_parser) do
+#          global_options = @global_parser.parse(args)
+#          cmd = parse_subcommand(args)
+#          cmd_options = parse_subcommand_options(args, cmd)
+#          Result.new(global_options, cmd, cmd_options)
+#        end
