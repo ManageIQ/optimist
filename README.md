@@ -1,17 +1,13 @@
 # OptimistXL
 
 http://github.com/nanobowers/optimist_xl/
-
-[![Gem Version](https://badge.fury.io/rb/optimist_xl.svg)](http://badge.fury.io/rb/optimist_xl)
 [![Build Status](https://travis-ci.org/nanobowers/optimist_xl.svg)](https://travis-ci.org/nanobowers/optimist_xl)
-[![Code Climate](https://codeclimate.com/github/nanobowers/optimist_xl/badges/gpa.svg)](https://codeclimate.com/github/nanobowers/optimist_xl)
-[![Coverage Status](http://img.shields.io/coveralls/nanobowers/optimist_xl.svg)](https://coveralls.io/r/nanobowers/optimist_xl)
 
 ## Documentation
 
-- Quickstart: See `OptimistXL.options` and then `OptimistXL::Parser#opt`.
-- Examples: http://github.com/nanobowers/optimist_xl/.
 - Wiki: http://github.com/nanobowers/optimist_xl/wiki
+- Examples: http://github.com/nanobowers/optimist_xl/examples
+- Code quickstart: See `OptimistXL.options` and then `OptimistXL::Parser#opt`.
 
 ## Description
 
@@ -31,10 +27,15 @@ for everything you don't specify.
 
 ## Extended features
 
-- inexact match
+- Automatic suggestions whens incorrect options are given
+- Available inexact matching of long arguments
+- Available prevention of short-arguments by default
+- `:permitted` flag to allow lists, ranges or regexp filtering of options.
+- "Native" subcommand support (coming soon)
 
 ## Requirements
 
+* Ruby 2.0+
 * A burning desire to write less code.
 
 ## Install
