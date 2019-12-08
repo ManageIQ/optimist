@@ -1,13 +1,13 @@
 # OptimistXL
 
-http://github.com/nanobowers/optimist_xl/
+http://github.com/nanobowers/optimist_xl
 
 [![Build Status](https://travis-ci.org/nanobowers/optimist_xl.svg)](https://travis-ci.org/nanobowers/optimist_xl)
 
 ## Documentation
 
 - Wiki: http://github.com/nanobowers/optimist_xl/wiki
-- Examples: http://github.com/nanobowers/optimist_xl/examples
+- Examples: http://github.com/nanobowers/optimist_xl/tree/master/examples
 - Code quickstart: See `OptimistXL.options` and then `OptimistXL::Parser#opt`.
 
 ## Description
