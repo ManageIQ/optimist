@@ -1,6 +1,7 @@
 # OptimistXL
 
 http://github.com/nanobowers/optimist_xl/
+
 [![Build Status](https://travis-ci.org/nanobowers/optimist_xl.svg)](https://travis-ci.org/nanobowers/optimist_xl)
 
 ## Documentation
