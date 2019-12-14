@@ -163,7 +163,7 @@ class Parser
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
     raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
-    raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil or an array;" unless o.permitted_type_valid?
+    raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
     @long[o.long] = o.name
     @short[o.short] = o.name if o.short?
     @specs[o.name] = o
@@ -389,9 +389,11 @@ class Parser
         params << (opts.array_default? ? opts.default.clone : [opts.default])
       end
 
-      params[0].each do |p|
-        raise CommandlineError, "option '#{arg}' only accepts #{opts.permitted_valid_string}" unless opts.permitted_value?(p)
-      end unless opts.permitted.nil?
+      if params.first && opts.permitted
+        params.first.each do |val|
+          opts.validate_permitted(arg, val)
+        end
+      end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
@@ -648,7 +650,7 @@ end
 
 class Option
 
-  attr_accessor :name, :short, :long, :default, :permitted
+  attr_accessor :name, :short, :long, :default, :permitted, :permitted_response
   attr_writer :multi_given
 
   def initialize
@@ -659,6 +661,7 @@ class Option
     @hidden = false
     @default = nil
     @permitted = nil
+    @permitted_response = "option '%{arg}' only accepts %{valid_string}"
     @optshash = Hash.new()
   end
 
@@ -730,7 +733,6 @@ class Option
                 else
                   format_stdio(default).to_s
                 end
-    #defword = str.end_with?('.') ? 'Default' : 'default'
     return "#{str} (Default: #{default_s})"
   end
 
@@ -746,7 +748,6 @@ class Option
                   when Regexp
                     permitted.to_s
                   end
-    #permword = str.end_with?('.') ? 'Permitted' : 'permitted'
     return "#{str} (Permitted: #{permitted_s})"
   end
 
@@ -770,6 +771,15 @@ class Option
     false
   end
 
+  def validate_permitted(arg, value)
+    return true if permitted.nil?
+    unless permitted_value?(value)
+      format_hash = {arg: arg, given: value, value: value, valid_string: permitted_valid_string(), permitted: permitted }
+      raise CommandlineError, permitted_response % format_hash
+    end
+    true
+  end
+  
   # incoming values from the command-line should be strings, so we should
   # stringify any permitted types as the basis of comparison.
   def permitted_value?(val)
@@ -825,6 +835,7 @@ class Option
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
     opt_inst.permitted = permitted
+    opt_inst.permitted_response = opts[:permitted_response] if opts[:permitted_response]
     opt_inst.default = defvalue
     opt_inst.name = name
     opt_inst.opts = opts

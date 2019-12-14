@@ -63,5 +63,14 @@ class PermittedTest < ::MiniTest::Test
     }
   end
   
+  def test_permitted_with_reason
+    @p.opt 'zipcode', 'desc', :type => String, :permitted => /^[0-9]{5}$/,
+           :permitted_response " %{arg} should be a zipcode but you have %{value}"
+    assert_raises(CommandlineError) {
+      @p.parse(%w(--zipcode A9A9AA))
+    }
+  end
+
+  
 end
 end
