@@ -13,35 +13,42 @@ class PermittedTest < ::MiniTest::Test
   end
 
   def test_permitted_invalid_value
+    err_regexp = /permitted values for option "bad" must be either nil, Range, Regexp or an Array/
     assert_raises(ArgumentError) {
-      @p.opt 'bad1', 'desc', :permitted => 1
+      @p.opt 'bad', 'desc', :permitted => 1
     }
     assert_raises(ArgumentError) {
-      @p.opt 'bad2', 'desc', :permitted => "A"
+      @p.opt 'bad', 'desc', :permitted => "A"
     }
-    assert_raises(ArgumentError) {
-      @p.opt 'bad3', 'desc', :permitted => :abcd
+    assert_raises_errmatch(ArgumentError, err_regexp) {
+      @p.opt 'bad', 'desc', :permitted => :abcd
     }
   end
 
   def test_permitted_with_string_array
     @p.opt 'fiz', 'desc', :type => 'string', :permitted => ['foo', 'bar']
     @p.parse(%w(--fiz foo))
-    assert_raises(CommandlineError) { @p.parse(%w(--fiz buz)) }
+    assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts one of: foo, bar/) {
+      @p.parse(%w(--fiz buz))
+    }
   end
   
   def test_permitted_with_symbol_array
     @p.opt 'fiz', 'desc', :type => 'string', :permitted => %i[dog cat]
     @p.parse(%w(--fiz dog)) 
     @p.parse(%w(--fiz cat)) 
-    assert_raises(CommandlineError) { @p.parse(%w(--fiz rat)) }
+    assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts one of: dog, cat/) {
+      @p.parse(%w(--fiz rat))
+    }
   end
 
   def test_permitted_with_numeric_array
     @p.opt 'mynum', 'desc', :type => Integer, :permitted => [1,2,4]
     @p.parse(%w(--mynum 1)) 
     @p.parse(%w(--mynum 4)) 
-    assert_raises(CommandlineError) { @p.parse(%w(--mynum 3)) }
+    assert_raises_errmatch(CommandlineError, /option '--mynum' only accepts one of: 1, 2, 4/) {
+      @p.parse(%w(--mynum 3))
+    }
   end
 
   def test_permitted_with_numeric_range
@@ -50,7 +57,7 @@ class PermittedTest < ::MiniTest::Test
     assert_equal opts['fiz'], 1
     opts = @p.parse(%w(--fiz 3))
     assert_equal opts['fiz'], 3
-    assert_raises(CommandlineError) {
+    assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts value in range of: 1\.\.3/) {
       @p.parse(%w(--fiz 4))
     }
   end
@@ -58,16 +65,25 @@ class PermittedTest < ::MiniTest::Test
   def test_permitted_with_regexp
     @p.opt 'zipcode', 'desc', :type => String, :permitted => /^[0-9]{5}$/
     @p.parse(%w(--zipcode 39762))
-    assert_raises(CommandlineError) {
+    err_regexp = %r|option '--zipcode' only accepts value matching: ...0.9..5|
+    assert_raises_errmatch(CommandlineError, err_regexp) {
       @p.parse(%w(--zipcode A9A9AA))
     }
   end
   
   def test_permitted_with_reason
-    @p.opt 'zipcode', 'desc', :type => String, :permitted => /^[0-9]{5}$/,
-           :permitted_response " %{arg} should be a zipcode but you have %{value}"
-    assert_raises(CommandlineError) {
+    # test all keys passed into the formatter for the permitted_response
+    @p.opt 'zipcode', 'desc', type: String, permitted: /^[0-9]{5}$/,
+           permitted_response: "opt %{arg} should be a zipcode but you have %{value}"
+    @p.opt :wig, 'wig', type: Integer, permitted: 1..4,
+           permitted_response: "opt %{arg} exceeded four wigs (%{valid_string}), %{permitted}, but you gave '%{given}'"
+    err_regexp = %r|opt --zipcode should be a zipcode but you have A9A9AA|
+    assert_raises_errmatch(CommandlineError, err_regexp) {
       @p.parse(%w(--zipcode A9A9AA))
+    }
+    err_regexp = %r|opt --wig exceeded four wigs \(value in range of: 1\.\.4\), 1\.\.4, but you gave '5'|
+    assert_raises_errmatch(CommandlineError, err_regexp) {
+      @p.parse(%w(--wig 5))
     }
   end
 
