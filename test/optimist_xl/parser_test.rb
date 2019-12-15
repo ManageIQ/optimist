@@ -773,6 +773,7 @@ Options:
     @p.parse %w(--asdf goat)
     assert_raises(CommandlineError) { @p.parse %w(--asdf) }
     assert_raises(HelpNeeded) { @p.parse %w(--asdf --help) }
+    assert_raises(HelpNeeded) { @p.parse %w(--asdf -h) }
     assert_raises(VersionNeeded) { @p.parse %w(--asdf --version) }
   end
 
@@ -1142,6 +1143,18 @@ Options:
     assert_equal 5, opts[:liberation]
     assert_equal 'bar', opts[:evaluate]
     assert_equal nil, opts[:eval]
+  end
+  
+  def test_exact_match
+    newp = Parser.new(exact_match: true)
+    newp.opt :liberation, "liberate something", :type => :int
+    newp.opt :evaluate, "evaluate something", :type => :string
+    assert_raises(CommandlineError, /unknown argument '--lib'/) do
+      newp.parse %w(--lib 5)
+    end
+    assert_raises_errmatch(CommandlineError, /unknown argument '--ev'/) do
+      newp.parse %w(--ev bar)
+    end
   end
 
   def test_inexact_collision
