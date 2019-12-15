@@ -1,0 +1,138 @@
+require 'stringio'
+require 'test_helper'
+
+module OptimistXL
+
+module SubcommandTests
+    
+  # fails when no args provided
+  def test_subcommand_noargs
+    assert_raises(OptimistXL::CommandlineError, /No subcommand provided/) do
+      @p.parse([])
+    end
+  end
+
+  # ok when global help provided
+  def test_subcommand_global_help
+    assert_raises(OptimistXL::HelpNeeded) do
+      @p.parse(%w(-h))
+    end
+    sio = StringIO.new "w"
+    @p.educate sio
+    assert_match /list\s+show the list/, sio.string
+    assert_match /create\s*\n/, sio.string
+  end
+
+  # fails when invalid param given
+  def test_subcommand_invalid_opt
+    assert_stderr_errmatch(/unknown argument '--boom'/) do
+      @p.parse(%w(--boom))
+    end
+  end
+  
+  # fails when invalid subcommand given
+  def test_subcommand_invalid_subcmd
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown subcommand 'boom'/) do
+      @p.parse(%w(boom))
+    end
+  end
+  
+  # ok when valid subcommand given
+  def test_subcommand_ok_noopts
+    @p.parse(%w(list))
+    @p.parse(%w(create))
+  end
+
+  # ok when valid subcommand given with help param
+  def test_subcommand_help_subcmd1
+    err = assert_raises(OptimistXL::HelpNeeded) do
+      @p.parse(%w(list --help))
+    end
+
+    sio = StringIO.new "w"
+    err.parser.educate sio
+    assert_match /all.*list all the things/, sio.string
+    assert_match /help.*Show this message/, sio.string
+  end
+  
+  def test_subcommand_help_subcmd2
+    err = assert_raises(OptimistXL::HelpNeeded) do
+      @p.parse(%w(create --help))
+    end
+    sio = StringIO.new "w"
+    err.parser.educate sio
+    assert_match /partial.*create a partial thing/, sio.string
+    assert_match /name.*creation name/, sio.string
+    assert_match /help.*Show this message/, sio.string
+  end
+  
+  # fails when valid subcommand given with invalid param
+  def test_subcommand_invalid_opt
+    #assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo' for command 'list'/) do
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo'/) do
+      @p.parse(%w(list --foo))
+    end
+    #assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--bar' for command 'create'/) do
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--bar'/) do
+      @p.parse(%w(create --bar))
+    end
+  end
+
+  # ok when valid subcommand given with valid params
+  def test_subcommand_ok
+    @p.parse(%w(list --all))
+    @p.parse(%w(create --partial --name duck))
+  end
+
+  
+end
+
+class SubcommandsWithGlobalOptTest < ::MiniTest::Test
+  include SubcommandTests
+  def setup
+    @p = Parser.new
+    @p.opt :some_global_stropt, 'Some global string option', type: :string, short: :none
+    @p.opt :some_global_flag, 'Some global flag'
+    @p.subcmd :list, "show the list" do
+      opt :all, 'list all the things', type: :boolean
+    end
+    @p.subcmd "create" do
+      opt :partial, 'create a partial thing', type: :boolean
+      opt :name,    'creation name', type: :string
+    end
+  end
+
+  def test_subcommand_ok_gopts
+    @p.parse(%w(--some-global-flag list --all))
+    @p.parse(%w(--some-global-stropt GHI create --partial --name duck))
+  end
+  
+  def test_subcommand_invalid_gopts
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--all'/) do
+      @p.parse(%w(--all list --all))
+    end
+  end
+
+end
+
+class SubcommandsWithoutGlobalOptTest < ::MiniTest::Test
+  include SubcommandTests
+  def setup
+    @p = Parser.new
+    @p.subcmd :list, "show the list" do
+      opt :all, 'list all the things', type: :boolean
+    end
+    @p.subcmd "create" do
+      opt :partial, 'create a partial thing', type: :boolean
+      opt :name,    'creation name', type: :string
+    end
+  end
+
+  def test_subcommand_invalid_gopts
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--some-global-flag'/) do
+      @p.parse(%w(--some-global-flag list --all))
+    end
+  end
+end
+
+end
