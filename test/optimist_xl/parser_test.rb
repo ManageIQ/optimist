@@ -46,11 +46,11 @@ class ParserTest < ::MiniTest::Test
 
   def test_unknown_arguments
     err = assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
-    assert_match(/unknown argument '--arg'$/, err.message)
+    assert_match(/unknown argument '--arg'/, err.message)
     @p.opt "arg"
     @p.parse(%w(--arg))
     err = assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
-    assert_match(/unknown argument '--arg2'$/, err.message)
+    assert_match(/unknown argument '--arg2'/, err.message)
   end
   
   def test_unknown_arguments_with_suggestions
@@ -1135,7 +1135,7 @@ Options:
   end
 
   def test_inexact_match
-    newp = Parser.new(:inexact_match => true)
+    newp = Parser.new()
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
     opts = newp.parse %w(--lib 5 --ev bar)
@@ -1145,7 +1145,7 @@ Options:
   end
 
   def test_inexact_collision
-    newp = Parser.new(:inexact_match => true)
+    newp = Parser.new()
     newp.opt :bookname, "name of a book", :type => :string
     newp.opt :bookcost, "cost of the book", :type => :string
     opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)
@@ -1340,7 +1340,8 @@ Options:
       settings_copy = @settings
     end
     assert_equal [], passargs_copy
-    assert_equal({:fizz=>:buzz, :bear=>:cat}, settings_copy)
+    assert_equal settings_copy[:fizz], :buzz
+    assert_equal settings_copy[:bear], :cat
   end
   
   def test_options_takes_some_other_data
@@ -1353,7 +1354,7 @@ Options:
       settings_copy = @settings
     end
     assert_equal [1,2,3], passargs_copy
-    assert_equal({}, settings_copy)
+    assert_equal(::OptimistXL::Parser::DEFAULT_SETTINGS, settings_copy)
   end
 end
 

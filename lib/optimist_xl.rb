@@ -85,6 +85,12 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
+  
+  DEFAULT_SETTINGS = { exact_match: false,
+                       explicit_short_opts: false,
+                       suggestions: true
+                     }
+
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
     @version = nil
@@ -99,14 +105,15 @@ class Parser
     @educate_on_error = false
     @synopsis = nil
     @usage = nil
-
+    
     ## allow passing settings through Parser.new as an optional hash.
     ## but keep compatibility with non-hashy args, though.
     begin
-      @settings = Hash[*a]
+      settings_hash = Hash[*a]
+      @settings = DEFAULT_SETTINGS.merge(settings_hash)
       a=[] ## clear out args if using as settings-hash
     rescue ArgumentError
-      @settings = Hash.new()
+      @settings = DEFAULT_SETTINGS
     end
 
     # instance_eval(&b) if b # can't take arguments
@@ -309,12 +316,12 @@ class Parser
 
     ## resolve symbols
     given_args = {}
-    @leftovers = each_arg cmdline do |arg, params|
+    @leftovers = each_arg cmdline do |original_arg, params|
       ## handle --no- forms
-      arg, negative_given = if arg =~ /^--no-([^-]\S*)$/
+      arg, negative_given = if original_arg =~ /^--no-([^-]\S*)$/
         ["--#{$1}", true]
       else
-        [arg, false]
+        [original_arg, false]
       end
 
       sym = case arg
@@ -323,14 +330,16 @@ class Parser
         else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
-      sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
-
-      ## Support inexact matching of long-arguments like perl's Getopt::Long
-      if @settings[:inexact_match] and arg.match(/^--(\S*)$/)
+      if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+        sym = nil 
+      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
+        # If sym is not already found in the short/long lookup then 
+        # support inexact matching of long-arguments like perl's Getopt::Long
         sym = perform_inexact_match(arg, $1)
       end
       
       next nil if ignore_invalid_options && !sym
+      
       handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
