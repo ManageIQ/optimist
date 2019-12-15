@@ -29,7 +29,7 @@ for everything you don't specify.
 ## Extended features
 
 - Automatic suggestions whens incorrect options are given
-- Available inexact matching of long arguments
+- Inexact matching of long arguments
 - Available prevention of short-arguments by default
 - `:permitted` flag to allow lists, ranges or regexp filtering of options.
 - "Native" subcommand support (coming soon)
