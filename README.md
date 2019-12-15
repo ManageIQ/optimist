@@ -28,11 +28,26 @@ for everything you don't specify.
 
 ## Extended features
 
+### Parser Settings
 - Automatic suggestions whens incorrect options are given
+    - disable with `suggestions: false`
 - Inexact matching of long arguments
+    - disable with `exact_match: true`
 - Available prevention of short-arguments by default
-- `:permitted` flag to allow lists, ranges or regexp filtering of options.
-- "Native" subcommand support (coming soon)
+    - enable with `explicit_short_opts: true`
+
+### Option Settings
+
+Permitted options allow specifying valid choices for an option using lists, ranges or regexp's 
+- `permitted:` to specify a allow lists, ranges or regexp filtering of options.
+- `permitted_response:` can be added to provide more explicit output when incorrect choices are given.
+- see [example](examples/permitted.rb)
+- concept and code via @akhoury6
+
+### Subcommands
+"Native" subcommand support
+- see [example](examples/subcommands.rb)
+- ideas borrowed from https://github.com/jwliechty/trollop-subcommands
 
 ## Requirements
 
