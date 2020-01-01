@@ -556,10 +556,17 @@ Options:
     @p.opt :arg, "desc", :type => :date, :short => 'd'
     opts = @p.parse(['-d', 'Jan 4, 2007'])
     assert_equal Date.civil(2007, 1, 4), opts[:arg]
-    opts = @p.parse(['-d', 'today'])
-    assert_equal Date.today, opts[:arg]
   end
 
+  def test_chronic_date_formatting
+    # note: only works with chronic gem
+    require 'optimist_xl/chronic'
+    @p.opt :arg, "chronic", :type => :chronic_date, :short => 'd'
+    opts = @p.parse(['-d', 'today'])
+    assert_equal Date.today, opts[:arg]
+  rescue LoadError
+  end
+  
   def test_short_options_cant_be_numeric
     assert_raises(ArgumentError) { @p.opt :arg, "desc", :short => "-1" }
     @p.opt :a1b, "desc"
@@ -984,6 +991,28 @@ Options:
     opts = @p.parse []
     assert_equal temp, opts[:arg3]
 
+    opts = @p.parse %w(--arg 2010/05/01)
+    assert_kind_of Date, opts[:arg]
+    assert_equal Date.new(2010, 5, 1), opts[:arg]
+
+    opts = @p.parse %w(--arg2 2010/9/13)
+    assert_kind_of Date, opts[:arg2]
+    assert_equal Date.new(2010, 9, 13), opts[:arg2]
+
+    opts = @p.parse %w(--arg3)
+    assert_equal temp, opts[:arg3]
+  end
+
+  def test_chronic_date_arg_type
+    require 'optimist_xl/chronic'
+    temp = Date.new
+    @p.opt :arg, 'desc', :type => :chronic_date
+    @p.opt :arg2, 'desc', :type => Chronic::Date
+    @p.opt :arg3, 'desc', :default => temp
+
+    opts = @p.parse []
+    assert_equal temp, opts[:arg3]
+
     opts = @p.parse %w(--arg 5/1/2010)
     assert_kind_of Date, opts[:arg]
     assert_equal Date.new(2010, 5, 1), opts[:arg]
@@ -994,7 +1023,8 @@ Options:
 
     opts = @p.parse %w(--arg3)
     assert_equal temp, opts[:arg3]
-  end
+  rescue LoadError
+  end    
 
   def test_unknown_arg_class_type
     assert_raises ArgumentError do

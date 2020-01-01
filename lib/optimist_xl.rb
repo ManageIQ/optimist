@@ -1076,7 +1076,10 @@ class StringOption < Option
   end
 end
 
-# Option for dates.  Uses Chronic if it exists.
+# Option for dates.  No longer uses Chronic if available.
+# If chronic style dates are needed, then you may
+# require 'optimist_xl/chronic'
+
 class DateOption < Option
   register_alias :date
   def type_format ; "=<date>" ; end
@@ -1085,13 +1088,7 @@ class DateOption < Option
       pg.map do |param|
         next param if param.is_a?(Date)
         begin
-          begin
-            require 'chronic'
-            time = Chronic.parse(param)
-          rescue LoadError
-            # chronic is not available
-          end
-          time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+          Date.parse(param)
         rescue ArgumentError
           raise CommandlineError, "option '#{self.name}' needs a date"
         end
