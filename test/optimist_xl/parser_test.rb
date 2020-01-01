@@ -1172,7 +1172,7 @@ Options:
     opts = newp.parse %w(--lib 5 --ev bar)
     assert_equal 5, opts[:liberation]
     assert_equal 'bar', opts[:evaluate]
-    assert_equal nil, opts[:eval]
+    assert_nil opts[:eval]
   end
   
   def test_exact_match

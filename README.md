@@ -20,7 +20,6 @@ for everything you don't specify.
 ## Features
 
 - Dirt-simple usage.
-- Single file. Throw it in lib/ if you don't want to make it a Rubygem dependency.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
 - Support for long options, short options, subcommands, and automatic type validation and
   conversion.
@@ -51,7 +50,7 @@ Permitted options allow specifying valid choices for an option using lists, rang
 
 ## Requirements
 
-* Ruby 2.0+
+* Ruby 2.2+
 * A burning desire to write less code.
 
 ## Install

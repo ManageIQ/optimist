@@ -19,13 +19,13 @@ module SubcommandTests
     end
     sio = StringIO.new "w"
     @p.educate sio
-    assert_match /list\s+show the list/, sio.string
-    assert_match /create\s*\n/, sio.string
+    assert_match(/list\s+show the list/, sio.string)
+    assert_match(/create\s*\n/, sio.string)
   end
 
   # fails when invalid param given
   def test_subcommand_invalid_opt
-    assert_stderr_errmatch(/unknown argument '--boom'/) do
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--boom'/) do
       @p.parse(%w(--boom))
     end
   end
@@ -51,8 +51,8 @@ module SubcommandTests
 
     sio = StringIO.new "w"
     err.parser.educate sio
-    assert_match /all.*list all the things/, sio.string
-    assert_match /help.*Show this message/, sio.string
+    assert_match(/all.*list all the things/, sio.string)
+    assert_match(/help.*Show this message/, sio.string)
   end
   
   def test_subcommand_help_subcmd2
@@ -61,13 +61,13 @@ module SubcommandTests
     end
     sio = StringIO.new "w"
     err.parser.educate sio
-    assert_match /partial.*create a partial thing/, sio.string
-    assert_match /name.*creation name/, sio.string
-    assert_match /help.*Show this message/, sio.string
+    assert_match(/partial.*create a partial thing/, sio.string)
+    assert_match(/name.*creation name/, sio.string)
+    assert_match(/help.*Show this message/, sio.string)
   end
   
   # fails when valid subcommand given with invalid param
-  def test_subcommand_invalid_opt
+  def test_subcommand_invalid_subopt
     #assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo' for command 'list'/) do
     assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo'/) do
       @p.parse(%w(list --foo))

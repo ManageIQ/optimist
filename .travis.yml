@@ -4,6 +4,8 @@ rvm:
   - "2.2"
   - "2.3.4"
   - "2.5.1"
+  - "2.6.3"
+  - "2.7.0"
   - jruby-head
 matrix:
   allow_failures:
