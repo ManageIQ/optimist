@@ -261,7 +261,7 @@ class Parser
   ## If we hit a complete match, then use that, otherwise see how many long-options partially match.
   ## If only one partially matches, then we can safely use that.
   ## Otherwise, we raise an error that the partially given option was ambiguous.
-  def perform_inexact_match (arg, partial_match)  # :nodoc:
+  def perform_inexact_match(arg, partial_match)  # :nodoc:
     return @long[partial_match] if @long.has_key?(partial_match)
     partially_matched_keys = @long.keys.grep(/^#{partial_match}/)
     return case partially_matched_keys.size
