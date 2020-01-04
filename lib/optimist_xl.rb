@@ -273,7 +273,8 @@ class Parser
   private :perform_inexact_match
 
   def handle_unknown_argument(arg, candidates, suggestions)
-    errstring = "unknown argument '#{arg}'"    
+    errstring = "unknown argument '#{arg}'"
+    errstring += " for command '#{subcommand_name}'" if self.respond_to?(:subcommand_name)
     if (suggestions &&
         Module::const_defined?("DidYouMean") &&
         Module::const_defined?("DidYouMean::JaroWinkler") &&
@@ -303,7 +304,7 @@ class Parser
         errstring << ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
       end
     end
-    raise CommandlineError, errstring 
+    raise CommandlineError, errstring
   end
   private :handle_unknown_argument
 
@@ -739,6 +740,11 @@ class SubcommandParser < Parser
     @desc = desc
   end
 
+  # alias to make referencing more obvious.
+  def subcommand_name
+    @name
+  end
+  
   def default_banner()
     command_name = File.basename($0).gsub(/\.[^.]+$/, '')
     bannertext = ''
