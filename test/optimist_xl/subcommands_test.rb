@@ -68,12 +68,10 @@ module SubcommandTests
   
   # fails when valid subcommand given with invalid param
   def test_subcommand_invalid_subopt
-    #assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo' for command 'list'/) do
-    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo'/) do
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--foo' for command 'list'/) do
       @p.parse(%w(list --foo))
     end
-    #assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--bar' for command 'create'/) do
-    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--bar'/) do
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--bar' for command 'create'/) do
       @p.parse(%w(create --bar))
     end
   end
@@ -105,11 +103,17 @@ class SubcommandsWithGlobalOptTest < ::MiniTest::Test
   def test_subcommand_ok_gopts
     @p.parse(%w(--some-global-flag list --all))
     @p.parse(%w(--some-global-stropt GHI create --partial --name duck))
+    # handles minimal-length partial-long arguments
+    @p.parse(%w(--some-global-s GHI create --par --na duck))
   end
   
   def test_subcommand_invalid_gopts
     assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--all'/) do
       @p.parse(%w(--all list --all))
+    end
+    # handles misspellings property on subcommands
+    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--partul' for command 'create'.  Did you mean: \[--partial\]/) do
+      @p.parse(%w(--some-global-stropt GHI create --partul --name duck))
     end
   end
 
