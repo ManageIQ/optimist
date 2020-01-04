@@ -4,7 +4,15 @@ require 'test_helper'
 module OptimistXL
 
 module SubcommandTests
-    
+
+  def if_did_you_mean_enabled
+    if (Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
+      yield
+    end
+  end
+  
   # fails when no args provided
   def test_subcommand_noargs
     assert_raises(OptimistXL::CommandlineError, /No subcommand provided/) do
@@ -112,8 +120,11 @@ class SubcommandsWithGlobalOptTest < ::MiniTest::Test
       @p.parse(%w(--all list --all))
     end
     # handles misspellings property on subcommands
-    assert_raises_errmatch(OptimistXL::CommandlineError, /unknown argument '--partul' for command 'create'.  Did you mean: \[--partial\]/) do
-      @p.parse(%w(--some-global-stropt GHI create --partul --name duck))
+    if_did_you_mean_enabled do
+      err_regex = /unknown argument '--partul' for command 'create'.  Did you mean: \[--partial\]/
+      assert_raises_errmatch(OptimistXL::CommandlineError, err_regex) do
+        @p.parse(%w(--some-global-stropt GHI create --partul --name duck))
+      end
     end
   end
 
