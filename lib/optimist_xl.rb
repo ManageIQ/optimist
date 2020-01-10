@@ -1000,8 +1000,8 @@ class Option
            else                   raise ArgumentError, "invalid short option name '#{sopt.inspect}'"
            end
 
-    if sopt
-      raise ArgumentError, "a short option name can't be a number or a dash" if sopt =~ ::OptimistXL::Parser::INVALID_SHORT_ARG_REGEX
+    if sopt && sopt =~ ::OptimistXL::Parser::INVALID_SHORT_ARG_REGEX
+      raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash" 
     end
     return sopt
   end
