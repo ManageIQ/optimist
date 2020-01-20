@@ -1,0 +1,114 @@
+require 'stringio'
+require 'test_helper'
+
+module OptimistXL
+  class StringFlagParserTest < ::MiniTest::Test
+    def setup
+      @p = Parser.new
+    end
+
+    # in this case, the stringflag should return nil
+    def test_stringflag_unset
+      @p.opt :xyz, "desc", :type => :stringflag
+      @p.opt :abc, "desc", :type => :flag
+      opts = @p.parse %w()
+      assert_equal nil, opts[:xyz]
+      assert_equal false, opts[:abc]
+      opts = @p.parse %w(--abc)
+      assert_equal nil, opts[:xyz]
+      assert_equal true, opts[:abc]
+    end
+
+    # in this case, the stringflag should return true
+    def test_stringflag_as_flag
+      @p.opt :xyz, "desc", :type => :stringflag
+      @p.opt :abc, "desc", :type => :flag
+      opts = @p.parse %w(--xyz )
+      assert_equal true, opts[:xyz_given]
+      assert_equal true, opts[:xyz]
+      assert_equal false, opts[:abc]
+      opts = @p.parse %w(--xyz --abc)
+      assert_equal true, opts[:xyz_given]
+      assert_equal true, opts[:xyz]
+      assert_equal true, opts[:abc]
+    end
+
+    # in this case, the stringflag should return a string
+    def test_stringflag_as_string
+      @p.opt :xyz, "desc", :type => :stringflag
+      @p.opt :abc, "desc", :type => :flag
+      opts = @p.parse %w(--xyz abcd)
+      assert_equal true, opts[:xyz_given]
+      assert_equal "abcd", opts[:xyz]
+      assert_equal false, opts[:abc]
+      opts = @p.parse %w(--xyz abcd --abc)
+      assert_equal true, opts[:xyz_given]
+      assert_equal "abcd", opts[:xyz]
+      assert_equal true, opts[:abc]
+    end
+
+    def test_stringflag_with_defaults
+      @p.opt :log, "desc", :type => :stringflag, default: "output.log"
+      opts = @p.parse []
+      assert_equal nil, opts[:log_given]
+      assert_equal "output.log", opts[:log]
+
+      opts = @p.parse %w(--no-log)
+      assert_equal true, opts[:log_given]
+      assert_equal false, opts[:log]
+
+      opts = @p.parse %w(--log)
+      assert_equal true, opts[:log_given]
+      assert_equal "output.log", opts[:log]
+
+      opts = @p.parse %w(--log other.log)
+      assert_equal true, opts[:log_given]
+      assert_equal "other.log", opts[:log]
+      
+    end
+
+    def test_stringflag_with_no_defaults
+      @p.opt :log, "desc", :type => :stringflag
+        
+      opts = @p.parse []
+      assert_equal nil, opts[:log_given]
+      assert_equal nil, opts[:log]
+
+      opts = @p.parse %w(--no-log)
+      assert_equal true, opts[:log_given]
+      assert_equal false, opts[:log]
+
+      opts = @p.parse %w(--log)
+      assert_equal true, opts[:log_given]
+      assert_equal true, opts[:log]
+
+      opts = @p.parse %w(--log other.log)
+      assert_equal true, opts[:log_given]
+      assert_equal "other.log", opts[:log]
+      
+    end
+  end
+
+  class MultiStringFlagParserTest < ::MiniTest::Test
+    def setup
+      @p = Parser.new
+      @p.opt :xyz, "desc", :type => :stringflag, :multi => true
+      @p.opt :abc, "desc", :type => :string, :multi => true
+    end
+
+    # in this case, the stringflag should return multiple strings
+    def test_multi_stringflag_as_strings
+      opts = @p.parse %w(--xyz dog --xyz cat)
+      assert_equal true, opts[:xyz_given]
+      assert_equal ["dog","cat"], opts[:xyz]
+      assert_equal [], opts[:abc] # note, multi-args default to empty array
+    end
+
+    def test_multi_stringflag_as_flags
+      opts = @p.parse %w(--xyz --xyz --xyz)
+      assert_equal true, opts[:xyz_given]
+      assert_equal [true, true, true], opts[:xyz]
+    end
+end
+    
+end

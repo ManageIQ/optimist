@@ -397,15 +397,34 @@ class Parser
       # The block returns the number of parameters taken.
       num_params_taken = 0
 
-      unless params.empty?
-        if @specs[sym].single_arg?
-          given_args[sym][:params] << params[0, 1]  # take the first parameter
-          num_params_taken = 1
-        elsif @specs[sym].multi_arg?
-          given_args[sym][:params] << params        # take all the parameters
+      #DEBUG# puts "\nparams:#{params} npt:#{num_params_taken},ps:#{params.size}"
+
+      #if params.size > 0
+      #  if @specs[sym].min_args == 1 && @specs[sym].max_args == 1
+      #    given_args[sym][:params] << params[0, 1]  # take the first parameter
+      #    num_params_taken = 1
+      #  elsif @specs[sym].max_args > 1
+      #    given_args[sym][:params] << params        # take all the parameters
+      #    num_params_taken = params.size
+      #  end
+      #end
+
+      if params.size == 0
+        if @specs[sym].min_args == 0
+          given_args[sym][:params] << [ @specs[sym].default || true]
+        end
+      elsif params.size > 0
+        if params.size >= @specs[sym].max_args
+          # take smaller of the two sizes to determine how many parameters to take
+          num_params_taken = [params.size, @specs[sym].max_args].min
+          given_args[sym][:params] << params[0, num_params_taken]
+        else
+          # take all the parameters
+          given_args[sym][:params] << params        
           num_params_taken = params.size
         end
       end
+      
 
       num_params_taken
     end
@@ -438,7 +457,8 @@ class Parser
       arg, params, negative_given = given_data.values_at :arg, :params, :negative_given
 
       opts = @specs[sym]
-      if params.empty? && !opts.flag?
+
+      if params.size < opts.min_args
         raise CommandlineError, "option '#{arg}' needs a parameter" unless opts.default
         params << (opts.array_default? ? opts.default.clone : [opts.default])
       end
@@ -453,13 +473,19 @@ class Parser
 
       vals[sym] = opts.parse(params, negative_given)
 
-      if opts.single_arg?
+      if opts.min_args==0 && opts.max_args==1
+        if opts.multi?
+          vals[sym] = vals[sym].map { |p| p[0] }
+        else
+          vals[sym] = vals[sym][0][0]
+        end
+      elsif opts.min_args==1 && opts.max_args==1
         if opts.multi?        # multiple options, each with a single parameter
           vals[sym] = vals[sym].map { |p| p[0] }
         else                  # single parameter
           vals[sym] = vals[sym][0][0]
         end
-      elsif opts.multi_arg? && !opts.multi?
+      elsif opts.max_args>1 && !opts.multi?
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
@@ -772,6 +798,9 @@ class Option
     @permitted = nil
     @permitted_response = "option '%{arg}' only accepts %{valid_string}"
     @optshash = Hash.new()
+    @min_args = 1
+    @max_args = 1
+    # maximum max_args is likely ~~ 128*1024, as linux MAX_ARG_STRLEN is 128kiB
   end
 
   def opts(key)
@@ -782,24 +811,24 @@ class Option
     @optshash = o
   end
 
-  ## Indicates a flag option, which is an option without an argument
-  def flag? ; false ; end
-  def single_arg?
-    !self.multi_arg? && !self.flag?
-  end
 
   def multi ; @multi_given ; end
   alias multi? multi
 
-  ## Indicates that this is a multivalued (Array type) argument
-  def multi_arg? ; false ; end
-  ## note: Option-Types with both multi_arg? and flag? false are single-parameter (normal) options.
-
+  attr_reader :min_args, :max_args
+  # |@min_args | @max_args |
+  # +----------+-----------+
+  # | 0        | 0         | formerly flag?==true (option without any arguments)
+  # | 1        | 1         | formerly single_arg?==true (single-parameter/normal option)
+  # | 1        | >1        | formerly multi_arg?==true 
+  # | ?        | ?         | presumably illegal condition. untested.
+  
   def array_default? ; self.default.kind_of?(Array) ; end
 
   def short? ; short && short != :none ; end
 
   def callback ; opts(:callback) ; end
+  
   def desc ; opts(:desc) ; end
 
   def required? ; opts(:required) ; end
@@ -812,7 +841,7 @@ class Option
   def type_format ; "" ; end
 
   def educate
-    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
+    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (min_args==0 && default ? ", --no-#{long}" : "")
   end
 
   ## Format the educate-line description including the default and permitted value(s)
@@ -920,8 +949,8 @@ class Option
 
     opttype = OptimistXL::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
-
-    raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
+    #DEBUG# puts "\nopt:#{opttype||'nil'} ofd:#{opttype_from_default}"  if opttype_from_default
+    raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && !(opttype.is_a? opttype_from_default.class)
 
     opt_inst = (opttype || opttype_from_default || OptimistXL::BooleanOption.new)
 
@@ -957,7 +986,7 @@ class Option
     if disambiguated_default.is_a? Array
       return(optdef.first.class.name.downcase + "s") if !optdef.empty?
       if opttype
-        raise ArgumentError, "multiple argument type must be plural" unless opttype.multi_arg?
+        raise ArgumentError, "multiple argument type must be plural" unless opttype.max_args > 1
         return nil
       else
         raise ArgumentError, "multiple argument type cannot be deduced from an empty array"
@@ -1011,11 +1040,14 @@ end
 # Flag option.  Has no arguments. Can be negated with "no-".
 class BooleanOption < Option
   register_alias :flag, :bool, :boolean, :trueclass, :falseclass
+
   def initialize
     super()
     @default = false
+    @min_args = 0
+    @max_args = 0
   end
-  def flag? ; true ; end
+  
   def parse(_paramlist, neg_given)
     return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
   end
@@ -1082,6 +1114,30 @@ class StringOption < Option
   end
 end
 
+# 
+class StringFlagOption < StringOption
+  register_alias :stringflag
+  def type_format ; "=<s?>" ; end
+  def parse(paramlist, neg_given)
+    paramlist.map do |plist|
+      plist.map do |pg|
+        neg_given ? false : pg
+        #case pg
+        #when FalseClass then () ? neg_given : !neg_given
+        #when TrueClass then (self.name.to_s =~ /^no_/) ? neg_given : !neg_given
+        #else pg
+        #end
+      end
+    end
+  end
+
+  def initialize
+    super
+    @min_args = 0
+    @max_args = 1
+  end
+end
+
 # Option for dates.  No longer uses Chronic if available.
 # If chronic style dates are needed, then you may
 # require 'optimist_xl/chronic'
@@ -1112,35 +1168,35 @@ end
 class IntegerArrayOption < IntegerOption
   register_alias :fixnums, :ints, :integers
   def type_format ; "=<i+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple Floats
 class FloatArrayOption < FloatOption
   register_alias :doubles, :floats
   def type_format ; "=<f+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple Strings
 class StringArrayOption < StringOption
   register_alias :strings
   def type_format ; "=<s+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple dates
 class DateArrayOption < DateOption
   register_alias :dates
   def type_format ; "=<date+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling Files/URLs via 'open'
 class IOArrayOption < IOOption
   register_alias :ios
   def type_format ; "=<filename/uri+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 ## The easy, syntactic-sugary entry method into OptimistXL. Creates a Parser,
@@ -1285,13 +1341,3 @@ end
 
 module_function :options, :die, :educate, :with_standard_exception_handling
 end # module
-
-
-# @global_parser.stop_on(subcommands)
-#        @global_parser.stop_on_unknown
-#        Trollop::with_standard_exception_handling(@global_parser) do
-#          global_options = @global_parser.parse(args)
-#          cmd = parse_subcommand(args)
-#          cmd_options = parse_subcommand_options(args, cmd)
-#          Result.new(global_options, cmd, cmd_options)
-#        end
