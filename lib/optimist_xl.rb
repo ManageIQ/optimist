@@ -172,15 +172,18 @@ class Parser
     o = Option.create(name, desc, opts)
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
-    raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
-    raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
+    o.long.names.each do |long|
+      raise ArgumentError, "long option name #{long.inspect} is already taken; please specify a (different) :long/:alt" if @long[long]
+      @long[long] = o.name
+    end
+
+    raise ArgumentError, "permitted values for option #{name} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
 
     o.short.chars.each do |short|
       raise ArgumentError, "short option name #{short.inspect} is already taken; please specify a (different) :short" if @short[short]
       @short[short] = o.name
     end
 
-    @long[o.long] = o.name
     @specs[o.name] = o
     @order << [:opt, o.name]
   end
