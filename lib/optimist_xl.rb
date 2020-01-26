@@ -76,8 +76,6 @@ class Parser
     return @registry[lookup].new
   end
 
-  INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
-
   ## The values from the commandline that were not interpreted by #parse.
   attr_reader :leftovers
 
@@ -175,10 +173,14 @@ class Parser
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
-    raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
     raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
+
+    o.short_chars.each do |short|
+      raise ArgumentError, "short option name #{short.inspect} is already taken; please specify a (different) :short" if @short[short]
+      @short[short] = o.name
+    end
+
     @long[o.long] = o.name
-    @short[o.short] = o.name if o.short?
     @specs[o.name] = o
     @order << [:opt, o.name]
   end
@@ -679,9 +681,9 @@ private
   def resolve_default_short_options!
     @order.each do |type, name|
       opts = @specs[name]
-      next if type != :opt || opts.short
+      next if type != :opt || opts.doesnt_need_autogen_short
 
-      c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.split(//).find { |d| d !~ OptimistXL::ShortNames::INVALID_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
         opts.short = c
         @short[c] = name
@@ -757,14 +759,52 @@ class SubcommandParser < Parser
 
 end
 
+#class LongNames
+#end
+
+class ShortNames
+
+  INVALID_ARG_REGEX = /[\d-]/ #:nodoc:
+
+  def initialize
+    @chars = []
+    @auto = true
+  end
+
+  attr_reader :chars, :auto
+  
+  def add(values)
+    values = [values] unless values.is_a?(Array) # box the value
+    values.compact.each do |val|
+      if val == :none
+        @auto = false
+        raise "Cannot set short to :none if short-chars have been defined '#{@chars}'" unless chars.empty?
+        next
+      end
+      strval = val.to_s
+      sopt = case strval
+             when /^-(.)$/ then $1
+             when /^.$/ then strval
+             else raise ArgumentError, "invalid short option name '#{val.inspect}'"
+             end
+
+      if sopt =~ INVALID_ARG_REGEX
+        raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash" 
+      end
+      @chars << sopt
+    end
+  end
+  
+end
+
 class Option
 
-  attr_accessor :name, :short, :long, :default, :permitted, :permitted_response
+  attr_accessor :name, :long, :default, :permitted, :permitted_response
   attr_writer :multi_given
 
   def initialize
     @long = nil
-    @short = nil
+    @short = ShortNames.new # can be an Array of one-char strings, a one-char String, nil or :none
     @name = nil
     @multi_given = false
     @hidden = false
@@ -797,7 +837,19 @@ class Option
 
   def array_default? ; self.default.kind_of?(Array) ; end
 
-  def short? ; short && short != :none ; end
+  def short=(values)
+    @short.add(values)
+  end
+  def short_chars ; @short.chars ; end
+  def short_auto ; @short.auto ; end
+  
+  def short # used in a test.. :(
+    return nil if short_chars.empty?
+    return :none if !@short.auto 
+    short_chars
+  end
+
+  def doesnt_need_autogen_short ; !short_auto || !short_chars.empty? ; end
 
   def callback ; opts(:callback) ; end
   def desc ; opts(:desc) ; end
@@ -812,7 +864,10 @@ class Option
   def type_format ; "" ; end
 
   def educate
-    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
+    optionlist = []
+    optionlist.concat short_chars.map { |o| "-#{o}" }
+    optionlist.concat [long].map {|o| "--#{o}" }
+    optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
 
   ## Format the educate-line description including the default and permitted value(s)
@@ -929,7 +984,7 @@ class Option
     opt_inst.long = handle_long_opt(opts[:long], name)
 
     ## fill in :short
-    opt_inst.short = handle_short_opt(opts[:short])
+    opt_inst.short = opts[:short]
 
     ## fill in :multi
     multi_given = opts[:multi] || false
@@ -992,19 +1047,6 @@ class Option
            end
   end
 
-  def self.handle_short_opt(sopt)
-    sopt = sopt.to_s if sopt && sopt != :none
-    sopt = case sopt
-           when /^-(.)$/          then $1
-           when nil, :none, /^.$/ then sopt
-           else                   raise ArgumentError, "invalid short option name '#{sopt.inspect}'"
-           end
-
-    if sopt && sopt =~ ::OptimistXL::Parser::INVALID_SHORT_ARG_REGEX
-      raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash" 
-    end
-    return sopt
-  end
 
 end
 
