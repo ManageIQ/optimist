@@ -175,7 +175,7 @@ class Parser
     raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
     raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
 
-    o.short_chars.each do |short|
+    o.short.chars.each do |short|
       raise ArgumentError, "short option name #{short.inspect} is already taken; please specify a (different) :short" if @short[short]
       @short[short] = o.name
     end
@@ -685,7 +685,7 @@ private
 
       c = opts.long.split(//).find { |d| d !~ OptimistXL::ShortNames::INVALID_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
-        opts.short = c
+        opts.short.add c
         @short[c] = name
       end
     end
@@ -837,19 +837,18 @@ class Option
 
   def array_default? ; self.default.kind_of?(Array) ; end
 
-  def short=(values)
-    @short.add(values)
-  end
-  def short_chars ; @short.chars ; end
-  def short_auto ; @short.auto ; end
-  
-  def short # used in a test.. :(
-    return nil if short_chars.empty?
-    return :none if !@short.auto 
-    short_chars
-  end
 
-  def doesnt_need_autogen_short ; !short_auto || !short_chars.empty? ; end
+#  def short_chars ; @short.chars ; end
+#  def short_auto ; @short.auto ; end
+  def short ; @short ; end
+  
+#  def short # used in a test.. :(
+#    return nil if short_chars.empty?
+#    return :none if !@short.auto 
+#    short_chars
+#  end
+
+  def doesnt_need_autogen_short ; !short.auto || !short.chars.empty? ; end
 
   def callback ; opts(:callback) ; end
   def desc ; opts(:desc) ; end
@@ -865,7 +864,7 @@ class Option
 
   def educate
     optionlist = []
-    optionlist.concat short_chars.map { |o| "-#{o}" }
+    optionlist.concat short.chars.map { |o| "-#{o}" }
     optionlist.concat [long].map {|o| "--#{o}" }
     optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
@@ -984,7 +983,7 @@ class Option
     opt_inst.long = handle_long_opt(opts[:long], name)
 
     ## fill in :short
-    opt_inst.short = opts[:short]
+    opt_inst.short.add opts[:short]
 
     ## fill in :multi
     multi_given = opts[:multi] || false

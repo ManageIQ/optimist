@@ -36,6 +36,11 @@ module OptimistXL
     end
 
     def test_altlong
+      @p = Parser.new
+      @p.opt "goodarg", "desc", :alt => "none"
+      @p.opt "goodarg2", "desc", :alt => "--two"
+      @p.opt "goodarg3", "desc", :alt => ["three", "--four", :five]
+      #assert_raises(ArgumentError) { @p.opt "badarg", "desc", :alt => ["", '--', '-bad', '---superbad', :'2'] }
     end
     
     def test_altshort_help
