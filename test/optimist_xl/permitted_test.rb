@@ -13,15 +13,15 @@ class PermittedTest < ::MiniTest::Test
   end
 
   def test_permitted_invalid_value
-    err_regexp = /permitted values for option "bad" must be either nil, Range, Regexp or an Array/
-    assert_raises(ArgumentError) {
+    err_regexp = /permitted values for option "(bad|mad|sad)" must be either nil, Range, Regexp or an Array/
+    assert_raises(ArgumentError, err_regexp) {
       @p.opt 'bad', 'desc', :permitted => 1
     }
-    assert_raises(ArgumentError) {
-      @p.opt 'bad', 'desc', :permitted => "A"
+    assert_raises(ArgumentError, err_regexp) {
+      @p.opt 'mad', 'desc', :permitted => "A"
     }
     assert_raises_errmatch(ArgumentError, err_regexp) {
-      @p.opt 'bad', 'desc', :permitted => :abcd
+      @p.opt 'sad', 'desc', :permitted => :abcd
     }
   end
 

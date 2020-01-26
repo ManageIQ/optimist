@@ -172,12 +172,12 @@ class Parser
     o = Option.create(name, desc, opts)
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
-    o.long.names.each do |long|
-      raise ArgumentError, "long option name #{long.inspect} is already taken; please specify a (different) :long/:alt" if @long[long]
-      @long[long] = o.name
+    o.long.names.each do |lng|
+      raise ArgumentError, "long option name #{lng.inspect} is already taken; please specify a (different) :long/:alt" if @long[lng]
+      @long[lng] = o.name
     end
 
-    raise ArgumentError, "permitted values for option #{name} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
+    raise ArgumentError, "permitted values for option #{o.long.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
 
     o.short.chars.each do |short|
       raise ArgumentError, "short option name #{short.inspect} is already taken; please specify a (different) :short" if @short[short]
@@ -686,7 +686,7 @@ private
       opts = @specs[name]
       next if type != :opt || opts.doesnt_need_autogen_short
 
-      c = opts.long.split(//).find { |d| d !~ OptimistXL::ShortNames::INVALID_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.long.split(//).find { |d| d !~ OptimistXL::ShortNames::INVALID_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
         opts.short.add c
         @short[c] = name
@@ -762,8 +762,39 @@ class SubcommandParser < Parser
 
 end
 
-#class LongNames
-#end
+class LongNames
+  def initialize
+    @truename = nil
+    @long = nil
+    @alts = []
+  end
+  
+  def make_valid(lopt)
+    return nil if lopt.nil?
+    case lopt.to_s
+    when /^--([^-].*)$/ then $1
+    when /^[^-]/        then lopt.to_s
+    else                     raise ArgumentError, "invalid long option name #{lopt.inspect}"
+    end
+  end
+  
+  def set(name, lopt, alts)
+    @truename = name
+    lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
+    @long = make_valid(lopt)
+    alts = [alts] unless alts.is_a?(Array) # box the value
+    @alts = alts.map { |alt| make_valid(alt) }.compact
+  end
+  
+  # long specified with :long has precedence over the true-name
+  def long ; @long || @truename ; end
+
+  # all valid names, including alts
+  def names
+    [long] + @alts
+  end
+  
+end
 
 class ShortNames
 
@@ -806,7 +837,7 @@ class Option
   attr_writer :multi_given
 
   def initialize
-    @long = nil
+    @long = LongNames.new
     @short = ShortNames.new # can be an Array of one-char strings, a one-char String, nil or :none
     @name = nil
     @multi_given = false
@@ -868,7 +899,7 @@ class Option
   def educate
     optionlist = []
     optionlist.concat short.chars.map { |o| "-#{o}" }
-    optionlist.concat [long].map {|o| "--#{o}" }
+    optionlist.concat long.names.map {|o| "--#{o}" }
     optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
 
@@ -983,7 +1014,7 @@ class Option
     opt_inst = (opttype || opttype_from_default || OptimistXL::BooleanOption.new)
 
     ## fill in :long
-    opt_inst.long = handle_long_opt(opts[:long], name)
+    opt_inst.long.set(name, opts[:long], opts[:alt])
 
     ## fill in :short
     opt_inst.short.add opts[:short]
@@ -1040,14 +1071,6 @@ class Option
     return OptimistXL::Parser.registry_getopttype(type_from_default)
   end
 
-  def self.handle_long_opt(lopt, name)
-    lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
-    lopt = case lopt
-           when /^--([^-].*)$/ then $1
-           when /^[^-]/        then lopt
-           else                     raise ArgumentError, "invalid long option name #{lopt.inspect}"
-           end
-  end
 
 
 end

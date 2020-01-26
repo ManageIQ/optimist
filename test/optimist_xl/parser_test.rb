@@ -752,7 +752,7 @@ Options:
 
   def test_auto_generated_long_names_convert_underscores_to_hyphens
     @p.opt :hello_there
-    assert_equal "hello-there", @p.specs[:hello_there].long
+    assert_equal "hello-there", @p.specs[:hello_there].long.long
   end
 
   def test_arguments_passed_through_block

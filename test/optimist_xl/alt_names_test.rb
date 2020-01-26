@@ -5,10 +5,19 @@ module OptimistXL
   class AlternateNamesTest < ::MiniTest::Test
 
     def setup
+      @p = Parser.new
+    end
+
+    def get_help_string
+      err = assert_raises(OptimistXL::HelpNeeded) do
+        @p.parse(%w(--help))
+      end
+      sio = StringIO.new "w"
+      err.parser.educate sio
+      sio.string
     end
 
     def test_altshort
-       @p = Parser.new
        @p.opt :catarg, "desc", :short => ["c", "-C"]
        opts = @p.parse %w(-c)
        assert_equal true, opts[:catarg]
@@ -19,7 +28,6 @@ module OptimistXL
     end
 
     def test_altshort_with_multi
-      @p = Parser.new
       @p.opt :flag, "desc", :short => ["-c", "C", :x], :multi => true
       @p.opt :num, "desc", :short => ["-n", "N"], :multi => true, type: Integer
       @p.parse %w(-c)
@@ -36,35 +44,61 @@ module OptimistXL
     end
 
     def test_altlong
-      @p = Parser.new
-      @p.opt "goodarg", "desc", :alt => "none"
+      @p.opt "goodarg0", "desc", :alt => "zero"
+      @p.opt "goodarg1", "desc", :long => "newone", :alt => "one"
       @p.opt "goodarg2", "desc", :alt => "--two"
       @p.opt "goodarg3", "desc", :alt => ["three", "--four", :five]
-      #assert_raises(ArgumentError) { @p.opt "badarg", "desc", :alt => ["", '--', '-bad', '---superbad', :'2'] }
+
+      [%w[--goodarg0], %w[--zero]].each do |a|
+        opts = @p.parse(a)
+        assert opts.goodarg0
+      end
+      
+      [%w[--newone], %w[-n], %w[--one]].each  do |a|
+        opts = @p.parse(a)
+        assert opts.goodarg1
+      end
+
+      [%w[--two]].each  do |a|
+        opts = @p.parse(a)
+        assert opts.goodarg2
+      end
+
+      [%w[--three], %w[--four], %w[--five]].each  do |a|
+        opts = @p.parse(a)
+        assert opts.goodarg3
+      end
+
+      [%w[--goodarg1], %w[--missing], %w[-a]].each do |a|
+        assert_raises(OptimistXL::CommandlineError) { @p.parse(a) }
+      end
+
+      ["", '--', '-bad', '---threedash'].each do |altitem|
+        assert_raises(ArgumentError) { @p.opt "badarg", "desc", :alt => altitem }
+      end
     end
     
     def test_altshort_help
-      @p = Parser.new
       @p.opt :cat, 'cat', short: ['c','C','a','T']
-      err = assert_raises(OptimistXL::HelpNeeded) do
-        @p.parse(%w(--help))
-      end
-      sio = StringIO.new "w"
-      err.parser.educate sio
+      outstring = get_help_string
       # expect mutliple short-opts to be in the help
-      assert_match(/-c, -C, -a, -T, --cat/, sio.string)
+      assert_match(/-c, -C, -a, -T, --cat/, outstring)
     end
 
+    
     def test_altlong_help
-      @p = Parser.new
       @p.opt :cat, 'a cat', alt: :feline
-      @p.opt :dog, 'a dog', alt: ['pooch', :canine]
-      err = assert_raises(OptimistXL::HelpNeeded) do
-        @p.parse(%w(--help))
-      end
-      sio = StringIO.new "w"
-      err.parser.educate sio
-      assert_match(//, sio.string)
+      @p.opt :dog, 'a dog', alt: ['Pooch', :canine]
+      @p.opt :fruit, 'a fruit', long: :fig, alt: ['peach', :pear, "--apple"], short: :none
+
+      outstring = get_help_string
+
+      assert_match(/^\s*-c, --cat, --feline/, outstring)
+      assert_match(/^\s*-d, --dog, --Pooch, --canine/, outstring)
+
+      # expect long-opt to shadow the actual name
+      assert_match(/^\s*--fig, --peach, --pear, --apple/, outstring)
+      
     end
     
   end
