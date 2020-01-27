@@ -100,6 +100,47 @@ module OptimistXL
       assert_match(/^\s*--fig, --peach, --pear, --apple/, outstring)
       
     end
+
+    def test_alt_duplicates
+      # alt duplicates named option
+      assert_raises(ArgumentError) {
+        @p.opt :cat, 'desc', :alt => :cat
+      }
+      # alt duplicates :long 
+      assert_raises(ArgumentError) {
+        @p.opt :cat, 'desc', :long => :feline, :alt => [:feline]
+      }
+      # alt duplicates itself
+      assert_raises(ArgumentError) {
+        @p.opt :abc, 'desc', :alt => [:aaa, :aaa]
+      }
+    end
     
+    def test_altlong_collisions
+      @p.opt :fat, 'desc'
+      @p.opt :raton, 'desc', :long => :rat
+      @p.opt :bat, 'desc', :alt => [:baton, :twirl]
+
+      # :alt collision with named option
+      assert_raises(ArgumentError) {
+        @p.opt :cat, 'desc', :alt => :fat
+      }
+
+      # :alt collision with :long option
+      assert_raises(ArgumentError) {
+        @p.opt :cat, 'desc', :alt => :rat
+      }
+
+      # :named option collision with existing :alt option
+      assert_raises(ArgumentError) {
+        @p.opt :baton, 'desc'
+      }
+
+      # :long option collision with existing :alt option
+      assert_raises(ArgumentError) {
+        @p.opt :whirl, 'desc', :long => 'twirl'
+      }
+      
+    end
   end
 end
