@@ -17,15 +17,19 @@ One line of code per option is all you need to write. For that, you get a nice
 automatically-generated help page, robust option parsing, and sensible defaults
 for everything you don't specify.
 
+This code is a feature-fork of Optimist: https://github.com/ManageIQ/optimist
+
+See the **Extended Features** section below for the differences/enhancements
+
 ## Features
 
-- Dirt-simple usage.
+- Simple usage.
 - Sensible defaults. No tweaking necessary, much tweaking possible.
 - Support for long options, short options, subcommands, and automatic type validation and
   conversion.
 - Automatic help message generation, wrapped to current screen width.
 
-## Extended features
+## Extended Features
 
 ### Parser Settings
 - Automatic suggestions whens incorrect options are given
@@ -37,16 +41,30 @@ for everything you don't specify.
 
 ### Option Settings
 
+#### Permitted
+
 Permitted options allow specifying valid choices for an option using lists, ranges or regexp's 
 - `permitted:` to specify a allow lists, ranges or regexp filtering of options.
 - `permitted_response:` can be added to provide more explicit output when incorrect choices are given.
 - see [example](examples/permitted.rb)
 - concept and code via @akhoury6
 
+#### Alternate named options
+
+Short options can now take be provided as an Array of list of alternate short-option characters.
+- `opt :cat, 'desc', short: ['c', 't']`
+- Previously `short:` only accepted a single character.
+
+Long options can be given alternate names using `alt:`
+- `opt :length, 'desc', alt: ['size']`
+- Note that `long: 'othername'` still exists to _override_ the named option and can be used in addition to the alt names.
+
+See [example](examples/alt_names.rb)
+
 ### Subcommands
-"Native" subcommand support
-- see [example](examples/subcommands.rb)
-- ideas borrowed from https://github.com/jwliechty/trollop-subcommands
+"Native" subcommand support - similar to sub-commands in Git.
+- See [example](examples/subcommands.rb)
+- Ideas borrowed from https://github.com/jwliechty/trollop-subcommands
 
 ## Requirements
 
