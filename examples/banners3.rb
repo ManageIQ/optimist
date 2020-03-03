@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../lib/optimist_xl'
 
-opts = OptimistXL::options do
+OptimistXL::options do
   version "cool-script v0.3.2 (code-name: apple-cake)"
   banner self.version  ## print out the version in the banner
   banner "drinks"
