@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.version       = OptimistXL::VERSION
   spec.authors       = ["William Morgan", "Keenan Brock", "Jason Frey", "Ben Bowers"]
   spec.email         = "nanobowers@gmail.com"
-  spec.summary       = "OptimistXL is a commandline option parser for Ruby that just gets out of your way."
-  spec.description   = "OptimistXL is a commandline option parser for Ruby that just
-gets out of your way. One line of code per option is all you need to write.
+  spec.summary       = "OptimistXL is feature fork of the Optimist commandline option parser."
+  spec.description   = "OptimistXL is feature filled but lightweight commandline option parser.
+One line of code per option is all you typically need to write.
 For that, you get a nice automatically-generated help page, robust option
 parsing, command subcompletion, and sensible defaults for everything you don't
 specify.  This gem is an enhanced-feature fork of the Optimist gem."
@@ -29,6 +29,8 @@ specify.  This gem is an enhanced-feature fork of the Optimist gem."
 
   spec.require_paths = ["lib"]
 
+  spec.required_ruby_version = '>= 2.2'
+  
   spec.add_development_dependency "minitest", "~> 5.4.3"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "chronic"
