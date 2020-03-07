@@ -9,7 +9,7 @@ require 'date'
 module OptimistXL
   # note: this is duplicated in gemspec
   # please change over there too
-VERSION = "3.1.1"
+VERSION = "3.2.0"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the OptimistXL::options entry.
@@ -434,7 +434,7 @@ class Parser
       end
     end
 
-    required.each do |sym, val|
+    required.each do |sym, _val|
       raise CommandlineError, "option --#{@specs[sym].long} must be specified" unless given_args.include? sym
     end
 
@@ -591,7 +591,7 @@ class Parser
     exit(error_code || -1)
   end
 
-private
+  private
 
   ## yield successive arg, parameter pairs
   def each_arg(args)
@@ -833,6 +833,7 @@ end
 
 class Option
 
+  attr_reader :short
   attr_accessor :name, :long, :default, :permitted, :permitted_response
   attr_writer :multi_given
 
@@ -871,17 +872,6 @@ class Option
 
   def array_default? ; self.default.kind_of?(Array) ; end
 
-
-#  def short_chars ; @short.chars ; end
-#  def short_auto ; @short.auto ; end
-  def short ; @short ; end
-  
-#  def short # used in a test.. :(
-#    return nil if short_chars.empty?
-#    return :none if !@short.auto 
-#    short_chars
-#  end
-
   def doesnt_need_autogen_short ; !short.auto || !short.chars.empty? ; end
 
   def callback ; opts(:callback) ; end
@@ -898,8 +888,8 @@ class Option
 
   def educate
     optionlist = []
-    optionlist.concat short.chars.map { |o| "-#{o}" }
-    optionlist.concat long.names.map {|o| "--#{o}" }
+    optionlist.concat(short.chars.map { |o| "-#{o}" })
+    optionlist.concat(long.names.map { |o| "--#{o}" })
     optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
 
@@ -953,7 +943,7 @@ class Option
     when Array
       return "one of: " + permitted.to_a.map(&:to_s).join(', ')
     when Range
-      return "value in range of: #{permitted.to_s}"
+      return "value in range of: #{permitted}"
     when Regexp
       return "value matching: #{permitted.inspect}"
     end
@@ -1004,7 +994,7 @@ class Option
   # to +OptimistXL::opt+.  This is trickier in OptimistXL, than other cmdline
   # parsers (e.g. Slop) because we allow the +default:+ to be able to
   # set the option's type.
-  def self.create(name, desc="", opts={}, settings={})
+  def self.create(name, _desc="", opts={}, _settings={})
 
     opttype = OptimistXL::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
@@ -1039,7 +1029,6 @@ class Option
     opt_inst
   end
 
-  private
 
   def self.get_type_from_disdef(optdef, opttype, disambiguated_default)
     if disambiguated_default.is_a? Array
@@ -1071,7 +1060,8 @@ class Option
     return OptimistXL::Parser.registry_getopttype(type_from_default)
   end
 
-
+  private_class_method :get_type_from_disdef
+  private_class_method :get_klass_from_default
 
 end
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../lib/optimist_xl'
 
-opts = OptimistXL::options do
+OptimistXL::options do
   synopsis "Overall synopsis of this program"
   version "cool-script v0.3 (code-name: apple-cake)"
   opt :juice, "use juice"

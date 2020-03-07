@@ -273,10 +273,7 @@ class ParserTest < ::MiniTest::Test
   end
 
   def test_flag_with_no_defaults_and_no_args_act_as_switches_array
-    opts = nil
-
     @p.opt :argd, "desc", :type => :strings, :default => ["default_string"]
-
     opts = @p.parse(%w(--argd))
     assert_equal ["default_string"], opts[:argd]
   end
@@ -1309,7 +1306,7 @@ Options:
 
   def test_supports_callback_inline
     assert_raises(RuntimeError, "good") do
-      @p.opt :cb1 do |vals|
+      @p.opt :cb1 do |_vals|
         raise "good"
       end
       @p.parse(%w(--cb1))
@@ -1318,7 +1315,7 @@ Options:
 
   def test_supports_callback_param
     assert_raises(RuntimeError, "good") do
-      @p.opt :cb1, "with callback", :callback => lambda { |vals| raise "good" }
+      @p.opt :cb1, "with callback", :callback => lambda { |_vals| raise "good" }
       @p.parse(%w(--cb1))
     end
   end

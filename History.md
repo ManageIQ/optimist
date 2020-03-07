@@ -1,3 +1,8 @@
+== [3.2.0] / 2020-03-02
+
+* Added alternate-named long options using `:alt`
+* Added alternate-named short-options by allowing `:short` to take an Array.
+* Refactored some short/long handling code into ShortNames and LongNames classes.
 == [3.1.1] / 2020-01-20
 
 * The gem has been forked from optimist to optimist_xl
