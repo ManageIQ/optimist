@@ -7,15 +7,15 @@ module OptimistXL
       @p = Parser.new
     end
 
-    # in this case, the stringflag should return nil
+    # in this case, the stringflag should return false
     def test_stringflag_unset
       @p.opt :xyz, "desc", :type => :stringflag
       @p.opt :abc, "desc", :type => :flag
       opts = @p.parse %w()
-      assert_equal nil, opts[:xyz]
+      assert_equal false, opts[:xyz]
       assert_equal false, opts[:abc]
       opts = @p.parse %w(--abc)
-      assert_equal nil, opts[:xyz]
+      assert_equal false, opts[:xyz]
       assert_equal true, opts[:abc]
     end
 
@@ -47,7 +47,7 @@ module OptimistXL
       assert_equal true, opts[:abc]
     end
 
-    def test_stringflag_with_defaults
+    def test_stringflag_with_string_default
       @p.opt :log, "desc", :type => :stringflag, default: "output.log"
       opts = @p.parse []
       assert_equal nil, opts[:log_given]
@@ -64,15 +64,34 @@ module OptimistXL
       opts = @p.parse %w(--log other.log)
       assert_equal true, opts[:log_given]
       assert_equal "other.log", opts[:log]
-      
     end
 
+    # should be same as with no default, but making sure.
+    def test_stringflag_with_false_default
+      @p.opt :log, "desc", :type => :stringflag, default: false
+      opts = @p.parse []
+      assert_equal nil, opts[:log_given]
+      assert_equal false, opts[:log]
+
+      opts = @p.parse %w(--no-log)
+      assert_equal true, opts[:log_given]
+      assert_equal false, opts[:log]
+
+      opts = @p.parse %w(--log)
+      assert_equal true, opts[:log_given]
+      assert_equal true, opts[:log]
+
+      opts = @p.parse %w(--log other.log)
+      assert_equal true, opts[:log_given]
+      assert_equal "other.log", opts[:log]
+    end
+    
     def test_stringflag_with_no_defaults
       @p.opt :log, "desc", :type => :stringflag
         
       opts = @p.parse []
       assert_equal nil, opts[:log_given]
-      assert_equal nil, opts[:log]
+      assert_equal false, opts[:log]
 
       opts = @p.parse %w(--no-log)
       assert_equal true, opts[:log_given]
@@ -93,6 +112,7 @@ module OptimistXL
     def setup
       @p = Parser.new
       @p.opt :xyz, "desc", :type => :stringflag, :multi => true
+      @p.opt :ghi, "desc", :type => :stringflag, :multi => true, default: ["gg","hh"]
       @p.opt :abc, "desc", :type => :string, :multi => true
     end
 
@@ -102,6 +122,8 @@ module OptimistXL
       assert_equal true, opts[:xyz_given]
       assert_equal ["dog","cat"], opts[:xyz]
       assert_equal [], opts[:abc] # note, multi-args default to empty array
+      assert_equal nil, opts[:ghi_given]
+      assert_equal ["gg","hh"], opts[:ghi]
     end
 
     def test_multi_stringflag_as_flags
@@ -109,6 +131,28 @@ module OptimistXL
       assert_equal true, opts[:xyz_given]
       assert_equal [true, true, true], opts[:xyz]
     end
-end
+
+    def test_multi_stringflag_as_mix1
+      opts = @p.parse %w(--xyz --xyz dog --xyz cat)
+      assert_equal true, opts[:xyz_given]
+      assert_equal [true, "dog", "cat"], opts[:xyz]
+    end
+
+    def test_multi_stringflag_as_mix2
+      opts = @p.parse %w(--xyz dog --xyz cat --xyz --abc letters)
+      assert_equal true, opts[:xyz_given]
+      assert_equal ["dog", "cat", true], opts[:xyz]
+      assert_equal ["letters"], opts[:abc]
+    end
+
+    def test_multi_stringflag_override_array_default
+      opts = @p.parse %w(--xyz --ghi yy --ghi zz)
+      assert_equal true, opts[:xyz_given]
+      assert_equal true, opts[:ghi_given]
+      assert_equal ["yy","zz"], opts[:ghi]
+    end
+
+  end
     
 end
+

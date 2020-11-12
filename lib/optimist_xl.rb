@@ -803,6 +803,14 @@ class Option
     # maximum max_args is likely ~~ 128*1024, as linux MAX_ARG_STRLEN is 128kiB
   end
 
+  
+  # Check that an option is compatible with another option.
+  # By default, checking that they are the same class, but we
+  # can override this in the subclass as needed.
+  def compatible_with?(other_option)
+    self.is_a? other_option.class
+  end
+
   def opts(key)
     @optshash[key]
   end
@@ -950,8 +958,10 @@ class Option
     opttype = OptimistXL::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
     #DEBUG# puts "\nopt:#{opttype||'nil'} ofd:#{opttype_from_default}"  if opttype_from_default
-    raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && !(opttype.is_a? opttype_from_default.class)
-
+    if opttype && opttype_from_default && !opttype.compatible_with?(opttype_from_default) # opttype.is_a? opttype_from_default.class
+      raise ArgumentError, ":type specification (#{opttype.class}) and default type don't match (default type is #{opttype_from_default.class})" 
+    end
+    
     opt_inst = (opttype || opttype_from_default || OptimistXL::BooleanOption.new)
 
     ## fill in :long
@@ -1034,7 +1044,7 @@ class Option
     end
     return sopt
   end
-
+  
 end
 
 # Flag option.  Has no arguments. Can be negated with "no-".
@@ -1133,9 +1143,17 @@ class StringFlagOption < StringOption
 
   def initialize
     super
+    @default = false
     @min_args = 0
     @max_args = 1
   end
+  
+  def compatible_with?(other_option)
+    self.is_a?(other_option.class) ||
+      other_option.is_a?(BooleanOption) ||
+      other_option.is_a?(StringArrayOption)
+  end
+
 end
 
 # Option for dates.  No longer uses Chronic if available.

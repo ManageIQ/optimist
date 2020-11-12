@@ -4,10 +4,7 @@ require_relative '../lib/optimist_xl'
 #module OptimistXL
 
 opts = OptimistXL::options do
-  opt :abc, "spec as a string or a flag", :type => :stringflag
-  opt :xyz, "spec as a string or a flag", :type => :string
+  opt :log, "specify optional log-file path", :type => :stringflag, :default => "progname.log"
 end
-
 p opts
-p ARGV
 
