@@ -2,6 +2,7 @@
 
 * Adding new `:stringflag` option.
 * Improving documentation.
+* Removing support for Ruby 2.2
 
 # [3.2.0] / 2020-03-02
 
