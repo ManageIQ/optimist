@@ -50,7 +50,7 @@ module OptimistXL
     def test_stringflag_with_string_default
       @p.opt :log, "desc", :type => :stringflag, default: "output.log"
       opts = @p.parse []
-      assert_equal nil, opts[:log_given]
+      assert_nil opts[:log_given]
       assert_equal "output.log", opts[:log]
 
       opts = @p.parse %w(--no-log)
@@ -70,7 +70,7 @@ module OptimistXL
     def test_stringflag_with_false_default
       @p.opt :log, "desc", :type => :stringflag, default: false
       opts = @p.parse []
-      assert_equal nil, opts[:log_given]
+      assert_nil opts[:log_given]
       assert_equal false, opts[:log]
 
       opts = @p.parse %w(--no-log)
@@ -90,7 +90,7 @@ module OptimistXL
       @p.opt :log, "desc", :type => :stringflag
         
       opts = @p.parse []
-      assert_equal nil, opts[:log_given]
+      assert_nil opts[:log_given]
       assert_equal false, opts[:log]
 
       opts = @p.parse %w(--no-log)
@@ -122,7 +122,7 @@ module OptimistXL
       assert_equal true, opts[:xyz_given]
       assert_equal ["dog","cat"], opts[:xyz]
       assert_equal [], opts[:abc] # note, multi-args default to empty array
-      assert_equal nil, opts[:ghi_given]
+      assert_nil opts[:ghi_given]
       assert_equal ["gg","hh"], opts[:ghi]
     end
 

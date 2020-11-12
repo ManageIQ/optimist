@@ -33,6 +33,6 @@ specify.  This gem is an enhanced-feature fork of the Optimist gem."
   spec.required_ruby_version = '>= 2.2'
   
   spec.add_development_dependency "minitest", "~> 5.4.3"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", ">= 12.3.3"
   spec.add_development_dependency "chronic"
 end
