@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.email         = "nanobowers@gmail.com"
   spec.summary       = "OptimistXL is feature fork of the Optimist commandline option parser."
   spec.description   = "OptimistXL is feature filled but lightweight commandline option parser.
+It contains all of the features of the Optimist gem, plus lots of additional features you didnt know you needed.
 One line of code per option is all you typically need to write.
 For that, you get a nice automatically-generated help page, robust option
 parsing, command subcompletion, and sensible defaults for everything you don't
