@@ -1,7 +1,6 @@
 language: ruby
 cache: bundler
 rvm:
-  - 2.2
   - 2.3
   - 2.4
   - 2.5
@@ -10,5 +9,5 @@ rvm:
   - jruby-head
 matrix:
   allow_failures:
-    - rvm: jruby-head
-  fast_finish: true
+#    - rvm: jruby-head
+#  fast_finish: true

@@ -148,7 +148,9 @@ module Optimist
     assert help[10] =~ /<date\+>/
   end
 
-  def test_help_has_grammatical_default_text
+  # changing behavior from optimist to simplify code.
+  # no longer write 'default' vs. 'Default' for descriptions ending with '.'
+  def test_help_has_default_text
     parser.opt :arg1, 'description with period.', :default => 'hello'
     parser.opt :arg2, 'description without period', :default => 'world'
     sio = StringIO.new 'w'
@@ -156,7 +158,7 @@ module Optimist
 
     help = sio.string.split "\n"
     assert help[1] =~ /Default/
-    assert help[2] =~ /default/
+    assert help[2] =~ /Default/
   end
 ############
 

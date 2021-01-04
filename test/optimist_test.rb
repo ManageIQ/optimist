@@ -171,7 +171,7 @@ class OptimistTest < MiniTest::Test
       assert_system_exit(0) do
         p = parser
         Optimist.with_standard_exception_handling(p) do
-          raise Optimist::HelpNeeded
+          raise Optimist::HelpNeeded.new(parser: p)
         end
       end
     end

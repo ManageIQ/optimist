@@ -1,14 +1,15 @@
-# lib/optimist.rb -- optimist command-line processing library
+# lib/optimist.rb -- Optimist command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
 # Copyright (c) 2014 Red Hat, Inc.
-# optimist is licensed under the MIT license.
+# Copyright (c) 2019 Ben Bowers
+# Optimist is licensed under the MIT license.
 
 require 'date'
 
 module Optimist
   # note: this is duplicated in gemspec
   # please change over there too
-VERSION = "3.0.1"
+VERSION = "3.3.0"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Optimist::options entry.
@@ -24,6 +25,11 @@ end
 ## Thrown by Parser if the user passes in '-h' or '--help'. Handled
 ## automatically by Optimist#options.
 class HelpNeeded < StandardError
+  attr_reader :parser
+  def initialize(msg=nil, parser: nil)
+    super(msg)
+    @parser = parser
+  end
 end
 
 ## Thrown by Parser if the user passes in '-v' or '--version'. Handled
@@ -70,8 +76,6 @@ class Parser
     return @registry[lookup].new
   end
 
-  INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
-
   ## The values from the commandline that were not interpreted by #parse.
   attr_reader :leftovers
 
@@ -83,6 +87,12 @@ class Parser
   ##  options that were not registered ahead of time.  If 'true', then the parser will simply
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
+
+  
+  DEFAULT_SETTINGS = { exact_match: false,
+                       explicit_short_opts: false,
+                       suggestions: true
+                     }
 
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
@@ -98,9 +108,21 @@ class Parser
     @educate_on_error = false
     @synopsis = nil
     @usage = nil
+    @subcommand_parsers = {}
+
+    ## allow passing settings through Parser.new as an optional hash.
+    ## but keep compatibility with non-hashy args, though.
+    begin
+      settings_hash = Hash[*a]
+      @settings = DEFAULT_SETTINGS.merge(settings_hash)
+      a=[] ## clear out args if using as settings-hash
+    rescue ArgumentError
+      @settings = DEFAULT_SETTINGS
+    end
 
     # instance_eval(&b) if b # can't take arguments
-    cloaker(&b).bind(self).call(*a) if b
+    #cloaker(&b).bind(self).call(*a) if b
+    self.instance_exec(*a, &b) if block_given?
   end
 
   ## Define an option. +name+ is the option name, a unique identifier
@@ -150,12 +172,26 @@ class Parser
     o = Option.create(name, desc, opts)
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
-    raise ArgumentError, "long option name #{o.long.inspect} is already taken; please specify a (different) :long" if @long[o.long]
-    raise ArgumentError, "short option name #{o.short.inspect} is already taken; please specify a (different) :short" if @short[o.short]
-    @long[o.long] = o.name
-    @short[o.short] = o.name if o.short?
+    o.long.names.each do |lng|
+      raise ArgumentError, "long option name #{lng.inspect} is already taken; please specify a (different) :long/:alt" if @long[lng]
+      @long[lng] = o.name
+    end
+
+    raise ArgumentError, "permitted values for option #{o.long.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
+
+    o.short.chars.each do |short|
+      raise ArgumentError, "short option name #{short.inspect} is already taken; please specify a (different) :short" if @short[short]
+      @short[short] = o.name
+    end
+
     @specs[o.name] = o
     @order << [:opt, o.name]
+  end
+
+  def subcmd(name, desc=nil, args = {}, &b)
+    sc = SubcommandParser.new(name, desc, *args, &b)
+    @subcommand_parsers[name.to_sym] = sc
+    return sc
   end
 
   ## Sets the version string. If set, the user can request the version
@@ -226,14 +262,95 @@ class Parser
     @educate_on_error = true
   end
 
+  ## Match long variables with inexact match.
+  ## If we hit a complete match, then use that, otherwise see how many long-options partially match.
+  ## If only one partially matches, then we can safely use that.
+  ## Otherwise, we raise an error that the partially given option was ambiguous.
+  def perform_inexact_match(arg, partial_match)  # :nodoc:
+    return @long[partial_match] if @long.has_key?(partial_match)
+    partially_matched_keys = @long.keys.grep(/^#{partial_match}/)
+    return case partially_matched_keys.size
+           when 0 ; nil
+           when 1 ; @long[partially_matched_keys.first]
+           else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{partially_matched_keys.join(',')})"
+           end
+  end
+  private :perform_inexact_match
+
+  def handle_unknown_argument(arg, candidates, suggestions)
+    errstring = "unknown argument '#{arg}'"
+    errstring += " for command '#{subcommand_name}'" if self.respond_to?(:subcommand_name)
+    if (suggestions &&
+        Module::const_defined?("DidYouMean") &&
+        Module::const_defined?("DidYouMean::JaroWinkler") &&
+        Module::const_defined?("DidYouMean::Levenshtein"))
+      input = arg.sub(/^[-]*/,'')
+
+      # Code borrowed from did_you_mean gem
+      jw_threshold = 0.75
+      seed = candidates.select {|candidate| DidYouMean::JaroWinkler.distance(candidate, input) >= jw_threshold } \
+               .sort_by! {|candidate| DidYouMean::JaroWinkler.distance(candidate.to_s, input) } \
+               .reverse!
+      # Correct mistypes
+      threshold   = (input.length * 0.25).ceil
+      has_mistype = seed.rindex {|c| DidYouMean::Levenshtein.distance(c, input) <= threshold }
+      corrections = if has_mistype
+                      seed.take(has_mistype + 1)
+                    else
+                      # Correct misspells
+                      seed.select do |candidate|
+                        length    = input.length < candidate.length ? input.length : candidate.length
+
+                        DidYouMean::Levenshtein.distance(candidate, input) < length
+                      end.first(1)
+                    end
+      unless corrections.empty?
+        dashdash_corrections = corrections.map{|s| "--#{s}" }
+        errstring << ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
+      end
+    end
+    raise CommandlineError, errstring
+  end
+  private :handle_unknown_argument
+
+  # Provide a list of given subcommands.
+  # List will be empty if subcmd was never given.
+  def subcommands
+    @subcommand_parsers.keys
+  end
+
   ## Parses the commandline. Typically called by Optimist::options,
   ## but you can call it directly if you need more control.
   ##
   ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
   def parse(cmdline = ARGV)
+    if subcommands.empty?
+      parse_base(cmdline)
+    else
+      # set state for subcommand-parse
+      @stop_words += subcommands
+      @stop_on_unknown = true
+      # parse global options
+      global_result = parse_base(cmdline)
+      # grab subcommand
+      cmd = cmdline.shift
+      raise CommandlineError.new('no subcommand provided') unless cmd
+      # parse subcommand options
+      subcmd_parser = @subcommand_parsers[cmd.to_sym]
+      raise CommandlineError.new("unknown subcommand '#{cmd}'") unless subcmd_parser
+      subcmd_result = subcmd_parser.parse_base(cmdline)
+      SubcommandResult.new(subcommand: cmd,
+                           global_options: global_result,
+                           subcommand_options: subcmd_result,
+                           leftovers: subcmd_parser.leftovers)
+    end
+  end
+  
+  def parse_base(cmdline = ARGV)
     vals = {}
     required = {}
 
+    # create default version/help options if not already defined
     opt :version, "Print version and exit" if @version && ! (@specs[:version] || @long["version"])
     opt :help, "Show this message" unless @specs[:help] || @long["help"]
 
@@ -243,16 +360,16 @@ class Parser
       vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options!
+    resolve_default_short_options! unless @settings[:explicit_short_opts]
 
     ## resolve symbols
     given_args = {}
-    @leftovers = each_arg cmdline do |arg, params|
+    @leftovers = each_arg cmdline do |original_arg, params|
       ## handle --no- forms
-      arg, negative_given = if arg =~ /^--no-([^-]\S*)$/
+      arg, negative_given = if original_arg =~ /^--no-([^-]\S*)$/
         ["--#{$1}", true]
       else
-        [arg, false]
+        [original_arg, false]
       end
 
       sym = case arg
@@ -261,10 +378,17 @@ class Parser
         else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
-      sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
-
+      if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+        sym = nil 
+      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
+        # If sym is not already found in the short/long lookup then 
+        # support inexact matching of long-arguments like perl's Getopt::Long
+        sym = perform_inexact_match(arg, $1)
+      end
+      
       next nil if ignore_invalid_options && !sym
-      raise CommandlineError, "unknown argument '#{arg}'" unless sym
+      
+      handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
         raise CommandlineError, "option '#{arg}' specified multiple times"
@@ -278,22 +402,43 @@ class Parser
       # The block returns the number of parameters taken.
       num_params_taken = 0
 
-      unless params.empty?
-        if @specs[sym].single_arg?
-          given_args[sym][:params] << params[0, 1]  # take the first parameter
-          num_params_taken = 1
-        elsif @specs[sym].multi_arg?
-          given_args[sym][:params] << params        # take all the parameters
+      #DEBUG# puts "\nparams:#{params} npt:#{num_params_taken},ps:#{params.size}"
+
+      #if params.size > 0
+      #  if @specs[sym].min_args == 1 && @specs[sym].max_args == 1
+      #    given_args[sym][:params] << params[0, 1]  # take the first parameter
+      #    num_params_taken = 1
+      #  elsif @specs[sym].max_args > 1
+      #    given_args[sym][:params] << params        # take all the parameters
+      #    num_params_taken = params.size
+      #  end
+      #end
+
+      if params.size == 0
+        if @specs[sym].min_args == 0
+          given_args[sym][:params] << [ @specs[sym].default || true]
+        end
+      elsif params.size > 0
+        if params.size >= @specs[sym].max_args
+          # take smaller of the two sizes to determine how many parameters to take
+          num_params_taken = [params.size, @specs[sym].max_args].min
+          given_args[sym][:params] << params[0, num_params_taken]
+        else
+          # take all the parameters
+          given_args[sym][:params] << params        
           num_params_taken = params.size
         end
       end
+      
 
       num_params_taken
     end
 
-    ## check for version and help args
+    ## check for version and help args, and raise if set.
+    ## HelpNeeded should pass the parser object so we know how to educate
+    ## if we are in a global-command or subcommand
     raise VersionNeeded if given_args.include? :version
-    raise HelpNeeded if given_args.include? :help
+    raise HelpNeeded.new(nil, parser: self) if given_args.include? :help
 
     ## check constraint satisfaction
     @constraints.each do |type, syms|
@@ -308,7 +453,7 @@ class Parser
       end
     end
 
-    required.each do |sym, val|
+    required.each do |sym, _val|
       raise CommandlineError, "option --#{@specs[sym].long} must be specified" unless given_args.include? sym
     end
 
@@ -317,22 +462,35 @@ class Parser
       arg, params, negative_given = given_data.values_at :arg, :params, :negative_given
 
       opts = @specs[sym]
-      if params.empty? && !opts.flag?
+
+      if params.size < opts.min_args
         raise CommandlineError, "option '#{arg}' needs a parameter" unless opts.default
         params << (opts.array_default? ? opts.default.clone : [opts.default])
+      end
+
+      if params.first && opts.permitted
+        params.first.each do |val|
+          opts.validate_permitted(arg, val)
+        end
       end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
       vals[sym] = opts.parse(params, negative_given)
 
-      if opts.single_arg?
+      if opts.min_args==0 && opts.max_args==1
+        if opts.multi?
+          vals[sym] = vals[sym].map { |p| p[0] }
+        else
+          vals[sym] = vals[sym][0][0]
+        end
+      elsif opts.min_args==1 && opts.max_args==1
         if opts.multi?        # multiple options, each with a single parameter
           vals[sym] = vals[sym].map { |p| p[0] }
         else                  # single parameter
           vals[sym] = vals[sym][0][0]
         end
-      elsif opts.multi_arg? && !opts.multi?
+      elsif opts.max_args>1 && !opts.multi?
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
@@ -354,6 +512,28 @@ class Parser
     vals
   end
 
+  # Create default text banner in a string so we can override it
+  # in the SubcommandParser class.
+  def default_banner
+    command_name = File.basename($0).gsub(/\.[^.]+$/, '')
+    bannertext = ''
+    bannertext << "Usage: #{command_name} #{@usage}\n" if @usage
+    bannertext << "#{@synopsis}\n" if @synopsis
+    bannertext << "\n" if @usage || @synopsis
+    bannertext << "#{@version}\n" if @version
+    unless subcommands.empty?
+      bannertext << "\n" if @version   
+      bannertext << "Commands:\n"
+      @subcommand_parsers.each_value do |scmd|
+        bannertext << sprintf("  %-20s %s\n", scmd.name, scmd.desc)
+      end
+      bannertext << "\n"   
+    end
+    bannertext << "Options:\n"
+    return bannertext
+  end
+
+  
   ## Print the help message to +stream+.
   def educate(stream = $stdout)
     width # hack: calculate it now; otherwise we have to be careful not to
@@ -365,24 +545,21 @@ class Parser
     leftcol_width = left.values.map(&:length).max || 0
     rightcol_start = leftcol_width + 6 # spaces
 
+    # print a default banner here if there is no text/banner
     unless @order.size > 0 && @order.first.first == :text
-      command_name = File.basename($0).gsub(/\.[^.]+$/, '')
-      stream.puts "Usage: #{command_name} #{@usage}\n" if @usage
-      stream.puts "#{@synopsis}\n" if @synopsis
-      stream.puts if @usage || @synopsis
-      stream.puts "#{@version}\n" if @version
-      stream.puts "Options:"
+      stream.puts default_banner()
     end
 
     @order.each do |what, opt|
       if what == :text
+        # print text/banner here
         stream.puts wrap(opt)
         next
       end
 
       spec = @specs[opt]
       stream.printf "  %-#{leftcol_width}s    ", left[opt]
-      desc = spec.description_with_default
+      desc = spec.full_description
 
       stream.puts wrap(desc, :width => width - rightcol_start - 1, :prefix => rightcol_start)
     end
@@ -440,7 +617,7 @@ class Parser
     exit(error_code || -1)
   end
 
-private
+  private
 
   ## yield successive arg, parameter pairs
   def each_arg(args)
@@ -533,11 +710,11 @@ private
   def resolve_default_short_options!
     @order.each do |type, name|
       opts = @specs[name]
-      next if type != :opt || opts.short
+      next if type != :opt || opts.doesnt_need_autogen_short
 
-      c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.long.split(//).find { |d| d !~ Optimist::ShortNames::INVALID_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
-        opts.short = c
+        opts.short.add c
         @short[c] = name
       end
     end
@@ -575,19 +752,138 @@ private
   end
 end
 
+# If used with subcommands, then return this object instead of a Hash.
+class SubcommandResult
+  def initialize(subcommand: nil, global_options: {}, subcommand_options: {}, leftovers: [])
+    @subcommand = subcommand
+    @global_options = global_options
+    @subcommand_options = subcommand_options
+    @leftovers = leftovers
+  end
+  attr_accessor :subcommand, :global_options, :subcommand_options, :leftovers
+end
+
+class SubcommandParser < Parser
+  attr_reader :name, :desc
+  def initialize(name, desc, *a, &b)
+    super(a, &b)
+    @name = name
+    @desc = desc
+  end
+
+  # alias to make referencing more obvious.
+  def subcommand_name
+    @name
+  end
+  
+  def default_banner()
+    command_name = File.basename($0).gsub(/\.[^.]+$/, '')
+    bannertext = ''
+    bannertext << "Usage: #{command_name} #{@name} #{@usage}\n\n" if @usage
+    bannertext << "#{@synopsis}\n\n" if @synopsis
+    bannertext << "#{desc}\n\n" if @desc
+    bannertext << "Options:\n"
+    return bannertext
+  end
+
+end
+
+class LongNames
+  def initialize
+    @truename = nil
+    @long = nil
+    @alts = []
+  end
+  
+  def make_valid(lopt)
+    return nil if lopt.nil?
+    case lopt.to_s
+    when /^--([^-].*)$/ then $1
+    when /^[^-]/        then lopt.to_s
+    else                     raise ArgumentError, "invalid long option name #{lopt.inspect}"
+    end
+  end
+  
+  def set(name, lopt, alts)
+    @truename = name
+    lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
+    @long = make_valid(lopt)
+    alts = [alts] unless alts.is_a?(Array) # box the value
+    @alts = alts.map { |alt| make_valid(alt) }.compact
+  end
+  
+  # long specified with :long has precedence over the true-name
+  def long ; @long || @truename ; end
+
+  # all valid names, including alts
+  def names
+    [long] + @alts
+  end
+  
+end
+
+class ShortNames
+
+  INVALID_ARG_REGEX = /[\d-]/ #:nodoc:
+
+  def initialize
+    @chars = []
+    @auto = true
+  end
+
+  attr_reader :chars, :auto
+  
+  def add(values)
+    values = [values] unless values.is_a?(Array) # box the value
+    values.compact.each do |val|
+      if val == :none
+        @auto = false
+        raise "Cannot set short to :none if short-chars have been defined '#{@chars}'" unless chars.empty?
+        next
+      end
+      strval = val.to_s
+      sopt = case strval
+             when /^-(.)$/ then $1
+             when /^.$/ then strval
+             else raise ArgumentError, "invalid short option name '#{val.inspect}'"
+             end
+
+      if sopt =~ INVALID_ARG_REGEX
+        raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash" 
+      end
+      @chars << sopt
+    end
+  end
+  
+end
+
 class Option
 
-  attr_accessor :name, :short, :long, :default
+  attr_reader :short
+  attr_accessor :name, :long, :default, :permitted, :permitted_response
   attr_writer :multi_given
 
   def initialize
-    @long = nil
-    @short = nil
+    @long = LongNames.new
+    @short = ShortNames.new # can be an Array of one-char strings, a one-char String, nil or :none
     @name = nil
     @multi_given = false
     @hidden = false
     @default = nil
+    @permitted = nil
+    @permitted_response = "option '%{arg}' only accepts %{valid_string}"
     @optshash = Hash.new()
+    @min_args = 1
+    @max_args = 1
+    # maximum max_args is likely ~~ 128*1024, as linux MAX_ARG_STRLEN is 128kiB
+  end
+
+  
+  # Check that an option is compatible with another option.
+  # By default, checking that they are the same class, but we
+  # can override this in the subclass as needed.
+  def compatible_with?(other_option)
+    self.is_a? other_option.class
   end
 
   def opts(key)
@@ -598,24 +894,24 @@ class Option
     @optshash = o
   end
 
-  ## Indicates a flag option, which is an option without an argument
-  def flag? ; false ; end
-  def single_arg?
-    !self.multi_arg? && !self.flag?
-  end
 
   def multi ; @multi_given ; end
   alias multi? multi
 
-  ## Indicates that this is a multivalued (Array type) argument
-  def multi_arg? ; false ; end
-  ## note: Option-Types with both multi_arg? and flag? false are single-parameter (normal) options.
-
+  attr_reader :min_args, :max_args
+  # |@min_args | @max_args |
+  # +----------+-----------+
+  # | 0        | 0         | formerly flag?==true (option without any arguments)
+  # | 1        | 1         | formerly single_arg?==true (single-parameter/normal option)
+  # | 1        | >1        | formerly multi_arg?==true 
+  # | ?        | ?         | presumably illegal condition. untested.
+  
   def array_default? ; self.default.kind_of?(Array) ; end
 
-  def short? ; short && short != :none ; end
+  def doesnt_need_autogen_short ; !short.auto || !short.chars.empty? ; end
 
   def callback ; opts(:callback) ; end
+  
   def desc ; opts(:desc) ; end
 
   def required? ; opts(:required) ; end
@@ -628,25 +924,99 @@ class Option
   def type_format ; "" ; end
 
   def educate
-    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
+    optionlist = []
+    optionlist.concat(short.chars.map { |o| "-#{o}" })
+    optionlist.concat(long.names.map { |o| "--#{o}" })
+    optionlist.compact.join(', ') + type_format + (min_args==0 && default ? ", --no-#{long}" : "")
   end
 
+  ## Format the educate-line description including the default and permitted value(s)
+  def full_description
+    desc_str = desc
+    desc_str = description_with_default desc_str if default
+    desc_str = description_with_permitted desc_str if permitted
+    desc_str
+  end
+
+  ## Format stdio like objects to a string
+  def format_stdio(obj)
+    case obj
+    when $stdout   then '<stdout>'
+    when $stdin    then '<stdin>'
+    when $stderr   then '<stderr>'
+    else obj # pass-through-case
+    end
+  end
+  
   ## Format the educate-line description including the default-value(s)
-  def description_with_default
-    return desc unless default
+  def description_with_default(str)
+    return str unless default
     default_s = case default
-                when $stdout   then '<stdout>'
-                when $stdin    then '<stdin>'
-                when $stderr   then '<stderr>'
                 when Array
                   default.join(', ')
                 else
-                  default.to_s
+                  format_stdio(default).to_s
                 end
-    defword = desc.end_with?('.') ? 'Default' : 'default'
-    return "#{desc} (#{defword}: #{default_s})"
+    return "#{str} (Default: #{default_s})"
   end
 
+  ## Format the educate-line description including the permitted-value(s)
+  def description_with_permitted(str)
+    permitted_s = case permitted
+                  when Array
+                    permitted.map do |p|
+                      format_stdio(p).to_s
+                    end.join(', ')
+                  when Range
+                    permitted.to_a.map(&:to_s).join(', ')
+                  when Regexp
+                    permitted.to_s
+                  end
+    return "#{str} (Permitted: #{permitted_s})"
+  end
+
+  def permitted_valid_string
+    case permitted
+    when Array
+      return "one of: " + permitted.to_a.map(&:to_s).join(', ')
+    when Range
+      return "value in range of: #{permitted}"
+    when Regexp
+      return "value matching: #{permitted.inspect}"
+    end
+    raise StandardError, "invalid branch"
+  end
+  
+  def permitted_type_valid?
+    return true if permitted.nil?
+    return true if permitted.is_a? Array
+    return true if permitted.is_a? Range
+    return true if permitted.is_a? Regexp
+    false
+  end
+
+  def validate_permitted(arg, value)
+    return true if permitted.nil?
+    unless permitted_value?(value)
+      format_hash = {arg: arg, given: value, value: value, valid_string: permitted_valid_string(), permitted: permitted }
+      raise CommandlineError, permitted_response % format_hash
+    end
+    true
+  end
+  
+  # incoming values from the command-line should be strings, so we should
+  # stringify any permitted types as the basis of comparison.
+  def permitted_value?(val)
+    case permitted
+    when nil then true
+    when Regexp then val.match permitted
+    when Range then permitted.to_a.map(&:to_s).include? val
+    when Array then permitted.map(&:to_s).include? val
+    else false
+    end
+  end  
+    
+  
   ## Provide a way to register symbol aliases to the Parser
   def self.register_alias(*alias_keys)
     alias_keys.each do |alias_key|
@@ -661,20 +1031,22 @@ class Option
   # to +Optimist::opt+.  This is trickier in Optimist, than other cmdline
   # parsers (e.g. Slop) because we allow the +default:+ to be able to
   # set the option's type.
-  def self.create(name, desc="", opts={}, settings={})
+  def self.create(name, _desc="", opts={}, _settings={})
 
     opttype = Optimist::Parser.registry_getopttype(opts[:type])
     opttype_from_default = get_klass_from_default(opts, opttype)
-
-    raise ArgumentError, ":type specification and default type don't match (default type is #{opttype_from_default.class})" if opttype && opttype_from_default && (opttype.class != opttype_from_default.class)
-
+    #DEBUG# puts "\nopt:#{opttype||'nil'} ofd:#{opttype_from_default}"  if opttype_from_default
+    if opttype && opttype_from_default && !opttype.compatible_with?(opttype_from_default) # opttype.is_a? opttype_from_default.class
+      raise ArgumentError, ":type specification (#{opttype.class}) and default type don't match (default type is #{opttype_from_default.class})" 
+    end
+    
     opt_inst = (opttype || opttype_from_default || Optimist::BooleanOption.new)
 
     ## fill in :long
-    opt_inst.long = handle_long_opt(opts[:long], name)
+    opt_inst.long.set(name, opts[:long], opts[:alt])
 
     ## fill in :short
-    opt_inst.short = handle_short_opt(opts[:short])
+    opt_inst.short.add opts[:short]
 
     ## fill in :multi
     multi_given = opts[:multi] || false
@@ -683,21 +1055,25 @@ class Option
     ## fill in :default for flags
     defvalue = opts[:default] || opt_inst.default
 
+    ## fill in permitted values
+    permitted = opts[:permitted] || nil
+
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
+    opt_inst.permitted = permitted
+    opt_inst.permitted_response = opts[:permitted_response] if opts[:permitted_response]
     opt_inst.default = defvalue
     opt_inst.name = name
     opt_inst.opts = opts
     opt_inst
   end
 
-  private
 
   def self.get_type_from_disdef(optdef, opttype, disambiguated_default)
     if disambiguated_default.is_a? Array
       return(optdef.first.class.name.downcase + "s") if !optdef.empty?
       if opttype
-        raise ArgumentError, "multiple argument type must be plural" unless opttype.multi_arg?
+        raise ArgumentError, "multiple argument type must be plural" unless opttype.max_args > 1
         return nil
       else
         raise ArgumentError, "multiple argument type cannot be deduced from an empty array"
@@ -723,6 +1099,9 @@ class Option
     return Optimist::Parser.registry_getopttype(type_from_default)
   end
 
+  private_class_method :get_type_from_disdef
+  private_class_method :get_klass_from_default
+
   def self.handle_long_opt(lopt, name)
     lopt = lopt ? lopt.to_s : name.to_s.gsub("_", "-")
     lopt = case lopt
@@ -745,17 +1124,20 @@ class Option
     end
     return sopt
   end
-
+  
 end
 
 # Flag option.  Has no arguments. Can be negated with "no-".
 class BooleanOption < Option
   register_alias :flag, :bool, :boolean, :trueclass, :falseclass
+
   def initialize
     super()
     @default = false
+    @min_args = 0
+    @max_args = 0
   end
-  def flag? ; true ; end
+  
   def parse(_paramlist, neg_given)
     return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
   end
@@ -822,7 +1204,42 @@ class StringOption < Option
   end
 end
 
-# Option for dates.  Uses Chronic if it exists.
+# 
+class StringFlagOption < StringOption
+  register_alias :stringflag
+  def type_format ; "=<s?>" ; end
+  def parse(paramlist, neg_given)
+    paramlist.map do |plist|
+      plist.map do |pg|
+        neg_given ? false : pg
+        #case pg
+        #when FalseClass then () ? neg_given : !neg_given
+        #when TrueClass then (self.name.to_s =~ /^no_/) ? neg_given : !neg_given
+        #else pg
+        #end
+      end
+    end
+  end
+
+  def initialize
+    super
+    @default = false
+    @min_args = 0
+    @max_args = 1
+  end
+  
+  def compatible_with?(other_option)
+    self.is_a?(other_option.class) ||
+      other_option.is_a?(BooleanOption) ||
+      other_option.is_a?(StringArrayOption)
+  end
+
+end
+
+# Option for dates.  No longer uses Chronic if available.
+# If chronic style dates are needed, then you may
+# require 'optimist/chronic'
+
 class DateOption < Option
   register_alias :date
   def type_format ; "=<date>" ; end
@@ -831,13 +1248,7 @@ class DateOption < Option
       pg.map do |param|
         next param if param.is_a?(Date)
         begin
-          begin
-            require 'chronic'
-            time = Chronic.parse(param)
-          rescue LoadError
-            # chronic is not available
-          end
-          time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
+          Date.parse(param)
         rescue ArgumentError
           raise CommandlineError, "option '#{self.name}' needs a date"
         end
@@ -855,35 +1266,35 @@ end
 class IntegerArrayOption < IntegerOption
   register_alias :fixnums, :ints, :integers
   def type_format ; "=<i+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple Floats
 class FloatArrayOption < FloatOption
   register_alias :doubles, :floats
   def type_format ; "=<f+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple Strings
 class StringArrayOption < StringOption
   register_alias :strings
   def type_format ; "=<s+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling multiple dates
 class DateArrayOption < DateOption
   register_alias :dates
   def type_format ; "=<date+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 # Option class for handling Files/URLs via 'open'
 class IOArrayOption < IOOption
   register_alias :ios
   def type_format ; "=<filename/uri+>" ; end
-  def multi_arg? ; true ; end
+  def initialize ; super ; @max_args = 999 ; end
 end
 
 ## The easy, syntactic-sugary entry method into Optimist. Creates a Parser,
@@ -915,6 +1326,22 @@ end
 ##
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
+##
+## Settings:
+##   Optimist::options and Optimist::Parser.new accept +settings+ to control how
+##   options are interpreted.  These settings are given as hash arguments, e.g:
+##
+##   opts = Optimist::options(ARGV, :inexact_match => true) do
+##     opt :foobar, 'messed up'
+##     opt :forget, 'forget it'
+##   end
+##
+##  +settings+ include:
+##  * :inexact_match  : Allow minimum unambigous number of characters to match a long option
+##  * :suggestions    : Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
+##  * :explicit_short : Short options will only be created where explicitly defined.  If you do not like short-options, this will prevent having to define :short=> :none for all of your options.
+
+##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
 ## See more examples at http://optimist.rubyforge.org.
 def options(args = ARGV, *a, &b)
@@ -951,8 +1378,8 @@ def with_standard_exception_handling(parser)
   yield
 rescue CommandlineError => e
   parser.die(e.message, nil, e.error_code)
-rescue HelpNeeded
-  parser.educate
+rescue HelpNeeded => e
+  e.parser.educate
   exit
 rescue VersionNeeded
   puts parser.version

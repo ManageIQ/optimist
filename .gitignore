@@ -13,3 +13,7 @@
 *.o
 *.a
 mkmf.log
+
+# dont checkin emacs tempfiles
+*~
+.\#*
