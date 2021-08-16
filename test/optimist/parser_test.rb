@@ -347,6 +347,14 @@ class ParserTest < ::MiniTest::Test
     assert_equal true, opts[:defaultfalse]
     assert_equal true, opts[:defaulttrue]
 
+    ## using short form turns them all on, regardless of default
+    #
+    # (matches positve "non-no" long form)
+    opts = @p.parse %w(-d -e -f)
+    assert_equal true, opts[:defaultnone]
+    assert_equal true, opts[:defaultfalse]
+    assert_equal true, opts[:defaulttrue]
+
     ## using --no- form turns them off, regardless of default
     opts = @p.parse %w(--no-defaultfalse --no-defaulttrue --no-defaultnone)
     assert_equal false, opts[:defaultnone]
@@ -374,6 +382,14 @@ class ParserTest < ::MiniTest::Test
 
     ## using dropped-no form turns them all off, regardless of default
     opts = @p.parse %w(--default-false --default-true --default-none)
+    assert_equal false, opts[:no_default_none]
+    assert_equal false, opts[:no_default_false]
+    assert_equal false, opts[:no_default_true]
+
+    ## using short form turns them all off, regardless of default
+    #
+    # (matches positve "non-no" long form)
+    opts = @p.parse %w(-n -o -d)
     assert_equal false, opts[:no_default_none]
     assert_equal false, opts[:no_default_false]
     assert_equal false, opts[:no_default_true]
