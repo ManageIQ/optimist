@@ -32,5 +32,5 @@ specify."
   spec.add_development_dependency "chronic"
   spec.add_development_dependency "manageiq-style"
   spec.add_development_dependency "minitest",      "~> 5.4.3"
-  spec.add_development_dependency "rake",          "~> 10.0"
+  spec.add_development_dependency "rake",          ">= 10.0"
 end
