@@ -199,6 +199,13 @@ class Parser
     @constraints << [:conflicts, syms]
   end
 
+  ## Marks two (or more!) options as required but mutually exclusive.
+  def either(*syms)
+    syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
+    @constraints << [:conflicts, syms]
+    @constraints << [:either, syms]
+  end
+
   ## Defines a set of words which cause parsing to terminate when
   ## encountered, such that any options to the left of the word are
   ## parsed as usual, and options to the right of the word are left
@@ -298,13 +305,16 @@ class Parser
     ## check constraint satisfaction
     @constraints.each do |type, syms|
       constraint_sym = syms.find { |sym| given_args[sym] }
-      next unless constraint_sym
 
       case type
       when :depends
+        next unless constraint_sym
         syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} requires --#{@specs[sym].long}" unless given_args.include? sym }
       when :conflicts
+        next unless constraint_sym
         syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
+      when :either
+        raise CommandlineError, "one of #{syms.map { |sym| '--' + @specs[sym].long }.join(', ') } is required" if (syms & given_args.keys).size != 1
       end
     end
 

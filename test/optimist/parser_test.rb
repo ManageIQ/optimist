@@ -763,6 +763,34 @@ Options:
     assert_raises(CommandlineError) { @p.parse %w(--one --mellow --two --jello) }
   end
 
+  def test_either
+    @p.opt :one
+    assert_raises(ArgumentError) { @p.either :one, :two }
+    @p.opt :two
+    @p.either :one, :two
+    @p.parse %w(--one)
+    @p.parse %w(--two)
+    assert_raises(CommandlineError) { @p.parse %w(--one --two) }
+    assert_raises(CommandlineError) { @p.parse %w() }
+
+    @p.opt :hello
+    @p.opt :yellow
+    @p.opt :mellow
+    @p.opt :jello
+    @p.either :hello, :yellow, :mellow, :jello
+    assert_raises(CommandlineError) { @p.parse %w(--hello --yellow --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
+
+    @p.parse %w(--hello --one)
+    @p.parse %w(--jello --two)
+    @p.parse %w(--mellow --one)
+    @p.parse %w(--mellow --two)
+
+    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello) }
+    assert_raises(CommandlineError) { @p.parse %w(--one --mellow --two --jello) }
+  end
+
   def test_conflict_error_messages
     @p.opt :one
     @p.opt "two"
