@@ -314,7 +314,7 @@ class Parser
         next unless constraint_sym
         syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
       when :either
-        raise CommandlineError, "one of #{syms.map { |sym| '--' + @specs[sym].long }.join(', ') } is required" if (syms & given_args.keys).size != 1
+        raise CommandlineError, "one of #{syms.map { |sym| "--#{@specs[sym].long}" }.join(', ') } is required" if (syms & given_args.keys).size != 1
       end
     end
 
