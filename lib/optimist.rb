@@ -6,9 +6,7 @@
 require 'date'
 
 module Optimist
-  # note: this is duplicated in gemspec
-  # please change over there too
-VERSION = "3.0.1"
+VERSION = "3.1.0"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
 ## you're using the Optimist::options entry.
