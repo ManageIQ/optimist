@@ -22,7 +22,7 @@ specify."
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.metadata    = {
-    "changelog_uri" => "https://github.com/ManageIQ/optimist/blob/master/History.txt",
+    "changelog_uri"   => "https://github.com/ManageIQ/optimist/blob/master/CHANGELOG.md",
     "source_code_uri" => "https://github.com/ManageIQ/optimist/",
     "bug_tracker_uri" => "https://github.com/ManageIQ/optimist/issues",
   }
