@@ -1,7 +1,7 @@
 require 'test_helper'
 
 module Optimist
-  class HelpNeededTest < ::MiniTest::Test
+  class HelpNeededTest < ::Minitest::Test
     def test_class
       assert_kind_of Exception, hn("message")
     end

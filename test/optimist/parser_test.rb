@@ -3,7 +3,7 @@ require 'test_helper'
 
 module Optimist
 
-class ParserTest < ::MiniTest::Test
+class ParserTest < ::Minitest::Test
   def setup
     @p = Parser.new
   end

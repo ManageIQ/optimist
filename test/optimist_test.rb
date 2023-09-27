@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class OptimistTest < MiniTest::Test
+class OptimistTest < Minitest::Test
   def setup
     Optimist.send(:instance_variable_set, "@last_parser", nil)
   end
