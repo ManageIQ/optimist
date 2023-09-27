@@ -3,7 +3,7 @@ require 'test_helper'
 
 module Optimist
 
-  class ParserOptTest < ::MiniTest::Test
+  class ParserOptTest < ::Minitest::Test
 
     private
 

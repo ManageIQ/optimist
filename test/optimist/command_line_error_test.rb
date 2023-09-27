@@ -1,7 +1,7 @@
 require 'test_helper'
 
 module Optimist
-  class CommandlineErrorTest < ::MiniTest::Test
+  class CommandlineErrorTest < ::Minitest::Test
     def test_class
       assert_kind_of Exception, cle("message")
     end

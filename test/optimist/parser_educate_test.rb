@@ -2,7 +2,7 @@ require 'stringio'
 require 'test_helper'
 
 module Optimist
-  class ParserEduateTest < ::MiniTest::Test
+  class ParserEduateTest < ::Minitest::Test
     def setup
     end
 

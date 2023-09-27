@@ -2,7 +2,7 @@ require 'stringio'
 require 'test_helper'
 
 module Optimist
-  class ParserParseTest < ::MiniTest::Test
+  class ParserParseTest < ::Minitest::Test
 
   # TODO: parse
     # resolve_default_short_options!
