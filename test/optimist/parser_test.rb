@@ -471,8 +471,8 @@ with a multi-line description
     @p.educate(out)
     assert_equal <<-EOM, out.string
 Options:
-  --arg=<i>    This is an arg
-               with a multi-line description
+      --arg=<i>    This is an arg
+                   with a multi-line description
     EOM
   end
 
