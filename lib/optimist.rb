@@ -636,7 +636,7 @@ class Option
   def type_format ; "" ; end
 
   def educate
-    (short? ? "-#{short}, " : "") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
+    (short? ? "-#{short}, " : "    ") + "--#{long}" + type_format + (flag? && default ? ", --no-#{long}" : "")
   end
 
   ## Format the educate-line description including the default-value(s)
