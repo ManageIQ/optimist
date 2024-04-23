@@ -158,6 +158,17 @@ module Optimist
     assert help[1] =~ /Default/
     assert help[2] =~ /default/
   end
+
+  def test_help_has_grammatical_permitted_text
+    parser.opt :arg1, 'description with period.', :type => :strings, :permitted => %w(foo bar)
+    parser.opt :arg2, 'description without period', :type => :strings, :permitted => %w(foo bar)
+    sio = StringIO.new 'w'
+    parser.educate sio
+
+    help = sio.string.split "\n"
+    assert help[1] =~ /Permitted/
+    assert help[2] =~ /permitted/
+  end
 ############
 
     private
