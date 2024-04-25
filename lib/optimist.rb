@@ -114,6 +114,7 @@ class Parser
   ## [+:default+] Set the default value for an argument. Without a default value, the hash returned by #parse (and thus Optimist::options) will have a +nil+ value for this key unless the argument is given on the commandline. The argument type is derived automatically from the class of the default value given, so specifying a +:type+ is not necessary if a +:default+ is given. (But see below for an important caveat when +:multi+: is specified too.) If the argument is a flag, and the default is set to +true+, then if it is specified on the the commandline the value will be +false+.
   ## [+:required+] If set to +true+, the argument must be provided on the commandline.
   ## [+:multi+] If set to +true+, allows multiple occurrences of the option on the commandline. Otherwise, only a single instance of the option is allowed. (Note that this is different from taking multiple parameters. See below.)
+  ## [+:permitted+] Specify an Array of permitted values for an option. If the user provides a value outside this list, an error is thrown.
   ##
   ## Note that there are two types of argument multiplicity: an argument
   ## can take multiple values, e.g. "--arg 1 2 3". An argument can also
