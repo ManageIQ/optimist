@@ -82,6 +82,8 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
+  DEFAULT_SETTINGS = { suggestions: true }
+
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
     @version = nil
@@ -97,8 +99,19 @@ class Parser
     @synopsis = nil
     @usage = nil
 
+    ## allow passing settings through Parser.new as an optional hash.
+    ## but keep compatibility with non-hashy args, though.
+    begin
+      settings_hash = Hash[*a]
+      @settings = DEFAULT_SETTINGS.merge(settings_hash)
+      a=[] ## clear out args if using as settings-hash
+    rescue ArgumentError
+      @settings = DEFAULT_SETTINGS
+    end
+
     # instance_eval(&b) if b # can't take arguments
-    cloaker(&b).bind(self).call(*a) if b
+    #cloaker(&b).bind(self).call(*a) if b
+    self.instance_exec(*a, &b) if block_given?
   end
 
   ## Define an option. +name+ is the option name, a unique identifier
@@ -231,6 +244,39 @@ class Parser
     @educate_on_error = true
   end
 
+  def handle_unknown_argument(arg, candidates, suggestions)
+    errstring = "unknown argument '#{arg}'"
+    errstring += " for command '#{subcommand_name}'" if self.respond_to?(:subcommand_name)
+    if suggestions
+      input = arg.sub(/^[-]*/,'')
+
+      # Code borrowed from did_you_mean gem
+      jw_threshold = 0.75
+      seed = candidates.select {|candidate| DidYouMean::JaroWinkler.distance(candidate, input) >= jw_threshold } \
+               .sort_by! {|candidate| DidYouMean::JaroWinkler.distance(candidate.to_s, input) } \
+               .reverse!
+      # Correct mistypes
+      threshold   = (input.length * 0.25).ceil
+      has_mistype = seed.rindex {|c| DidYouMean::Levenshtein.distance(c, input) <= threshold }
+      corrections = if has_mistype
+                      seed.take(has_mistype + 1)
+                    else
+                      # Correct misspells
+                      seed.select do |candidate|
+                        length    = input.length < candidate.length ? input.length : candidate.length
+
+                        DidYouMean::Levenshtein.distance(candidate, input) < length
+                      end.first(1)
+                    end
+      unless corrections.empty?
+        dashdash_corrections = corrections.map{|s| "--#{s}" }
+        errstring << ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
+      end
+    end
+    raise CommandlineError, errstring
+  end
+  private :handle_unknown_argument
+
   ## Parses the commandline. Typically called by Optimist::options,
   ## but you can call it directly if you need more control.
   ##
@@ -269,7 +315,8 @@ class Parser
       sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
 
       next nil if ignore_invalid_options && !sym
-      raise CommandlineError, "unknown argument '#{arg}'" unless sym
+
+      handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
         raise CommandlineError, "option '#{arg}' specified multiple times"
