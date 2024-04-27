@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # lib/optimist.rb -- optimist command-line processing library
 # Copyright (c) 2008-2014 William Morgan.
 # Copyright (c) 2014 Red Hat, Inc.
@@ -483,7 +485,7 @@ private
         end
         i += 1
       when /^-(\S+)$/ # one or more short arguments
-        short_remaining = ""
+        short_remaining = []
         shortargs = $1.split(//)
         shortargs.each_with_index do |a, j|
           if j == (shortargs.length - 1)
@@ -493,7 +495,7 @@ private
             unless num_params_taken
               short_remaining << a
               if @stop_on_unknown
-                remains << "-#{short_remaining}"
+                remains << "-#{short_remaining.join}"
                 return remains += args[i + 1..-1]
               end
             else
@@ -503,8 +505,8 @@ private
             unless yield "-#{a}", []
               short_remaining << a
               if @stop_on_unknown
-                short_remaining += shortargs[j + 1..-1].join
-                remains << "-#{short_remaining}"
+                short_remaining << shortargs[j + 1..-1].join
+                remains << "-#{short_remaining.join}"
                 return remains += args[i + 1..-1]
               end
             end
@@ -512,7 +514,7 @@ private
         end
 
         unless short_remaining.empty?
-          remains << "-#{short_remaining}"
+          remains << "-#{short_remaining.join}"
         end
         i += 1
       else
