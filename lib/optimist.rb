@@ -4,8 +4,6 @@
 # optimist is licensed under the MIT license.
 
 require 'date'
-require 'did_you_mean/levenshtein'
-require 'did_you_mean/jaro_winkler'
 
 module Optimist
 VERSION = "3.1.0"
