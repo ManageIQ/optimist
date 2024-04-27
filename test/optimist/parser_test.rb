@@ -52,6 +52,13 @@ class ParserTest < ::Minitest::Test
   end
 
   def test_unknown_arguments_with_suggestions
+    unless (Module::const_defined?("DidYouMean") &&
+      Module::const_defined?("DidYouMean::JaroWinkler") &&
+      Module::const_defined?("DidYouMean::Levenshtein"))
+      # if we cannot
+      skip("Skipping because DidYouMean was not found")
+      return false
+    end
     sugp = Parser.new(:suggestions => true)
     err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
     assert_match(/unknown argument '--bone'$/, err.message)

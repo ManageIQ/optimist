@@ -111,8 +111,6 @@ class Parser
       @settings = DEFAULT_SETTINGS
     end
 
-    # instance_eval(&b) if b # can't take arguments
-    #cloaker(&b).bind(self).call(*a) if b
     self.instance_exec(*a, &b) if block_given?
   end
 
@@ -249,7 +247,10 @@ class Parser
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
     errstring += " for command '#{subcommand_name}'" if self.respond_to?(:subcommand_name)
-    if suggestions
+    if (suggestions &&
+      Module::const_defined?("DidYouMean") &&
+      Module::const_defined?("DidYouMean::JaroWinkler") &&
+      Module::const_defined?("DidYouMean::Levenshtein"))
       input = arg.sub(/^[-]*/,'')
 
       # Code borrowed from did_you_mean gem
@@ -620,16 +621,6 @@ private
     ret
   end
 
-  ## instance_eval but with ability to handle block arguments
-  ## thanks to _why: http://redhanded.hobix.com/inspect/aBlockCostume.html
-  def cloaker(&b)
-    (class << self; self; end).class_eval do
-      define_method :cloaker_, &b
-      meth = instance_method :cloaker_
-      remove_method :cloaker_
-      meth
-    end
-  end
 end
 
 class Option
