@@ -924,7 +924,7 @@ end
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
 ##
-## See more examples at http://optimist.rubyforge.org.
+## See more examples at https://www.manageiq.org/optimist
 def options(args = ARGV, *a, &b)
   @last_parser = Parser.new(*a, &b)
   with_standard_exception_handling(@last_parser) { @last_parser.parse args }
