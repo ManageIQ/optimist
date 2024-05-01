@@ -118,6 +118,14 @@ class ParserTest < ::Minitest::Test
     assert_raises(CommandlineError) { @p.parse(%w(--arg2 --arg3)) }
   end
 
+  def test_permitted_flags_filter_inputs
+    @p.opt "arg", "desc", :type => :strings, :permitted => %w(foo bar)
+
+    result = @p.parse(%w(--arg foo))
+    assert_equal ["foo"], result["arg"]
+    assert_raises(CommandlineError) { @p.parse(%w(--arg baz)) }
+  end
+
   ## flags that take an argument error unless given one
   def test_argflags_demand_args
     @p.opt "goodarg", "desc", :type => String
