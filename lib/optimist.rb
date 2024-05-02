@@ -248,7 +248,6 @@ class Parser
 
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
-    errstring += " for command '#{subcommand_name}'" if self.respond_to?(:subcommand_name)
     if (suggestions &&
       Module::const_defined?("DidYouMean") &&
       Module::const_defined?("DidYouMean::JaroWinkler") &&
@@ -275,7 +274,7 @@ class Parser
                     end
       unless corrections.empty?
         dashdash_corrections = corrections.map{|s| "--#{s}" }
-        errstring << ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
+        errstring += ".  Did you mean: [#{dashdash_corrections.join(', ')}] ?"
       end
     end
     raise CommandlineError, errstring
