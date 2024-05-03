@@ -1025,7 +1025,7 @@ end
 ##   end
 ##
 ##  +settings+ include:
-##  * :exact_match  : (default=false) Allow minimum unambigous number of characters to match a long option
+##  * :exact_match  : (default=true) Allow minimum unambigous number of characters to match a long option
 ##  * :suggestions  : (default=true) Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
 ##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
