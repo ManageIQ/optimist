@@ -84,7 +84,7 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
-  DEFAULT_SETTINGS = { suggestions: true }
+  DEFAULT_SETTINGS = { suggestions: true, exact_match: true }
 
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
@@ -246,6 +246,21 @@ class Parser
     @educate_on_error = true
   end
 
+  ## Match long variables with inexact match.
+  ## If we hit a complete match, then use that, otherwise see how many long-options partially match.
+  ## If only one partially matches, then we can safely use that.
+  ## Otherwise, we raise an error that the partially given option was ambiguous.
+  def perform_inexact_match(arg, partial_match)  # :nodoc:
+    return @long[partial_match] if @long.has_key?(partial_match)
+    partially_matched_keys = @long.keys.select { |opt| opt.start_with?(partial_match) }
+    case partially_matched_keys.size
+    when 0 ; nil
+    when 1 ; @long[partially_matched_keys.first]
+    else ; raise CommandlineError, "ambiguous option '#{arg}' matched keys (#{partially_matched_keys.join(',')})"
+    end
+  end
+  private :perform_inexact_match
+
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
     if (suggestions &&
@@ -316,10 +331,14 @@ class Parser
         else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
-      sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+      if arg.start_with?("--no-") # explicitly invalidate --no-no- arguments
+        sym = nil
+      ## Support inexact matching of long-arguments like perl's Getopt::Long
+      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S+)$/)
+        sym = perform_inexact_match(arg, $1)
+      end
 
       next nil if ignore_invalid_options && !sym
-
       handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 
       if given_args.include?(sym) && !@specs[sym].multi?
@@ -513,7 +532,7 @@ private
     until i >= args.length
       return remains += args[i..-1] if @stop_words.member? args[i]
       case args[i]
-      when /^--$/ # arg terminator
+      when "--" # arg terminator
         return remains += args[(i + 1)..-1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
         num_params_taken = yield "--#{$1}", [$2]
@@ -598,7 +617,7 @@ private
       opts = @specs[name]
       next if type != :opt || opts.short
 
-      c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.chars.find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
         opts.short = c
         @short[c] = name
@@ -995,6 +1014,20 @@ end
 ##
 ##   ## if called with --monkey
 ##   p opts # => {:monkey=>true, :name=>nil, :num_limbs=>4, :help=>false, :monkey_given=>true}
+##
+## Settings:
+##   Optimist::options and Optimist::Parser.new accept +settings+ to control how
+##   options are interpreted.  These settings are given as hash arguments, e.g:
+##
+##   opts = Optimist::options(ARGV, exact_match: false) do
+##     opt :foobar, 'messed up'
+##     opt :forget, 'forget it'
+##   end
+##
+##  +settings+ include:
+##  * :exact_match  : (default=true) Allow minimum unambigous number of characters to match a long option
+##  * :suggestions  : (default=true) Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
+##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
 ## See more examples at https://www.manageiq.org/optimist
 def options(args = ARGV, *a, &b)
