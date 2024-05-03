@@ -252,7 +252,7 @@ class Parser
   ## Otherwise, we raise an error that the partially given option was ambiguous.
   def perform_inexact_match(arg, partial_match)  # :nodoc:
     return @long[partial_match] if @long.has_key?(partial_match)
-    partially_matched_keys = @long.keys.grep(/^#{partial_match}/)
+    partially_matched_keys = @long.keys.select { |opt| opt.start_with?(partial_match) }
     case partially_matched_keys.size
     when 0 ; nil
     when 1 ; @long[partially_matched_keys.first]
@@ -331,7 +331,7 @@ class Parser
         else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
-      if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+      if arg.start_with?("--no-") # explicitly invalidate --no-no- arguments
         sym = nil
       ## Support inexact matching of long-arguments like perl's Getopt::Long
       elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S+)$/)
@@ -532,7 +532,7 @@ private
     until i >= args.length
       return remains += args[i..-1] if @stop_words.member? args[i]
       case args[i]
-      when /^--$/ # arg terminator
+      when "--" # arg terminator
         return remains += args[(i + 1)..-1]
       when /^--(\S+?)=(.*)$/ # long argument with equals
         num_params_taken = yield "--#{$1}", [$2]
@@ -617,7 +617,7 @@ private
       opts = @specs[name]
       next if type != :opt || opts.short
 
-      c = opts.long.split(//).find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
+      c = opts.long.chars.find { |d| d !~ INVALID_SHORT_ARG_REGEX && !@short.member?(d) }
       if c # found a character to use
         opts.short = c
         @short[c] = name
@@ -856,7 +856,7 @@ class BooleanOption < Option
   end
   def flag? ; true ; end
   def parse(_paramlist, neg_given)
-    return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
+    return(self.name.to_s.start_with("^no_") ? neg_given : !neg_given)
   end
 end
 
