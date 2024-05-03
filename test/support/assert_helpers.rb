@@ -42,5 +42,11 @@ module Minitest::Assertions
     end
     flunk "#{msg}#{mu_pp(exp)} SystemExit expected but nothing was raised."
   end
+
+  # wrapper around common assertion checking pattern
+  def assert_raises_errmatch(err_klass, err_regexp, &b)
+    err = assert_raises(err_klass, &b)
+    assert_match(err_regexp, err.message)
+  end
 end
 

@@ -85,7 +85,7 @@ class Parser
   attr_accessor :ignore_invalid_options
 
   DEFAULT_SETTINGS = { suggestions: true, exact_match: false }
-  
+
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
     @version = nil
@@ -264,9 +264,9 @@ class Parser
   def handle_unknown_argument(arg, candidates, suggestions)
     errstring = "unknown argument '#{arg}'"
     if (suggestions &&
-        Module::const_defined?("DidYouMean") &&
-        Module::const_defined?("DidYouMean::JaroWinkler") &&
-        Module::const_defined?("DidYouMean::Levenshtein"))
+      Module::const_defined?("DidYouMean") &&
+      Module::const_defined?("DidYouMean::JaroWinkler") &&
+      Module::const_defined?("DidYouMean::Levenshtein"))
       input = arg.sub(/^[-]*/,'')
 
       # Code borrowed from did_you_mean gem
@@ -331,13 +331,13 @@ class Parser
         else                       raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
-      sym = nil if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
-
+      if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
+        sym = nil
       ## Support inexact matching of long-arguments like perl's Getopt::Long
-      if !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
+      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
         sym = perform_inexact_match(arg, $1)
       end
-      
+
       next nil if ignore_invalid_options && !sym
       handle_unknown_argument(arg, @long.keys, @settings[:suggestions]) unless sym
 

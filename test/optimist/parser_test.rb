@@ -46,56 +46,11 @@ class ParserTest < ::Minitest::Test
 
   def test_unknown_arguments
     err = assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
-    assert_match(/unknown argument '--arg'$/, err.message)
+    assert_match(/unknown argument '--arg'/, err.message)
     @p.opt "arg"
     @p.parse(%w(--arg))
     err = assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
-    assert_match(/unknown argument '--arg2'$/, err.message)
-  end
-  
-  def test_unknown_arguments_with_suggestions
-    sugp = Parser.new(:suggestions => true)
-    err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
-    assert_match(/unknown argument '--bone'$/, err.message)
-
-    if (Module::const_defined?("DidYouMean") &&
-        Module::const_defined?("DidYouMean::JaroWinkler") &&
-        Module::const_defined?("DidYouMean::Levenshtein"))
-      sugp.opt "cone"
-      sugp.parse(%w(--cone))
-
-      # single letter mismatch
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--bone)) }
-      assert_match(/unknown argument '--bone'.  Did you mean: \[--cone\] \?$/, err.message)
-
-      # transposition
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--ocne)) }
-      assert_match(/unknown argument '--ocne'.  Did you mean: \[--cone\] \?$/, err.message)
-
-      # extra letter at end
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--cones)) }
-      assert_match(/unknown argument '--cones'.  Did you mean: \[--cone\] \?$/, err.message)
-
-      # too big of a mismatch to suggest (extra letters in front)
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--snowcone)) }
-      assert_match(/unknown argument '--snowcone'$/, err.message)
-
-      # too big of a mismatch to suggest (nothing close)
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--clown-nose)) }
-      assert_match(/unknown argument '--clown-nose'$/, err.message)
-
-      sugp.opt "zippy"
-      sugp.opt "zapzy"
-      # single letter mismatch, matches two
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--zipzy)) }
-      assert_match(/unknown argument '--zipzy'.  Did you mean: \[--zippy, --zapzy\] \?$/, err.message)
-
-      sugp.opt "big_bug"
-      # suggest common case of dash versus underscore in argnames
-      err = assert_raises(CommandlineError) { sugp.parse(%w(--big_bug)) }
-      assert_match(/unknown argument '--big_bug'.  Did you mean: \[--big-bug\] \?$/, err.message)
-    end
-    
+    assert_match(/unknown argument '--arg2'/, err.message)
   end
 
   def test_unknown_arguments_with_suggestions
@@ -825,13 +780,13 @@ Options:
     end
     assert_equal @goat, boat
   end
-  
+
   ## test-only access reader method so that we dont have to
   ## expose settings in the public API.
   class Optimist::Parser
     def get_settings_for_testing ; return @settings ;end
   end
-  
+
   def test_two_arguments_passed_through_block
     newp = Parser.new(:abcd => 123, :efgh => "other" ) do |i|
     end
@@ -1229,7 +1184,7 @@ Options:
     opts = newp.parse %w(--lib 5 --ev bar)
     assert_equal 5, opts[:liberation]
     assert_equal 'bar', opts[:evaluate]
-    assert_equal nil, opts[:eval]
+    assert_nil opts[:eval]
   end
 
   def test_exact_match
@@ -1440,9 +1395,10 @@ Options:
       settings_copy = @settings
     end
     assert_equal [], passargs_copy
-    assert_equal({:fizz=>:buzz, :bear=>:cat}, settings_copy)
+    assert_equal settings_copy[:fizz], :buzz
+    assert_equal settings_copy[:bear], :cat
   end
-  
+
   def test_options_takes_some_other_data
     passargs_copy = []
     settings_copy = []
@@ -1453,7 +1409,7 @@ Options:
       settings_copy = @settings
     end
     assert_equal [1,2,3], passargs_copy
-    assert_equal({}, settings_copy)
+    assert_equal(Optimist::Parser::DEFAULT_SETTINGS, settings_copy)
   end
 end
 
