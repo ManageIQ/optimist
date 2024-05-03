@@ -1178,7 +1178,7 @@ Options:
   end
 
   def test_inexact_match
-    newp = Parser.new()
+    newp = Parser.new(exact_match: false)
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
     opts = newp.parse %w(--lib 5 --ev bar)
@@ -1188,7 +1188,7 @@ Options:
   end
 
   def test_exact_match
-    newp = Parser.new(exact_match: true)
+    newp = Parser.new()
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
     assert_raises(CommandlineError, /unknown argument '--lib'/) do
@@ -1200,7 +1200,7 @@ Options:
   end
 
   def test_inexact_collision
-    newp = Parser.new()
+    newp = Parser.new(exact_match: false)
     newp.opt :bookname, "name of a book", :type => :string
     newp.opt :bookcost, "cost of the book", :type => :string
     opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)
@@ -1216,13 +1216,12 @@ Options:
   end
 
   def test_inexact_collision_with_exact
-    newp = Parser.new()
+    newp = Parser.new(exact_match: false)
     newp.opt :book, "name of a book", :type => :string, :default => "ABC"
     newp.opt :bookcost, "cost of the book", :type => :int, :default => 5
     opts = newp.parse %w(--book warthog --bookc 3)
     assert_equal 'warthog', opts[:book]
     assert_equal 3, opts[:bookcost]
-
   end
 
   def test_accepts_arguments_with_spaces
