@@ -84,7 +84,7 @@ class Parser
   ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
-  DEFAULT_SETTINGS = { suggestions: true, exact_match: false }
+  DEFAULT_SETTINGS = { suggestions: true, exact_match: true }
 
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize(*a, &b)
