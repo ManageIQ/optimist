@@ -334,7 +334,7 @@ class Parser
       if arg =~ /--no-/ # explicitly invalidate --no-no- arguments
         sym = nil
       ## Support inexact matching of long-arguments like perl's Getopt::Long
-      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S*)$/)
+      elsif !sym && !@settings[:exact_match] && arg.match(/^--(\S+)$/)
         sym = perform_inexact_match(arg, $1)
       end
 
