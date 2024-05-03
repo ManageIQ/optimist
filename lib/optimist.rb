@@ -856,7 +856,7 @@ class BooleanOption < Option
   end
   def flag? ; true ; end
   def parse(_paramlist, neg_given)
-    return(self.name.to_s.start_with("^no_") ? neg_given : !neg_given)
+    return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
   end
 end
 
