@@ -1177,6 +1177,39 @@ Options:
     assert opts[:ccd]
   end
 
+  def test_short_opts_not_implicitly_created
+    newp = Parser.new(explicit_short_opts: true)
+    newp.opt :user1, "user1"
+    newp.opt :bag, "bag", :short => 'b'
+    assert_raises(CommandlineError) do
+      newp.parse %w(-u)
+    end
+    opts = newp.parse %w(--user1)
+    assert opts[:user1]
+    opts = newp.parse %w(-b)
+    assert opts[:bag]
+  end
+
+  def test_short_opts_not_implicit_help_ver
+    # When explicit_short_opts is enabled this extends 
+    # to the built-in help/version also.
+    newp = Parser.new(explicit_short_opts: true)
+    newp.opt :abc, "abc"
+    newp.version "3.4.5"
+    assert_raises(CommandlineError) do
+      newp.parse %w(-h)
+    end
+    assert_raises(CommandlineError) do
+      newp.parse %w(-v)
+    end
+    assert_raises(HelpNeeded) do
+      newp.parse %w(--help)
+    end
+    assert_raises(VersionNeeded) do
+      newp.parse %w(--version)
+    end
+  end
+
   def test_inexact_match
     newp = Parser.new(exact_match: false)
     newp.opt :liberation, "liberate something", :type => :int
