@@ -18,13 +18,25 @@ module Optimist
     end
 
     def test_altshort
-       @p.opt :catarg, "desc", :short => ["c", "-C"]
+      @p.opt :catarg, "desc", :short => ["c", "-C"]
        opts = @p.parse %w(-c)
        assert_equal true, opts[:catarg]
        opts = @p.parse %w(-C)
        assert_equal true, opts[:catarg]
        assert_raises(CommandlineError) { @p.parse %w(-c -C) }
        assert_raises(CommandlineError) { @p.parse %w(-cC) }
+    end
+
+    def test_altshort_invalid_none
+      assert_raises(ArgumentError) {
+        @p.opt :something, "some opt", :short => [:s, :none]
+      }
+      assert_raises(ArgumentError) {
+        @p.opt :something, "some opt", :short => [:none, :s]
+      }
+      assert_raises(ArgumentError) {
+        @p.opt :zumthing, "some opt", :short => [:none, :none]
+      }
     end
 
     def test_altshort_with_multi

@@ -703,12 +703,15 @@ class ShortNames
 
   def add(values)
     values = [values] unless values.is_a?(Array) # box the value
-    values.compact.each do |val|
-      if val == :none
+    values = values.compact
+    if values.include?(:none)
+      if values.size == 1
         @auto = false
-        raise "Cannot set short to :none if short-chars have been defined '#{@chars}'" unless chars.empty?
-        next
+        return
       end
+      raise ArgumentError, "Cannot use :none with any other values in short option: #{values.inspect}"
+    end
+    values.each do |val|
       strval = val.to_s
       sopt = case strval
              when /^-(.)$/ then $1
