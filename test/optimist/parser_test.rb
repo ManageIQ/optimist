@@ -1178,7 +1178,7 @@ Options:
   end
 
   def test_short_opts_not_implicitly_created
-    newp = Parser.new(explicit_short_opts: true)
+    newp = Parser.new(implicit_short_opts: false)
     newp.opt :user1, "user1"
     newp.opt :bag, "bag", :short => 'b'
     assert_raises(CommandlineError) do
@@ -1191,9 +1191,9 @@ Options:
   end
 
   def test_short_opts_not_implicit_help_ver
-    # When explicit_short_opts is enabled this extends 
-    # to the built-in help/version also.
-    newp = Parser.new(explicit_short_opts: true)
+    # When implicit_short_opts is false this implies the short options
+    # for the built-in help/version are also not created.
+    newp = Parser.new(implicit_short_opts: false)
     newp.opt :abc, "abc"
     newp.version "3.4.5"
     assert_raises(CommandlineError) do

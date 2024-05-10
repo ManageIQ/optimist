@@ -86,7 +86,7 @@ class Parser
 
   DEFAULT_SETTINGS = {
     exact_match: true,
-    explicit_short_opts: false,
+    implicit_short_opts: true,
     suggestions: true
   }
 
@@ -317,7 +317,7 @@ class Parser
       vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options! unless @settings[:explicit_short_opts]
+    resolve_default_short_options! if @settings[:implicit_short_opts]
 
     ## resolve symbols
     given_args = {}
@@ -1031,7 +1031,7 @@ end
 ##  +settings+ include:
 ##  * :exact_match  : (default=true) Allow minimum unambigous number of characters to match a long option
 ##  * :suggestions  : (default=true) Enables suggestions when unknown arguments are given and DidYouMean is installed.  DidYouMean comes standard with Ruby 2.3+
-##  * :explicit_short_opts : (default=false) Short options will only be created where explicitly defined.  If you do not like short-options, this will prevent having to define :short=> :none for all of your options.
+##  * :implicit_short_opts : (default=true) Short options will only be created where explicitly defined.  If you do not like short-options, this will prevent having to define :short=> :none for all of your options.
 ##  Because Optimist::options uses a default argument for +args+, you must pass that argument when using the settings feature.
 ##
 ## See more examples at https://www.manageiq.org/optimist
