@@ -528,8 +528,8 @@ with a multi-line description
     @p.educate(out)
     assert_equal <<-EOM, out.string
 Options:
-      --arg=<i>    This is an arg
-                   with a multi-line description
+  --arg=<i>    This is an arg
+               with a multi-line description
     EOM
   end
 
@@ -592,7 +592,11 @@ Options:
     assert_raises(ArgumentError) { @p.opt :arg, "desc", :short => "-1" }
     @p.opt :a1b, "desc"
     @p.opt :a2b, "desc"
-    assert @p.specs[:a2b].short.to_i == 0
+    @p.parse []
+    # testing private interface to ensure default
+    # short options did not become numeric
+    assert_equal @p.specs[:a1b].short.chars.first, 'a'
+    assert_equal @p.specs[:a2b].short.chars.first, 'b'
   end
 
   def test_short_options_can_be_weird
@@ -769,7 +773,7 @@ Options:
 
   def test_auto_generated_long_names_convert_underscores_to_hyphens
     @p.opt :hello_there
-    assert_equal "hello-there", @p.specs[:hello_there].long
+    assert_equal "hello-there", @p.specs[:hello_there].long.long
   end
 
   def test_arguments_passed_through_block
