@@ -37,22 +37,49 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
 ## Regex for parameters
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
-class Constraint 
-  attr_reader :idents
+# Abstract class for a constraint.  Do not use by itself.
+class Constraint
   def initialize(syms)
     @idents = syms
+  end
+  def validate(given_args:, specs:)
+    overlap = @idents & given_args.keys
+    if error_condition(overlap.size)
+      longargs = @idents.map { |sym| "--#{specs[sym].long}" }
+      raise CommandlineError, error_message(longargs)
+    end
   end
 end
 
 # A Dependency constraint.  Useful when Option A requires Option B also be used.
-class DependConstraint < Constraint; end
+class DependConstraint < Constraint
+  def error_condition(overlap_size)
+    (overlap_size != 0) && (overlap_size != @idents.size)
+  end
+  def error_message(longargs) # constraint_sym, this_sym)
+    "#{longargs.join(', ')} have dependency and must be given together"
+  end
+end
 
 # A Conflict constraint.  Useful when Option A cannot be used with Option B.
-class ConflictConstraint < Constraint; end
+class ConflictConstraint < Constraint
+  def error_condition(overlap_size)
+    (overlap_size != 0) && (overlap_size != 1)
+  end
+  def error_message(longargs)
+    "only one of #{longargs.join(', ')} can be given"
+  end
+end
 
-# An Either-Or constraint.
-class EitherConstraint < Constraint; end
-
+# An Either-Or constraint. For Mutually exclusive options
+class EitherConstraint < Constraint
+  def error_condition(overlap_size)
+    overlap_size != 1
+  end
+  def error_message(longargs)
+    "one of #{longargs.join(', ')} is required"
+  end
+end
 
 ## The commandline parser. In typical usage, the methods in this class
 ## will be handled internally by Optimist::options. In this case, only the
@@ -399,18 +426,7 @@ class Parser
 
     ## check constraint satisfaction
     @constraints.each do |const|
-      syms = const.idents
-      constraint_sym = syms.find { |sym| given_args[sym] }
-      case const
-      when DependConstraint
-        next unless constraint_sym
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} requires --#{@specs[sym].long}" unless given_args.include? sym }
-      when ConflictConstraint
-        next unless constraint_sym
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
-      when EitherConstraint
-        raise CommandlineError, "one of #{syms.map { |sym| "--#{@specs[sym].long}" }.join(', ') } is required" if (syms & given_args.keys).size != 1
-      end
+      const.validate(given_args: given_args, specs: @specs)
     end
 
     required.each do |sym, val|
