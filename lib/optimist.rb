@@ -37,6 +37,23 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
 ## Regex for parameters
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
+class Constraint 
+  attr_reader :idents
+  def initialize(syms)
+    @idents = syms
+  end
+end
+
+# A Dependency constraint.  Useful when Option A requires Option B also be used.
+class DependConstraint < Constraint; end
+
+# A Conflict constraint.  Useful when Option A cannot be used with Option B.
+class ConflictConstraint < Constraint; end
+
+# An Either-Or constraint.
+class EitherConstraint < Constraint; end
+
+
 ## The commandline parser. In typical usage, the methods in this class
 ## will be handled internally by Optimist::options. In this case, only the
 ## #opt, #banner and #version, #depends, and #conflicts methods will
@@ -213,20 +230,20 @@ class Parser
   ## better modeled with Optimist::die.
   def depends(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:depends, syms]
+    @constraints << DependConstraint.new(syms)
   end
 
   ## Marks two (or more!) options as conflicting.
   def conflicts(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:conflicts, syms]
+    @constraints << ConflictConstraint.new(syms)
   end
 
   ## Marks two (or more!) options as required but mutually exclusive.
   def either(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:conflicts, syms]
-    @constraints << [:either, syms]
+    @constraints << ConflictConstraint.new(syms)
+    @constraints << EitherConstraint.new(syms)
   end
 
   ## Defines a set of words which cause parsing to terminate when
@@ -381,17 +398,17 @@ class Parser
     raise HelpNeeded if given_args.include? :help
 
     ## check constraint satisfaction
-    @constraints.each do |type, syms|
+    @constraints.each do |const|
+      syms = const.idents
       constraint_sym = syms.find { |sym| given_args[sym] }
-
-      case type
-      when :depends
+      case const
+      when DependConstraint
         next unless constraint_sym
         syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} requires --#{@specs[sym].long}" unless given_args.include? sym }
-      when :conflicts
+      when ConflictConstraint
         next unless constraint_sym
         syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
-      when :either
+      when EitherConstraint
         raise CommandlineError, "one of #{syms.map { |sym| "--#{@specs[sym].long}" }.join(', ') } is required" if (syms & given_args.keys).size != 1
       end
     end
