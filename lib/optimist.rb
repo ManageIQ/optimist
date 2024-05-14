@@ -57,7 +57,7 @@ class DependConstraint < Constraint
     (overlap_size != 0) && (overlap_size != @idents.size)
   end
   def error_message(longargs) # constraint_sym, this_sym)
-    "#{longargs.join(', ')} have dependency and must be given together"
+    "#{longargs.join(', ')} have a dependency and must be given together"
   end
 end
 
@@ -77,7 +77,7 @@ class EitherConstraint < Constraint
     overlap_size != 1
   end
   def error_message(longargs)
-    "one of #{longargs.join(', ')} is required"
+    "one and only one of #{longargs.join(', ')} is required"
   end
 end
 
@@ -269,7 +269,6 @@ class Parser
   ## Marks two (or more!) options as required but mutually exclusive.
   def either(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << ConflictConstraint.new(syms)
     @constraints << EitherConstraint.new(syms)
   end
 
