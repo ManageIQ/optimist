@@ -56,7 +56,7 @@ class DependConstraint < Constraint
   def error_condition(overlap_size)
     (overlap_size != 0) && (overlap_size != @idents.size)
   end
-  def error_message(longargs) # constraint_sym, this_sym)
+  def error_message(longargs)
     "#{longargs.join(', ')} have a dependency and must be given together"
   end
 end
