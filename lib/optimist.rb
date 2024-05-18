@@ -45,7 +45,7 @@ class Constraint
   def validate(given_args:, specs:)
     overlap = @idents & given_args.keys
     if error_condition(overlap.size)
-      longargs = @idents.map { |sym| "--#{specs[sym].long}" }
+      longargs = @idents.map { |sym| "--#{specs[sym].long.long}" }
       raise CommandlineError, error_message(longargs)
     end
   end
