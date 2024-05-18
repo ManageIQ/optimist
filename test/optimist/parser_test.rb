@@ -35,8 +35,6 @@ class ParserTest < ::Minitest::Test
     assert_equal "synopsis string", parser.synopsis
   end
 
-  # def test_depends
-  # def test_conflicts
   # def test_stop_on
   # def test_stop_on_unknown
 
@@ -808,109 +806,6 @@ Options:
     assert_raises(VersionNeeded) { @p.parse %w(--asdf --version) }
   end
 
-  def test_conflicts
-    @p.opt :one
-    assert_raises(ArgumentError) { @p.conflicts :one, :two }
-    @p.opt :two
-    @p.conflicts :one, :two
-    @p.parse %w(--one)
-    @p.parse %w(--two)
-    assert_raises(CommandlineError) { @p.parse %w(--one --two) }
-
-    @p.opt :hello
-    @p.opt :yellow
-    @p.opt :mellow
-    @p.opt :jello
-    @p.conflicts :hello, :yellow, :mellow, :jello
-    assert_raises(CommandlineError) { @p.parse %w(--hello --yellow --mellow --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
-
-    @p.parse %w(--hello)
-    @p.parse %w(--jello)
-    @p.parse %w(--yellow)
-    @p.parse %w(--mellow)
-
-    @p.parse %w(--mellow --one)
-    @p.parse %w(--mellow --two)
-
-    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--one --mellow --two --jello) }
-  end
-
-  def test_either
-    @p.opt :one
-    assert_raises(ArgumentError) { @p.either :one, :two }
-    @p.opt :two
-    @p.either :one, :two
-    @p.parse %w(--one)
-    @p.parse %w(--two)
-    assert_raises(CommandlineError) { @p.parse %w(--one --two) }
-    assert_raises(CommandlineError) { @p.parse %w() }
-
-    @p.opt :hello
-    @p.opt :yellow
-    @p.opt :mellow
-    @p.opt :jello
-    @p.either :hello, :yellow, :mellow, :jello
-    assert_raises(CommandlineError) { @p.parse %w(--hello --yellow --mellow --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
-
-    @p.parse %w(--hello --one)
-    @p.parse %w(--jello --two)
-    @p.parse %w(--mellow --one)
-    @p.parse %w(--mellow --two)
-
-    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--one --mellow --two --jello) }
-  end
-
-  def test_conflict_error_messages
-    @p.opt :one
-    @p.opt "two"
-    @p.conflicts :one, "two"
-
-    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--one --two) }
-  end
-
-  def test_depends
-    @p.opt :one
-    assert_raises(ArgumentError) { @p.depends :one, :two }
-    @p.opt :two
-    @p.depends :one, :two
-    @p.parse %w(--one --two)
-    assert_raises(CommandlineError) { @p.parse %w(--one) }
-    assert_raises(CommandlineError) { @p.parse %w(--two) }
-
-    @p.opt :hello
-    @p.opt :yellow
-    @p.opt :mellow
-    @p.opt :jello
-    @p.depends :hello, :yellow, :mellow, :jello
-    @p.parse %w(--hello --yellow --mellow --jello)
-    assert_raises(CommandlineError) { @p.parse %w(--hello --mellow --jello) }
-    assert_raises(CommandlineError) { @p.parse %w(--hello --jello) }
-
-    assert_raises(CommandlineError) { @p.parse %w(--hello) }
-    assert_raises(CommandlineError) { @p.parse %w(--mellow) }
-
-    @p.parse %w(--hello --yellow --mellow --jello --one --two)
-    @p.parse %w(--hello --yellow --mellow --jello --one --two a b c)
-
-    assert_raises(CommandlineError) { @p.parse %w(--mellow --two --jello --one) }
-  end
-
-  def test_depend_error_messages
-    @p.opt :one
-    @p.opt "two"
-    @p.depends :one, "two"
-
-    @p.parse %w(--one --two)
-
-    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--one) }
-    assert_raises(CommandlineError, /--one.*--two/) { @p.parse %w(--two) }
-  end
 
   ## courtesy neill zero
   def test_two_required_one_missing_accuses_correctly
