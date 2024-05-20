@@ -169,6 +169,16 @@ module Optimist
     assert help[1] =~ /Permitted/
     assert help[2] =~ /permitted/
   end
+
+  def test_help_with_permitted_range
+    parser.opt :rating, 'rating', permitted: 1..5
+    parser.opt :hex, 'hexadecimal', permitted: /^[0-9a-f]/i
+    sio = StringIO.new 'w'
+    parser.educate sio
+    help = sio.string.split "\n"
+    assert_match %r{rating \(permitted: 1\.\.5\)}, help[1]
+    assert_match %r{hexadecimal \(permitted: \/\^\[0-9a-f\]\/i\)}, help[2]
+  end
 ############
 
     private
