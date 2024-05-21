@@ -219,8 +219,8 @@ class Parser
       @short[short] = o.name
     end
 
-    raise ArgumentError, "permitted values for option #{o.long.inspect} must be either nil or an array;" unless o.permitted.nil? or o.permitted.is_a? Array
-    
+    raise ArgumentError, "permitted values for option #{o.long.long.inspect} must be either nil, Range, Regexp or an Array;" unless o.permitted_type_valid?
+
     @specs[o.name] = o
     @order << [:opt, o.name]
   end
@@ -442,9 +442,11 @@ class Parser
         params << (opts.array_default? ? opts.default.clone : [opts.default])
       end
 
-      params[0].each do |p|
-        raise CommandlineError, "option '#{arg}' only accepts one of: #{opts.permitted.join(', ')}" unless opts.permitted.include? p
-      end unless opts.permitted.nil?
+      if params.first && opts.permitted
+        params.first.each do |val|
+          opts.validate_permitted(arg, val)
+        end
+      end
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
@@ -762,7 +764,7 @@ end
 
 class Option
 
-  attr_accessor :name, :short, :long, :default, :permitted
+  attr_accessor :name, :short, :long, :default, :permitted, :permitted_response
   attr_writer :multi_given
 
   def initialize
@@ -773,6 +775,7 @@ class Option
     @hidden = false
     @default = nil
     @permitted = nil
+    @permitted_response = "option '%{arg}' only accepts %{valid_string}"
     @optshash = Hash.new()
   end
 
@@ -828,32 +831,80 @@ class Option
     desc_str
   end
 
+  ## Format stdio like objects to a string
+  def format_stdio(obj)
+    case obj
+    when $stdout   then '<stdout>'
+    when $stdin    then '<stdin>'
+    when $stderr   then '<stderr>'
+    else obj # pass-through-case
+    end
+  end
+
   ## Generate the default value string for the educate line
   private def default_description_str str
     default_s = case default
-                when $stdout   then '<stdout>'
-                when $stdin    then '<stdin>'
-                when $stderr   then '<stderr>'
                 when Array
                   default.join(', ')
                 else
-                  default.to_s
+                  format_stdio(default).to_s
                 end
     defword = str.end_with?('.') ? 'Default' : 'default'
     " (#{defword}: #{default_s})"
   end
 
+  def permitted_valid_string
+    case permitted
+    when Array
+      return "one of: " + permitted.to_a.map(&:to_s).join(', ')
+    when Range
+      return "value in range of: #{permitted}"
+    when Regexp
+      return "value matching: #{permitted.inspect}"
+    end
+    raise NotImplementedError, "invalid branch"
+  end
+
+  def permitted_type_valid?
+    case permitted
+    when NilClass, Array, Range, Regexp then true
+    else false
+    end
+  end
+
+  def validate_permitted(arg, value)
+    return true if permitted.nil?
+    unless permitted_value?(value)
+      format_hash = {arg: arg, given: value, value: value, valid_string: permitted_valid_string(), permitted: permitted }
+      raise CommandlineError, permitted_response % format_hash
+    end
+    true
+  end
+  
+  # incoming values from the command-line should be strings, so we should
+  # stringify any permitted types as the basis of comparison.
+  def permitted_value?(val)
+    case permitted
+    when nil then true
+    when Regexp then val.match? permitted
+    when Range then permitted.to_a.map(&:to_s).include? val
+    when Array then permitted.map(&:to_s).include? val
+    else false
+    end
+  end
+
   ## Generate the permitted values string for the educate line
   private def permitted_description_str str
-    permitted_s = permitted.map do |p|
-      case p
-      when $stdout   then '<stdout>'
-      when $stdin    then '<stdin>'
-      when $stderr   then '<stderr>'
-      else
-        p.to_s
-      end
-    end.join(', ')
+    permitted_s = case permitted
+                  when Array
+                    permitted.map do |p|
+                      format_stdio(p).to_s
+                    end.join(', ')
+                  when Range, Regexp
+                    permitted.inspect
+                  else
+                    raise NotImplementedError
+                  end
     permword = str.end_with?('.') ? 'Permitted' : 'permitted'
     " (#{permword}: #{permitted_s})"
   end
@@ -900,6 +951,7 @@ class Option
     ## autobox :default for :multi (multi-occurrence) arguments
     defvalue = [defvalue] if defvalue && multi_given && !defvalue.kind_of?(Array)
     opt_inst.permitted = permitted
+    opt_inst.permitted_response = opts[:permitted_response] if opts[:permitted_response]
     opt_inst.default = defvalue
     opt_inst.name = name
     opt_inst.opts = opts
