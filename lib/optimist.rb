@@ -37,6 +37,50 @@ FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
 ## Regex for parameters
 PARAM_RE = /^-(-|\.$|[^\d\.])/
 
+# Abstract class for a constraint.  Do not use by itself.
+class Constraint
+  def initialize(syms)
+    @idents = syms
+  end
+  def validate(given_args:, specs:)
+    overlap = @idents & given_args.keys
+    if error_condition(overlap.size)
+      longargs = @idents.map { |sym| "--#{specs[sym].long.long}" }
+      raise CommandlineError, error_message(longargs)
+    end
+  end
+end
+
+# A Dependency constraint.  Useful when Option A requires Option B also be used.
+class DependConstraint < Constraint
+  def error_condition(overlap_size)
+    (overlap_size != 0) && (overlap_size != @idents.size)
+  end
+  def error_message(longargs)
+    "#{longargs.join(', ')} have a dependency and must be given together"
+  end
+end
+
+# A Conflict constraint.  Useful when Option A cannot be used with Option B.
+class ConflictConstraint < Constraint
+  def error_condition(overlap_size)
+    (overlap_size != 0) && (overlap_size != 1)
+  end
+  def error_message(longargs)
+    "only one of #{longargs.join(', ')} can be given"
+  end
+end
+
+# An Either-Or constraint. For Mutually exclusive options
+class EitherConstraint < Constraint
+  def error_condition(overlap_size)
+    overlap_size != 1
+  end
+  def error_message(longargs)
+    "one and only one of #{longargs.join(', ')} is required"
+  end
+end
+
 ## The commandline parser. In typical usage, the methods in this class
 ## will be handled internally by Optimist::options. In this case, only the
 ## #opt, #banner and #version, #depends, and #conflicts methods will
@@ -213,20 +257,19 @@ class Parser
   ## better modeled with Optimist::die.
   def depends(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:depends, syms]
+    @constraints << DependConstraint.new(syms)
   end
 
   ## Marks two (or more!) options as conflicting.
   def conflicts(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:conflicts, syms]
+    @constraints << ConflictConstraint.new(syms)
   end
 
   ## Marks two (or more!) options as required but mutually exclusive.
   def either(*syms)
     syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
-    @constraints << [:conflicts, syms]
-    @constraints << [:either, syms]
+    @constraints << EitherConstraint.new(syms)
   end
 
   ## Defines a set of words which cause parsing to terminate when
@@ -381,19 +424,8 @@ class Parser
     raise HelpNeeded if given_args.include? :help
 
     ## check constraint satisfaction
-    @constraints.each do |type, syms|
-      constraint_sym = syms.find { |sym| given_args[sym] }
-
-      case type
-      when :depends
-        next unless constraint_sym
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} requires --#{@specs[sym].long}" unless given_args.include? sym }
-      when :conflicts
-        next unless constraint_sym
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym].long} conflicts with --#{@specs[sym].long}" if given_args.include?(sym) && (sym != constraint_sym) }
-      when :either
-        raise CommandlineError, "one of #{syms.map { |sym| "--#{@specs[sym].long}" }.join(', ') } is required" if (syms & given_args.keys).size != 1
-      end
+    @constraints.each do |const|
+      const.validate(given_args: given_args, specs: @specs)
     end
 
     required.each do |sym, val|
