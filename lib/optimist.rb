@@ -854,7 +854,7 @@ class Option
   def permitted_value?(val)
     case permitted
     when nil then true
-    when Regexp then val.match permitted
+    when Regexp then val.match? permitted
     when Range then permitted.to_a.map(&:to_s).include? val
     when Array then permitted.map(&:to_s).include? val
     else false
