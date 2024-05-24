@@ -54,7 +54,18 @@ class ParserPermittedTest < ::Minitest::Test
     }
   end
 
-  def test_permitted_with_numeric_range
+  def test_permitted_with_string_range
+    @p.opt 'fiz', 'desc', :type => String, :permitted => 'A'..'z'
+    opts = @p.parse(%w(--fiz B))
+    assert_equal opts['fiz'], "B"
+    opts = @p.parse(%w(--fiz z))
+    assert_equal opts['fiz'], "z"
+    assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts value in range of: A\.\.z/) {
+      @p.parse(%w(--fiz @))
+    }
+  end
+
+  def test_permitted_with_integer_range
     @p.opt 'fiz', 'desc', :type => Integer, :permitted => 1..3
     opts = @p.parse(%w(--fiz 1))
     assert_equal opts['fiz'], 1
@@ -62,6 +73,23 @@ class ParserPermittedTest < ::Minitest::Test
     assert_equal opts['fiz'], 3
     assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts value in range of: 1\.\.3/) {
       @p.parse(%w(--fiz 4))
+    }
+  end
+
+  def test_permitted_with_float_range
+    @p.opt 'fiz', 'desc', :type => Float, :permitted => 1.2 .. 3.5
+    opts = @p.parse(%w(--fiz 1.2))
+    assert_in_epsilon opts['fiz'], 1.2
+    opts = @p.parse(%w(--fiz 2.7))
+    assert_in_epsilon opts['fiz'], 2.7
+    opts = @p.parse(%w(--fiz 3.5))
+    assert_in_epsilon opts['fiz'], 3.5
+    err_regexp = /option '--fiz' only accepts value in range of: 1\.2\.\.3\.5/
+    assert_raises_errmatch(CommandlineError, err_regexp) {
+      @p.parse(%w(--fiz 3.51))
+    }
+    assert_raises_errmatch(CommandlineError, err_regexp) {
+      @p.parse(%w(--fiz 1.19))
     }
   end
 

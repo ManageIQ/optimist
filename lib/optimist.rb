@@ -887,7 +887,7 @@ class Option
     case permitted
     when nil then true
     when Regexp then val.match? permitted
-    when Range then permitted.to_a.map(&:to_s).include? val
+    when Range then permitted.include? as_type(val)
     when Array then permitted.map(&:to_s).include? val
     else false
     end
@@ -1009,11 +1009,12 @@ end
 class FloatOption < Option
   register_alias :float, :double
   def type_format ; "=<f>" ; end
+  def as_type(param) ; param.to_f ; end
   def parse(paramlist, _neg_given)
     paramlist.map do |pg|
       pg.map do |param|
         raise CommandlineError, "option '#{self.name}' needs a floating-point number" unless param.is_a?(Numeric) || param =~ FLOAT_RE
-        param.to_f
+        as_type(param)
       end
     end
   end
@@ -1023,11 +1024,12 @@ end
 class IntegerOption < Option
   register_alias :int, :integer, :fixnum
   def type_format ; "=<i>" ; end
+  def as_type(param) ; param.to_i ; end
   def parse(paramlist, _neg_given)
     paramlist.map do |pg|
       pg.map do |param|
         raise CommandlineError, "option '#{self.name}' needs an integer" unless param.is_a?(Numeric) || param =~ /^-?[\d_]+$/
-        param.to_i
+        as_type(param)
       end
     end
   end
@@ -1060,9 +1062,10 @@ end
 # Option class for handling Strings.
 class StringOption < Option
   register_alias :string
+  def as_type(val) ; val.to_s ; end
   def type_format ; "=<s>" ; end
   def parse(paramlist, _neg_given)
-    paramlist.map { |pg| pg.map(&:to_s) }
+    paramlist.map { |pg| pg.map { |param| as_type(param) } }
   end
 end
 
