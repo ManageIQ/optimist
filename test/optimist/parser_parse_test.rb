@@ -37,7 +37,7 @@ module Optimist
 
   def test_version_needed_unset
     parser.opt "arg"
-    assert_raises(CommandlineError) { parser.parse %w(-v) }
+    assert_raises_errmatch(CommandlineError, /unknown argument '-v'/) { parser.parse %w(-v) }
   end
 
   def test_version_needed
@@ -54,7 +54,7 @@ module Optimist
 
   def test_version_only_appears_if_set
     parser.opt "arg"
-    assert_raises(CommandlineError) { parser.parse %w(-v) }
+    assert_raises_errmatch(CommandlineError, /unknown argument '-v'/) { parser.parse %w(-v) }
   end
 
   def test_version_with_other_args

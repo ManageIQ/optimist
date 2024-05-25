@@ -13,7 +13,7 @@ class ParserPermittedTest < ::Minitest::Test
 
     result = @p.parse(%w(--arg foo))
     assert_equal ["foo"], result["arg"]
-    assert_raises(CommandlineError) { @p.parse(%w(--arg baz)) }
+    assert_raises_errmatch(CommandlineError, /option '--arg' only accepts one of: foo, bar/) { @p.parse(%w(--arg baz)) }
   end
 
   def test_permitted_invalid_scalar_value

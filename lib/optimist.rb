@@ -429,7 +429,7 @@ class Parser
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option --#{@specs[sym].long} must be specified" unless given_args.include? sym
+      raise CommandlineError, "option --#{@specs[sym].long.long} must be specified" unless given_args.include? sym
     end
 
     ## parse parameters
@@ -553,7 +553,7 @@ class Parser
   def die(arg, msg = nil, error_code = nil)
     msg, error_code = nil, msg if msg.kind_of?(Integer)
     if msg
-      $stderr.puts "Error: argument --#{@specs[arg].long} #{msg}."
+      $stderr.puts "Error: argument --#{@specs[arg].long.long} #{msg}."
     else
       $stderr.puts "Error: #{arg}."
     end

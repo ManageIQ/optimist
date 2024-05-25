@@ -23,18 +23,20 @@ module Optimist
        assert_equal true, opts[:catarg]
        opts = @p.parse %w(-C)
        assert_equal true, opts[:catarg]
-       assert_raises(CommandlineError) { @p.parse %w(-c -C) }
-       assert_raises(CommandlineError) { @p.parse %w(-cC) }
+       err_regex = /option '-C' specified multiple times/
+       assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-c -C) }
+       assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-cC) }
     end
 
     def test_altshort_invalid_none
-      assert_raises(ArgumentError) {
+      err_regex = /Cannot use :none with any other values in short option:/
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :something, "some opt", :short => [:s, :none]
       }
-      assert_raises(ArgumentError) {
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :something, "some opt", :short => [:none, :s]
       }
-      assert_raises(ArgumentError) {
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :zumthing, "some opt", :short => [:none, :none]
       }
     end
@@ -82,11 +84,11 @@ module Optimist
       end
 
       [%w[--goodarg1], %w[--missing], %w[-a]].each do |a|
-        assert_raises(Optimist::CommandlineError) { @p.parse(a) }
+        assert_raises_errmatch(Optimist::CommandlineError, /unknown argument/) { @p.parse(a) }
       end
 
       ["", '--', '-bad', '---threedash'].each do |altitem|
-        assert_raises(ArgumentError) { @p.opt "badarg", "desc", :alt => altitem }
+        assert_raises_errmatch(ArgumentError, /invalid long option name/) { @p.opt "badarg", "desc", :alt => altitem }
       end
     end
     
@@ -116,15 +118,18 @@ module Optimist
 
     def test_alt_duplicates
       # alt duplicates named option
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :cat
       }
       # alt duplicates :long 
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "feline" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :long => :feline, :alt => [:feline]
       }
       # alt duplicates itself
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "aaa" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :abc, 'desc', :alt => [:aaa, :aaa]
       }
     end
@@ -135,22 +140,26 @@ module Optimist
       @p.opt :bat, 'desc', :alt => [:baton, :twirl]
 
       # :alt collision with named option
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "fat" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :fat
       }
 
       # :alt collision with :long option
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :rat
       }
 
       # :named option collision with existing :alt option
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "baton" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :baton, 'desc'
       }
 
       # :long option collision with existing :alt option
-      assert_raises(ArgumentError) {
+      err_regex = /long option name "twirl" is already taken; please specify a \(different\) :long\/:alt/ 
+      assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :whirl, 'desc', :long => 'twirl'
       }
       
