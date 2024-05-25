@@ -804,8 +804,8 @@ Options:
     @p.opt "arg1", "desc1", :required => true
     @p.opt "arg2", "desc2", :required => true
 
-    assert_raises(CommandlineError, /arg2/) { @p.parse(%w(--arg1)) }
-    assert_raises(CommandlineError, /arg1/) { @p.parse(%w(--arg2)) }
+    assert_raises_errmatch(CommandlineError, /arg2/) { @p.parse(%w(--arg1)) }
+    assert_raises_errmatch(CommandlineError, /arg1/) { @p.parse(%w(--arg2)) }
     @p.parse(%w(--arg1 --arg2))
   end
 
@@ -1115,7 +1115,7 @@ Options:
     newp = Parser.new()
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
-    assert_raises(CommandlineError, /unknown argument '--lib'/) do
+    assert_raises_errmatch(CommandlineError, /unknown argument '--lib'/) do
       newp.parse %w(--lib 5)
     end
     assert_raises_errmatch(CommandlineError, /unknown argument '--ev'/) do
@@ -1134,7 +1134,7 @@ Options:
       newp.parse %w(--book 5) # ambiguous
     end
     ## partial match causes 'specified multiple times' error
-    assert_raises(CommandlineError, /specified multiple times/) do
+    assert_raises_errmatch(CommandlineError, /specified multiple times/) do
       newp.parse %w(--bookc 17 --bookcost 22)
     end
   end
@@ -1239,7 +1239,7 @@ Options:
   end
 
   def test_supports_callback_inline
-    assert_raises(RuntimeError, "good") do
+    assert_raises_errmatch(RuntimeError, "good") do
       @p.opt :cb1 do |vals|
         raise "good"
       end
@@ -1248,7 +1248,7 @@ Options:
   end
 
   def test_supports_callback_param
-    assert_raises(RuntimeError, "good") do
+    assert_raises_errmatch(RuntimeError, "good") do
       @p.opt :cb1, "with callback", :callback => lambda { |vals| raise "good" }
       @p.parse(%w(--cb1))
     end

@@ -9,7 +9,7 @@ module Optimist
     end
 
     def get_help_string
-      err = assert_raises(Optimist::HelpNeeded) do
+      assert_raises(Optimist::HelpNeeded) do
         @p.parse(%w(--help))
       end
       sio = StringIO.new "w"
