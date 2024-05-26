@@ -43,12 +43,10 @@ class ParserTest < ::Minitest::Test
 
 
   def test_unknown_arguments
-    err = assert_raises(CommandlineError) { @p.parse(%w(--arg)) }
-    assert_match(/unknown argument '--arg'/, err.message)
+    assert_raises_errmatch(CommandlineError, /unknown argument '--arg'/) { @p.parse(%w(--arg)) }
     @p.opt "arg"
     @p.parse(%w(--arg))
-    err = assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
-    assert_match(/unknown argument '--arg2'/, err.message)
+    assert_raises_errmatch(CommandlineError, /unknown argument '--arg2'/) { @p.parse(%w(--arg2)) }
   end
 
   def test_unknown_arguments_with_suggestions
@@ -103,8 +101,8 @@ class ParserTest < ::Minitest::Test
 
     @p.parse(%w(--arg))
     @p.parse(%w(arg))
-    assert_raises(CommandlineError) { @p.parse(%w(---arg)) }
-    assert_raises(CommandlineError) { @p.parse(%w(-arg)) }
+    assert_raises_errmatch(CommandlineError, /invalid argument syntax: '---arg'/) { @p.parse(%w(---arg)) }
+    assert_raises_errmatch(CommandlineError, /unknown argument '-r'/) { @p.parse(%w(-arg)) }
   end
 
   def test_required_flags_are_required
@@ -114,8 +112,9 @@ class ParserTest < ::Minitest::Test
 
     @p.parse(%w(--arg))
     @p.parse(%w(--arg --arg2))
-    assert_raises(CommandlineError) { @p.parse(%w(--arg2)) }
-    assert_raises(CommandlineError) { @p.parse(%w(--arg2 --arg3)) }
+    err_regex = %r/option --arg must be specified/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--arg2)) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--arg2 --arg3)) }
   end
 
   ## flags that take an argument error unless given one
@@ -124,8 +123,9 @@ class ParserTest < ::Minitest::Test
     @p.opt "goodarg2", "desc", :type => String
 
     @p.parse(%w(--goodarg goat))
-    assert_raises(CommandlineError) { @p.parse(%w(--goodarg --goodarg2 goat)) }
-    assert_raises(CommandlineError) { @p.parse(%w(--goodarg)) }
+    err_regex = %r/option '--goodarg' needs a parameter/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--goodarg --goodarg2 goat)) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--goodarg)) }
   end
 
   ## flags that don't take arguments ignore them
@@ -142,19 +142,24 @@ class ParserTest < ::Minitest::Test
   ## flags that require args of a specific type refuse args of other
   ## types
   def test_typed_args_refuse_args_of_other_types
-    @p.opt "goodarg", "desc", :type => :int
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :type => :asdf }
+    @p.opt "goodarg", "desc", :type => :int    
+    err_regex = %r/Unsupported argument type 'asdf', registry lookup 'asdf'/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :type => :asdf }
 
     @p.parse(%w(--goodarg 3))
-    assert_raises(CommandlineError) { @p.parse(%w(--goodarg 4.2)) }
-    assert_raises(CommandlineError) { @p.parse(%w(--goodarg hello)) }
+    err_regex = %r/option 'goodarg' needs an integer/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--goodarg 4.2)) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--goodarg hello)) }
   end
 
   ## type is correctly derived from :default
   def test_type_correctly_derived_from_default
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :default => [] }
-    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
-    assert_raises(ArgumentError) { @p.opt "badarg4", "desc", :default => Hash.new }
+    err_regex = %r/multiple argument type cannot be deduced from an empty array/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :default => [] }
+    err_regex = %r/Unsupported argument type 'hashs', registry lookup 'hashs'/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg3", "desc", :default => [{1 => 2}] }
+    err_regex = %r/Unsupported argument type 'hash', registry lookup 'hash'/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg4", "desc", :default => Hash.new }
 
     # single arg: int
     @p.opt "argsi", "desc", :default => 0
@@ -166,9 +171,9 @@ class ParserTest < ::Minitest::Test
     assert_equal 4, opts["argsi"]
     opts = @p.parse(%w(--argsi=-4))
     assert_equal( -4, opts["argsi"])
-
-    assert_raises(CommandlineError) { @p.parse(%w(--argsi 4.2)) }
-    assert_raises(CommandlineError) { @p.parse(%w(--argsi hello)) }
+    err_regex = /option 'argsi' needs an integer/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argsi 4.2)) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argsi hello)) }
 
     # single arg: float
     @p.opt "argsf", "desc", :default => 3.14
@@ -180,7 +185,8 @@ class ParserTest < ::Minitest::Test
     assert_equal 2, opts["argsf"]
     opts = @p.parse(%w(--argsf 1.0e-2))
     assert_equal 1.0e-2, opts["argsf"]
-    assert_raises(CommandlineError) { @p.parse(%w(--argsf hello)) }
+    err_regex = /option 'argsf' needs a floating-point number/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argsf hello)) }
 
     # single arg: date
     date = Date.today
@@ -189,7 +195,8 @@ class ParserTest < ::Minitest::Test
     assert_equal Date.today, opts["argsd"]
     opts = @p.parse(['--argsd', 'Jan 4, 2007'])
     assert_equal Date.civil(2007, 1, 4), opts["argsd"]
-    assert_raises(CommandlineError) { @p.parse(%w(--argsd hello)) }
+    err_regex = /option 'argsd' needs a date/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argsd hello)) }
 
     # single arg: string
     @p.opt "argss", "desc", :default => "foobar"
@@ -206,8 +213,9 @@ class ParserTest < ::Minitest::Test
     assert_equal [3, 5], opts["argmi"]
     opts = @p.parse(%w(--argmi 4))
     assert_equal [4], opts["argmi"]
-    assert_raises(CommandlineError) { @p.parse(%w(--argmi 4.2)) }
-    assert_raises(CommandlineError) { @p.parse(%w(--argmi hello)) }
+    err_regex = /option 'argmi' needs an integer/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argmi 4.2)) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argmi hello)) }
 
     # multi args: floats
     @p.opt "argmf", "desc", :default => [3.34, 5.21]
@@ -217,7 +225,8 @@ class ParserTest < ::Minitest::Test
     assert_equal [2], opts["argmf"]
     opts = @p.parse(%w(--argmf 4.0))
     assert_equal [4.0], opts["argmf"]
-    assert_raises(CommandlineError) { @p.parse(%w(--argmf hello)) }
+    err_regex = /option 'argmf' needs a floating-point number/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argmf hello)) }
 
     # multi args: dates
     dates = [Date.today, Date.civil(2007, 1, 4)]
@@ -226,7 +235,8 @@ class ParserTest < ::Minitest::Test
     assert_equal dates, opts["argmd"]
     opts = @p.parse(['--argmd', 'Jan 4, 2007'])
     assert_equal [Date.civil(2007, 1, 4)], opts["argmd"]
-    assert_raises(CommandlineError) { @p.parse(%w(--argmd hello)) }
+    err_regex = /option 'argmd' needs a date/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse(%w(--argmd hello)) }
 
     # multi args: strings
     @p.opt "argmst", "desc", :default => %w(hello world)
@@ -240,10 +250,12 @@ class ParserTest < ::Minitest::Test
 
   ## :type and :default must match if both are specified
   def test_type_and_default_must_match
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :type => :int, :default => "hello" }
-    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => 4 }
-    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :String, :default => ["hi"] }
-    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :type => :ints, :default => [3.14] }
+    # Different versions of ruby raise different error messages.
+    err_regex = %r/(type specification and default type don't match|Unsupported argument type)/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :type => :int, :default => "hello" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg2", "desc", :type => :String, :default => 4 }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg2", "desc", :type => :String, :default => ["hi"] }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg2", "desc", :type => :ints, :default => [3.14] }
 
     @p.opt "argsi", "desc", :type => :int, :default => 4
     @p.opt "argsf", "desc", :type => :float, :default => 3.14
@@ -286,10 +298,11 @@ class ParserTest < ::Minitest::Test
     @p.opt "argmf", "desc", :type => :floats, :default => []
     @p.opt "argmd", "desc", :type => :dates, :default => []
     @p.opt "argms", "desc", :type => :strings, :default => []
-    assert_raises(ArgumentError) { @p.opt "badi", "desc", :type => :int, :default => [] }
-    assert_raises(ArgumentError) { @p.opt "badf", "desc", :type => :float, :default => [] }
-    assert_raises(ArgumentError) { @p.opt "badd", "desc", :type => :date, :default => [] }
-    assert_raises(ArgumentError) { @p.opt "bads", "desc", :type => :string, :default => [] }
+    err_regex = %r/multiple argument type must be plural/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badi", "desc", :type => :int, :default => [] }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badf", "desc", :type => :float, :default => [] }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badd", "desc", :type => :date, :default => [] }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "bads", "desc", :type => :string, :default => [] }
     opts = @p.parse([])
     assert_equal(opts["argmi"], [])
     assert_equal(opts["argmf"], [])
@@ -302,18 +315,20 @@ class ParserTest < ::Minitest::Test
     @p.opt "goodarg2", "desc", :long => "--two"
     @p.opt "goodarg3", "desc", :long => "arg-3"
     @p.opt "goodarg4", "desc", :long => "--good-arg-four"
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :long => "" }
-    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :long => "--" }
-    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :long => "-one" }
-    assert_raises(ArgumentError) { @p.opt "badarg4", "desc", :long => "---toomany" }
+    err_regex = /invalid long option name/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :long => "" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg2", "desc", :long => "--" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg3", "desc", :long => "-one" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg4", "desc", :long => "---toomany" }
   end
 
   def test_short_detects_bad_names
     @p.opt "goodarg", "desc", :short => "a"
     @p.opt "goodarg2", "desc", :short => "-b"
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :short => "" }
-    assert_raises(ArgumentError) { @p.opt "badarg2", "desc", :short => "-ab" }
-    assert_raises(ArgumentError) { @p.opt "badarg3", "desc", :short => "--t" }
+    err_regex = /invalid short option name/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :short => "" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg2", "desc", :short => "-ab" }
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg3", "desc", :short => "--t" }
   end
 
   def test_short_names_created_automatically
@@ -357,25 +372,29 @@ class ParserTest < ::Minitest::Test
     @p.educate sio
     assert sio.string =~ /--arg\s+desc/
 
-    assert_raises(CommandlineError) { @p.parse %w(-a) }
+    assert_raises_errmatch(CommandlineError, /unknown argument '-a'/) { @p.parse %w(-a) }
   end
 
   ## two args can't have the same name
   def test_conflicting_names_are_detected
     @p.opt "goodarg"
-    assert_raises(ArgumentError) { @p.opt "goodarg" }
+    err_regex = /you already have an argument named 'goodarg'/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "goodarg" }
   end
 
   ## two args can't have the same :long
   def test_conflicting_longs_detected
     @p.opt "goodarg", "desc", :long => "--goodarg"
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :long => "--goodarg" }
+    err_regex = /long option name \"goodarg\" is already taken/
+
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :long => "--goodarg" }
   end
 
   ## two args can't have the same :short
   def test_conflicting_shorts_detected
     @p.opt "goodarg", "desc", :short => "-g"
-    assert_raises(ArgumentError) { @p.opt "badarg", "desc", :short => "-g" }
+    err_regex = /short option name \"g\" is already taken/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :short => "-g" }
   end
 
   ## note: this behavior has changed in optimist 2.0!
@@ -444,7 +463,7 @@ class ParserTest < ::Minitest::Test
     assert_equal false, opts[:no_default_true]
 
     ## disallow double negatives for reasons of sanity preservation
-    assert_raises(CommandlineError) { @p.parse %w(--no-no-default-true) }
+    assert_raises_errmatch(CommandlineError, /unknown argument '--no-default-true'/) { @p.parse %w(--no-no-default-true) }
   end
 
   def test_short_options_combine
@@ -467,8 +486,9 @@ class ParserTest < ::Minitest::Test
     assert_equal true, opts[:arg2]
     assert_equal 4, opts[:arg3]
 
-    assert_raises(CommandlineError) { @p.parse %w(-cab 4) }
-    assert_raises(CommandlineError) { @p.parse %w(-cba 4) }
+    err_regex = /option '-c' needs a parameter/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-cab 4) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-cba 4) }
   end
 
   def test_doubledash_ends_option_processing
@@ -555,13 +575,15 @@ Options:
     assert_equal(-0.1, opts[:arg])
     opts = @p.parse %w(-f -.1)
     assert_equal(-0.1, opts[:arg])
-    assert_raises(CommandlineError) { @p.parse %w(-f a) }
-    assert_raises(CommandlineError) { @p.parse %w(-f 1a) }
-    assert_raises(CommandlineError) { @p.parse %w(-f 1.a) }
-    assert_raises(CommandlineError) { @p.parse %w(-f a.1) }
-    assert_raises(CommandlineError) { @p.parse %w(-f 1.0.0) }
-    assert_raises(CommandlineError) { @p.parse %w(-f .) }
-    assert_raises(CommandlineError) { @p.parse %w(-f -.) }
+    err_regex = %r/option 'arg' needs a floating-point number/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f a) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f 1a) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f 1.a) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f a.1) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f 1.0.0) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f .) }
+    err_regex = %r/unknown argument '-.'/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-f -.) }
   end
 
   def test_floating_point_formatting_default
@@ -579,7 +601,8 @@ Options:
   end
 
   def test_short_options_cant_be_numeric
-    assert_raises(ArgumentError) { @p.opt :arg, "desc", :short => "-1" }
+    err_regex = %r/short option name '1' can't be a number or a dash/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt :arg, "desc", :short => "-1" }
     @p.opt :a1b, "desc"
     @p.opt :a2b, "desc"
     @p.parse []
@@ -592,14 +615,16 @@ Options:
   def test_short_options_can_be_weird
     @p.opt :arg1, "desc", :short => "#"
     @p.opt :arg2, "desc", :short => "."
-    assert_raises(ArgumentError) { @p.opt :arg3, "desc", :short => "-" }
+    err_regex = %r/short option name '-' can't be a number or a dash/
+    assert_raises_errmatch(ArgumentError, err_regex) { @p.opt :arg3, "desc", :short => "-" }
   end
 
   def test_options_cant_be_set_multiple_times_if_not_specified
     @p.opt :arg, "desc", :short => "-x"
     @p.parse %w(-x)
-    assert_raises(CommandlineError) { @p.parse %w(-x -x) }
-    assert_raises(CommandlineError) { @p.parse %w(-xx) }
+    err_regex = /option '-x' specified multiple times/
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-x -x) }
+    assert_raises_errmatch(CommandlineError, err_regex) { @p.parse %w(-xx) }
   end
 
   def test_options_can_be_set_multiple_times_if_specified
@@ -683,7 +708,7 @@ Options:
     assert_equal [4, 6, 9], opts[:arg3]
     assert_equal [3.14, 2.41], opts[:arg4]
 
-    assert_raises(CommandlineError) { opts = @p.parse %w(-abcd 3.14 2.41) }
+    assert_raises_errmatch(CommandlineError, /option '-c' needs a parameter/) { opts = @p.parse %w(-abcd 3.14 2.41) }
   end
 
   def test_long_options_with_multiple_options
@@ -793,7 +818,7 @@ Options:
     @p.opt :asdf, "desc", :type => String
     @p.version "version"
     @p.parse %w(--asdf goat)
-    assert_raises(CommandlineError) { @p.parse %w(--asdf) }
+    assert_raises_errmatch(CommandlineError, /option '--asdf' needs a parameter/) { @p.parse %w(--asdf) }
     assert_raises(HelpNeeded) { @p.parse %w(--asdf --help) }
     assert_raises(VersionNeeded) { @p.parse %w(--asdf --version) }
   end
@@ -804,8 +829,8 @@ Options:
     @p.opt "arg1", "desc1", :required => true
     @p.opt "arg2", "desc2", :required => true
 
-    assert_raises(CommandlineError, /arg2/) { @p.parse(%w(--arg1)) }
-    assert_raises(CommandlineError, /arg1/) { @p.parse(%w(--arg2)) }
+    assert_raises_errmatch(CommandlineError, /arg2/) { @p.parse(%w(--arg1)) }
+    assert_raises_errmatch(CommandlineError, /arg1/) { @p.parse(%w(--arg2)) }
     @p.parse(%w(--arg1 --arg2))
   end
 
@@ -966,8 +991,11 @@ Options:
 
     opts = @p.parse %w(--arg3 stdin)
     assert_equal $stdin, opts[:arg3]
-
-    assert_raises(CommandlineError) { opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) }
+    
+    err_regex = %r/file or url for option 'arg' cannot be opened: No such file or directory/
+    assert_raises_errmatch(CommandlineError, err_regex) {
+      opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) 
+    }
   end
 
   def test_openstruct_style_access
@@ -1072,7 +1100,7 @@ Options:
     newp = Parser.new(implicit_short_opts: false)
     newp.opt :user1, "user1"
     newp.opt :bag, "bag", :short => 'b'
-    assert_raises(CommandlineError) do
+    assert_raises_errmatch(CommandlineError, /unknown argument '-u'/) do
       newp.parse %w(-u)
     end
     opts = newp.parse %w(--user1)
@@ -1087,10 +1115,10 @@ Options:
     newp = Parser.new(implicit_short_opts: false)
     newp.opt :abc, "abc"
     newp.version "3.4.5"
-    assert_raises(CommandlineError) do
+    assert_raises_errmatch(CommandlineError, /unknown argument '-h'/) do
       newp.parse %w(-h)
     end
-    assert_raises(CommandlineError) do
+    assert_raises_errmatch(CommandlineError, /unknown argument '-v'/) do
       newp.parse %w(-v)
     end
     assert_raises(HelpNeeded) do
@@ -1115,7 +1143,7 @@ Options:
     newp = Parser.new()
     newp.opt :liberation, "liberate something", :type => :int
     newp.opt :evaluate, "evaluate something", :type => :string
-    assert_raises(CommandlineError, /unknown argument '--lib'/) do
+    assert_raises_errmatch(CommandlineError, /unknown argument '--lib'/) do
       newp.parse %w(--lib 5)
     end
     assert_raises_errmatch(CommandlineError, /unknown argument '--ev'/) do
@@ -1130,11 +1158,11 @@ Options:
     opts = newp.parse %w(--bookn hairy_potsworth --bookc 10)
     assert_equal 'hairy_potsworth', opts[:bookname]
     assert_equal '10', opts[:bookcost]
-    assert_raises(CommandlineError) do
+    assert_raises_errmatch(CommandlineError, /ambiguous option '--book' matched keys \(bookname,bookcost\)/) do
       newp.parse %w(--book 5) # ambiguous
     end
     ## partial match causes 'specified multiple times' error
-    assert_raises(CommandlineError, /specified multiple times/) do
+    assert_raises_errmatch(CommandlineError, /specified multiple times/) do
       newp.parse %w(--bookc 17 --bookcost 22)
     end
   end
@@ -1205,7 +1233,7 @@ Options:
   end
 
   def test_simple_interface_handles_die
-    assert_stderr do
+    assert_stderr(/Error: argument --potato is invalid/) do
       ::Optimist::options(%w(--potato)) do
         opt :potato
       end
@@ -1214,7 +1242,7 @@ Options:
   end
 
   def test_simple_interface_handles_die_without_message
-    assert_stderr(/Error:/) do
+    assert_stderr(/Error: potato\./) do
       ::Optimist::options(%w(--potato)) do
         opt :potato
       end
@@ -1223,7 +1251,7 @@ Options:
   end
 
   def test_invalid_option_with_simple_interface
-    assert_stderr do
+    assert_stderr(/Error: unknown argument \'--potato\'\./) do
       assert_raises(SystemExit) do
         ::Optimist.options(%w(--potato))
       end
@@ -1239,7 +1267,7 @@ Options:
   end
 
   def test_supports_callback_inline
-    assert_raises(RuntimeError, "good") do
+    assert_raises_errmatch(RuntimeError, "good") do
       @p.opt :cb1 do |vals|
         raise "good"
       end
@@ -1248,7 +1276,7 @@ Options:
   end
 
   def test_supports_callback_param
-    assert_raises(RuntimeError, "good") do
+    assert_raises_errmatch(RuntimeError, "good") do
       @p.opt :cb1, "with callback", :callback => lambda { |vals| raise "good" }
       @p.parse(%w(--cb1))
     end

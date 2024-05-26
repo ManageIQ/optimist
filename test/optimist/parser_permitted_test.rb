@@ -13,15 +13,15 @@ class ParserPermittedTest < ::Minitest::Test
 
     result = @p.parse(%w(--arg foo))
     assert_equal ["foo"], result["arg"]
-    assert_raises(CommandlineError) { @p.parse(%w(--arg baz)) }
+    assert_raises_errmatch(CommandlineError, /option '--arg' only accepts one of: foo, bar/) { @p.parse(%w(--arg baz)) }
   end
 
   def test_permitted_invalid_scalar_value
     err_regexp = /permitted values for option "(bad|mad|sad)" must be either nil, Range, Regexp or an Array/
-    assert_raises(ArgumentError, err_regexp) {
+    assert_raises_errmatch(ArgumentError, err_regexp) {
       @p.opt 'bad', 'desc', :permitted => 1
     }
-    assert_raises(ArgumentError, err_regexp) {
+    assert_raises_errmatch(ArgumentError, err_regexp) {
       @p.opt 'mad', 'desc', :permitted => "A"
     }
     assert_raises_errmatch(ArgumentError, err_regexp) {

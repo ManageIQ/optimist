@@ -39,7 +39,8 @@ class OptimistTest < Minitest::Test
   end
 
   def test_die_without_options_ever_run
-    assert_raises(ArgumentError) { Optimist.die 'hello' }
+    err_regex = /Optimist::die can only be called after Optimist::options/
+    assert_raises_errmatch(ArgumentError, err_regex) { Optimist.die 'hello' }
   end
 
   def test_die
@@ -70,7 +71,8 @@ class OptimistTest < Minitest::Test
   end
 
   def test_educate_without_options_ever_run
-    assert_raises(ArgumentError) { Optimist.educate }
+    err_regex = /Optimist::educate can only be called after Optimist::options/
+    assert_raises_errmatch(ArgumentError, err_regex) { Optimist.educate }
   end
 
   def test_educate
