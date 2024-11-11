@@ -4,6 +4,22 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.2.0] - 2024-11-11
+### Added
+- Align the short and long forms into their own columns in the help output ([#145](https://github.com/ManageIQ/optimist/pull/145) - thanks @akhoury6)
+- Add support for DidYouMean when long options are spelled incorrectly ([#150](https://github.com/ManageIQ/optimist/pull/150) - thanks @nanobowers)
+- Using `permitted:` restricts the allowed values that a end-user inputs to a pre-defined list ([#147](https://github.com/ManageIQ/optimist/pull/147) - thanks @akhoury6)
+- Add exact_match to settings, defaulting to inexact matching ([#154](https://github.com/ManageIQ/optimist/pull/154) - thanks @nanobowers)
+- Add setting to disable implicit short options ([#155](https://github.com/ManageIQ/optimist/pull/155) - thanks @nanobowers)
+- Add alt longname and multiple char support ([#151](https://github.com/ManageIQ/optimist/pull/151) - thanks @nanobowers)
+- Permitted regexp/range support ([#158](https://github.com/ManageIQ/optimist/pull/158), [#159](https://github.com/ManageIQ/optimist/pull/159) - thanks @nanobowers)
+- Add some examples ([#161](https://github.com/ManageIQ/optimist/pull/161) - thanks @nanobowers)
+
+### Changed
+- Enable frozen_string_literal for future-ruby support ([#149](https://github.com/ManageIQ/optimist/pull/149), [#153](https://github.com/ManageIQ/optimist/pull/153)  - thanks @nanobowers)
+- Refactor constraints ([#156](https://github.com/ManageIQ/optimist/pull/156) - thanks @nanobowers)
+- Fix assert_raises to assert_raises_errmatch ([#160](https://github.com/ManageIQ/optimist/pull/160) - thanks @nanobowers)
+
 ## [3.1.0] - 2023-07-24
 ### Added
 - Implement `either` command ([#130](https://github.com/ManageIQ/optimist/pull/130) - thanks @alezummo)
@@ -206,7 +222,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release.
 
-[Unreleased]: https://github.com/ManageIQ/optimist/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/optimist/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/ManageIQ/optimist/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/ManageIQ/optimist/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/ManageIQ/optimist/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/ManageIQ/optimist/compare/v2.1.3...v3.0.0
