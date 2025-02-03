@@ -18,6 +18,7 @@ jobs:
         - '3.1'
         - '3.2'
         - '3.3'
+        - '3.4'
         - jruby-9.4
         - ruby-head
         - jruby-head
@@ -30,4 +31,3 @@ jobs:
         bundler-cache: true
     - name: Run tests
       run: bundle exec rake
-      continue-on-error: ${{ matrix.ruby-version == 'ruby-head' }}
