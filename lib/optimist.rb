@@ -477,6 +477,7 @@ class Parser
         self[m] || self[m.to_s]
       end
     end
+    vals[:_stopped] = @stopped || false unless @stop_words.empty?
     vals
   end
 
@@ -574,7 +575,10 @@ private
     i = 0
 
     until i >= args.length
-      return remains += args[i..-1] if @stop_words.member? args[i]
+      if @stop_words.member? args[i]
+        @stopped = true
+        return remains += args[i..-1]
+      end
       case args[i]
       when "--" # arg terminator
         return remains += args[(i + 1)..-1]
