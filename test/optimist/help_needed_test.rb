@@ -1,4 +1,4 @@
-require 'test_helper'
+require_relative '../test_helper'
 
 module Optimist
   class HelpNeededTest < ::Minitest::Test
