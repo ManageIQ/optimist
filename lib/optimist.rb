@@ -208,7 +208,7 @@ class Parser
     o = Option.create(name, desc, opts)
 
     raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? o.name
-    
+
     o.long.names.each do |lng|
       raise ArgumentError, "long option name #{lng.inspect} is already taken; please specify a (different) :long/:alt" if @long[lng]
       @long[lng] = o.name
@@ -754,7 +754,7 @@ class ShortNames
              end
 
       if sopt =~ INVALID_ARG_REGEX
-        raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash" 
+        raise ArgumentError, "short option name '#{sopt}' can't be a number or a dash"
       end
       @chars << sopt
     end
@@ -880,7 +880,7 @@ class Option
     end
     true
   end
-  
+
   # incoming values from the command-line should be strings, so we should
   # stringify any permitted types as the basis of comparison.
   def permitted_value?(val)

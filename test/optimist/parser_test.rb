@@ -142,7 +142,7 @@ class ParserTest < ::Minitest::Test
   ## flags that require args of a specific type refuse args of other
   ## types
   def test_typed_args_refuse_args_of_other_types
-    @p.opt "goodarg", "desc", :type => :int    
+    @p.opt "goodarg", "desc", :type => :int
     err_regex = %r/Unsupported argument type 'asdf', registry lookup 'asdf'/
     assert_raises_errmatch(ArgumentError, err_regex) { @p.opt "badarg", "desc", :type => :asdf }
 
@@ -991,10 +991,10 @@ Options:
 
     opts = @p.parse %w(--arg3 stdin)
     assert_equal $stdin, opts[:arg3]
-    
+
     err_regex = %r/file or url for option 'arg' cannot be opened: No such file or directory/
     assert_raises_errmatch(CommandlineError, err_regex) {
-      opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf) 
+      opts = @p.parse %w(--arg /fdasfasef/fessafef/asdfasdfa/fesasf)
     }
   end
 
