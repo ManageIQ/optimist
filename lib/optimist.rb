@@ -820,7 +820,7 @@ class Option
     optionlist = []
     optionlist.concat(short.chars.map { |o| "-#{o}" })
     optionlist.concat(long.names.map { |o| "--#{o}" })
-    optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long}" : "")
+    optionlist.compact.join(', ') + type_format + (flag? && default ? ", --no-#{long.long}" : "")
   end
 
   ## Format the educate-line description including the default and permitted value(s)
