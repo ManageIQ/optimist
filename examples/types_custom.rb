@@ -27,7 +27,7 @@ class ZipCodeOption < Optimist::Option
 end
 
 opts = Optimist::options do
-  opt :zipcode, "United states postal code", :type => :zipcode 
+  opt :zipcode, "United states postal code", :type => :zipcode
 end
 
 p opts[:zipcode]

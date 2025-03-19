@@ -38,8 +38,8 @@ class ParserPermittedTest < ::Minitest::Test
   end
   def test_permitted_with_symbol_array
     @p.opt 'fiz', 'desc', :type => 'string', :permitted => %i[dog cat]
-    @p.parse(%w(--fiz dog)) 
-    @p.parse(%w(--fiz cat)) 
+    @p.parse(%w(--fiz dog))
+    @p.parse(%w(--fiz cat))
     assert_raises_errmatch(CommandlineError, /option '--fiz' only accepts one of: dog, cat/) {
       @p.parse(%w(--fiz rat))
     }
@@ -47,8 +47,8 @@ class ParserPermittedTest < ::Minitest::Test
 
   def test_permitted_with_numeric_array
     @p.opt 'mynum', 'desc', :type => Integer, :permitted => [1,2,4]
-    @p.parse(%w(--mynum 1)) 
-    @p.parse(%w(--mynum 4)) 
+    @p.parse(%w(--mynum 1))
+    @p.parse(%w(--mynum 4))
     assert_raises_errmatch(CommandlineError, /option '--mynum' only accepts one of: 1, 2, 4/) {
       @p.parse(%w(--mynum 3))
     }

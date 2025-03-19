@@ -67,7 +67,7 @@ module Optimist
         opts = @p.parse(a)
         assert opts.goodarg0
       end
-      
+
       [%w[--newone], %w[-n], %w[--one]].each  do |a|
         opts = @p.parse(a)
         assert opts.goodarg1
@@ -91,7 +91,7 @@ module Optimist
         assert_raises_errmatch(ArgumentError, /invalid long option name/) { @p.opt "badarg", "desc", :alt => altitem }
       end
     end
-    
+
     def test_altshort_help
       @p.opt :cat, 'cat', short: ['c','C','a','T']
       outstring = get_help_string
@@ -99,7 +99,7 @@ module Optimist
       assert_match(/-c, -C, -a, -T, --cat/, outstring)
     end
 
-    
+
     def test_altlong_help
       @p.opt :cat, 'a cat', alt: :feline
       @p.opt :dog, 'a dog', alt: ['Pooch', :canine]
@@ -113,56 +113,56 @@ module Optimist
       # expect long-opt to shadow the actual name
       assert_match(/^\s*--fig, --peach, --pear, --apple/, outstring)
       assert_match(/^\s*-g, --gemuse, --groente/, outstring)
-      
+
     end
 
     def test_alt_duplicates
       # alt duplicates named option
-      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :cat
       }
-      # alt duplicates :long 
-      err_regex = /long option name "feline" is already taken; please specify a \(different\) :long\/:alt/ 
+      # alt duplicates :long
+      err_regex = /long option name "feline" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :long => :feline, :alt => [:feline]
       }
       # alt duplicates itself
-      err_regex = /long option name "aaa" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "aaa" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :abc, 'desc', :alt => [:aaa, :aaa]
       }
     end
-    
+
     def test_altlong_collisions
       @p.opt :fat, 'desc'
       @p.opt :raton, 'desc', :long => :rat
       @p.opt :bat, 'desc', :alt => [:baton, :twirl]
 
       # :alt collision with named option
-      err_regex = /long option name "fat" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "fat" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :fat
       }
 
       # :alt collision with :long option
-      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "cat" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :cat, 'desc', :alt => :rat
       }
 
       # :named option collision with existing :alt option
-      err_regex = /long option name "baton" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "baton" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :baton, 'desc'
       }
 
       # :long option collision with existing :alt option
-      err_regex = /long option name "twirl" is already taken; please specify a \(different\) :long\/:alt/ 
+      err_regex = /long option name "twirl" is already taken; please specify a \(different\) :long\/:alt/
       assert_raises_errmatch(ArgumentError, err_regex) {
         @p.opt :whirl, 'desc', :long => 'twirl'
       }
-      
+
     end
   end
 end

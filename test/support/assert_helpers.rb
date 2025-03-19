@@ -51,4 +51,3 @@ module Minitest::Assertions
     assert_match(err_regexp, err.message)
   end
 end
-

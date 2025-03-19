@@ -7,4 +7,3 @@ opts = Optimist::options do
   opt :num_limbs, "Number of limbs", :default => 4  # integer --num-limbs <i>, default to 4
 end
 p opts
-
