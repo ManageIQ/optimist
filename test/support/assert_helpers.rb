@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Minitest::Assertions
   def assert_parses_correctly(parser, commandline, expected_opts,
                               expected_leftovers)
@@ -9,7 +11,7 @@ module Minitest::Assertions
   def assert_stderr(str = nil, msg = nil)
     msg = "#{msg}.\n" if msg
 
-    old_stderr, $stderr = $stderr, StringIO.new('')
+    old_stderr, $stderr = $stderr, StringIO.new
     yield
     assert_match str, $stderr.string, msg if str
   ensure
@@ -19,7 +21,7 @@ module Minitest::Assertions
   def assert_stdout(str = nil, msg = nil)
     msg = "#{msg}.\n" if msg
 
-    old_stdout, $stdout = $stdout, StringIO.new('')
+    old_stdout, $stdout = $stdout, StringIO.new
     yield
     assert_match str, $stdout.string, msg if str
   ensure

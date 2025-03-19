@@ -368,7 +368,7 @@ class ParserTest < ::Minitest::Test
     @p.opt "arg", "desc", :short => :none
     @p.parse []
 
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.educate sio
     assert sio.string =~ /--arg\s+desc/
 
