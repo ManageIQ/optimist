@@ -148,6 +148,18 @@ module Optimist
     assert help[10] =~ /<date\+>/
   end
 
+  def test_help_handles_boolean_flags
+    parser.opt :default_false, 'default-false', :default => false
+    parser.opt :default_true, 'default-true', :default => true
+    sio = StringIO.new "w"
+    parser.educate sio
+
+    help = sio.string.split "\n"
+    assert help[1] =~ /--default-false/
+    assert help[2] =~ /--default-true, --no-default-true/
+    assert help[2] =~ /\(default: true\)/
+  end
+
   def test_help_has_grammatical_default_text
     parser.opt :arg1, 'description with period.', :default => 'hello'
     parser.opt :arg2, 'description without period', :default => 'world'
