@@ -4,6 +4,18 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.2.1] - 2025-03-19
+### Added
+- Added testing of jruby-9.4 ([#172](https://github.com/ManageIQ/optimist/pull/172) - thanks @Fryguy)
+- Added testing of Ruby 3.4 ([#173](https://github.com/ManageIQ/optimist/pull/173) - thanks @Fryguy)
+
+### Removed
+- Drop testing of Ruby <2.7, jruby-9.3 ([#172](https://github.com/ManageIQ/optimist/pull/172) - thanks @Fryguy)
+
+### Fixed
+- Fix issue where negative boolean flags were output incorrectly ([#179](https://github.com/ManageIQ/optimist/pull/179) - thanks @Fryguy)
+- Fix issues with frozen strings which fail jruby-head (JRuby 10) ([#180](https://github.com/ManageIQ/optimist/pull/180) - thanks @Fryguy)
+
 ## [3.2.0] - 2024-11-11
 ### Added
 - Align the short and long forms into their own columns in the help output ([#145](https://github.com/ManageIQ/optimist/pull/145) - thanks @akhoury6)
@@ -222,7 +234,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release.
 
-[Unreleased]: https://github.com/ManageIQ/optimist/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/optimist/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/ManageIQ/optimist/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/ManageIQ/optimist/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/ManageIQ/optimist/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/ManageIQ/optimist/compare/v3.0.0...v3.0.1
