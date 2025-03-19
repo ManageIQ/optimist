@@ -12,7 +12,7 @@ module Optimist
       assert_raises(Optimist::HelpNeeded) do
         @p.parse(%w(--help))
       end
-      sio = StringIO.new "w"
+      sio = StringIO.new
       @p.educate sio
       sio.string
     end

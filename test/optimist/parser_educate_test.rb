@@ -40,7 +40,7 @@ module Optimist
 # pulled out of optimist_test for now
   def test_help_has_default_banner
     @p = Parser.new
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -49,7 +49,7 @@ module Optimist
 
     @p = Parser.new
     @p.version "my version"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -58,7 +58,7 @@ module Optimist
 
     @p = Parser.new
     @p.banner "my own banner"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -67,7 +67,7 @@ module Optimist
 
     @p = Parser.new
     @p.text "my own text banner"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -78,7 +78,7 @@ module Optimist
   def test_help_has_optional_usage
     @p = Parser.new
     @p.usage "OPTIONS FILES"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -89,7 +89,7 @@ module Optimist
   def test_help_has_optional_synopsis
     @p = Parser.new
     @p.synopsis "About this program"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -101,7 +101,7 @@ module Optimist
     @p = Parser.new
     @p.usage "OPTIONS FILES"
     @p.synopsis "About this program"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     @p.parse []
     @p.educate sio
     help = sio.string.split "\n"
@@ -113,7 +113,7 @@ module Optimist
   def test_help_preserves_positions
     parser.opt :zzz, "zzz"
     parser.opt :aaa, "aaa"
-    sio = StringIO.new "w"
+    sio = StringIO.new
     parser.educate sio
 
     help = sio.string.split "\n"
@@ -132,7 +132,7 @@ module Optimist
     parser.opt :arg8, 'arg', :type => :ios
     parser.opt :arg9, 'arg', :type => :date
     parser.opt :arg10, 'arg', :type => :dates
-    sio = StringIO.new "w"
+    sio = StringIO.new
     parser.educate sio
 
     help = sio.string.split "\n"
@@ -151,7 +151,7 @@ module Optimist
   def test_help_handles_boolean_flags
     parser.opt :default_false, 'default-false', :default => false
     parser.opt :default_true, 'default-true', :default => true
-    sio = StringIO.new "w"
+    sio = StringIO.new
     parser.educate sio
 
     help = sio.string.split "\n"
@@ -163,7 +163,7 @@ module Optimist
   def test_help_has_grammatical_default_text
     parser.opt :arg1, 'description with period.', :default => 'hello'
     parser.opt :arg2, 'description without period', :default => 'world'
-    sio = StringIO.new 'w'
+    sio = StringIO.new
     parser.educate sio
 
     help = sio.string.split "\n"
@@ -174,7 +174,7 @@ module Optimist
   def test_help_has_grammatical_permitted_text
     parser.opt :arg1, 'description with period.', :type => :strings, :permitted => %w(foo bar)
     parser.opt :arg2, 'description without period', :type => :strings, :permitted => %w(foo bar)
-    sio = StringIO.new 'w'
+    sio = StringIO.new
     parser.educate sio
 
     help = sio.string.split "\n"
@@ -185,7 +185,7 @@ module Optimist
   def test_help_with_permitted_range
     parser.opt :rating, 'rating', permitted: 1..5
     parser.opt :hex, 'hexadecimal', permitted: /^[0-9a-f]/i
-    sio = StringIO.new 'w'
+    sio = StringIO.new
     parser.educate sio
     help = sio.string.split "\n"
     assert_match %r{rating \(permitted: 1\.\.5\)}, help[1]
