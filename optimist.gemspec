@@ -30,7 +30,7 @@ specify."
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "chronic"
-  spec.add_development_dependency "manageiq-style", ">= 1.5.3"
+  spec.add_development_dependency "manageiq-style", ">= 1.5.4"
   spec.add_development_dependency "minitest",       "~> 5.25"
   spec.add_development_dependency "rake",           ">= 10.0"
 end
