@@ -641,19 +641,19 @@ Options:
     assert_equal [], @p.leftovers
   end
 
-  def test_short_options_with_multiple_options_does_not_affect_flags_type
+  def test_short_options_with_multiple_options_flag_types_get_counted
     @p.opt :xarg, "desc", :short => "-x", :type => :flag, :multi => true
 
     opts = @p.parse %w(-x a)
-    assert_equal true, opts[:xarg]
+    assert_equal 1, opts[:xarg]
     assert_equal %w(a), @p.leftovers
 
     opts = @p.parse %w(-x a -x b)
-    assert_equal true, opts[:xarg]
+    assert_equal 2, opts[:xarg]
     assert_equal %w(a b), @p.leftovers
 
     opts = @p.parse %w(-xx a -x b)
-    assert_equal true, opts[:xarg]
+    assert_equal 3, opts[:xarg]
     assert_equal %w(a b), @p.leftovers
   end
 
@@ -1186,10 +1186,16 @@ Options:
     assert_equal 0, @p.leftovers.size
   end
 
-  def test_multi_args_default_to_empty_array
-    @p.opt :arg1, "arg", :multi => true
+  def test_multi_args_with_specified_type_defaults_to_empty_array
+    @p.opt :arg1, "arg", :type => :string, :multi => true
     opts = @p.parse []
     assert_equal [], opts[:arg1]
+  end
+
+  def test_multi_args_with_type_flag_defaults_to_zero
+    @p.opt :arg1, "arg", :multi => true
+    opts = @p.parse []
+    assert_equal 0, opts[:arg1]
   end
 
   def test_simple_interface_handles_help
