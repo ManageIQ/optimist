@@ -4,7 +4,6 @@ http://manageiq.github.io/optimist/
 
 [![Gem Version](https://badge.fury.io/rb/optimist.svg)](http://badge.fury.io/rb/optimist)
 [![CI](https://github.com/ManageIQ/optimist/actions/workflows/ci.yaml/badge.svg)](https://github.com/ManageIQ/optimist/actions/workflows/ci.yaml)
-[![Code Climate](https://codeclimate.com/github/ManageIQ/optimist.svg)](https://codeclimate.com/github/ManageIQ/optimist)
 [![Coverage Status](http://img.shields.io/coveralls/ManageIQ/optimist.svg)](https://coveralls.io/r/ManageIQ/optimist)
 
 ## Documentation
