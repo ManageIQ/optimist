@@ -18,9 +18,7 @@ specify."
   spec.homepage      = "http://manageiq.github.io/optimist/"
   spec.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0")
-  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.files         = `git ls-files lib`.split("\n") + ["CHANGELOG.md", "LICENSE.txt", "README.md"]
   spec.metadata    = {
     "changelog_uri"   => "https://github.com/ManageIQ/optimist/blob/master/CHANGELOG.md",
     "source_code_uri" => "https://github.com/ManageIQ/optimist/",
