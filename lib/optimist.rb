@@ -363,7 +363,8 @@ class Parser
     @specs.each do |sym, opts|
       required[sym] = true if opts.required?
       vals[sym] = opts.default
-      vals[sym] = [] if opts.multi && !opts.default # multi arguments default to [], not nil
+      vals[sym] = [] if opts.multi && !opts.default && !opts.flag? # multi arguments default to [], not nil
+      vals[sym] = 0 if opts.multi && !opts.default && opts.flag? # multi argument flags default to 0 because they return a count
     end
 
     resolve_default_short_options! if @settings[:implicit_short_opts]
@@ -405,6 +406,11 @@ class Parser
 
       # The block returns the number of parameters taken.
       num_params_taken = 0
+
+      if @specs[sym].multi? && @specs[sym].flag?
+        given_args[sym][:params][0] ||= 0
+        given_args[sym][:params][0] += 1
+      end
 
       unless params.empty?
         if @specs[sym].single_arg?
@@ -1001,6 +1007,7 @@ class BooleanOption < Option
   end
   def flag? ; true ; end
   def parse(_paramlist, neg_given)
+    return _paramlist[0] if @multi_given
     return(self.name.to_s =~ /^no_/ ? neg_given : !neg_given)
   end
 end
